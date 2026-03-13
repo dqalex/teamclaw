@@ -2359,12 +2359,12 @@ Dashboard 预览
           type TEXT NOT NULL,
           resource_type TEXT NOT NULL,
           resource_id TEXT NOT NULL,
-          requester_id TEXT NOT NULL REFERENCES members(id),
+          requester_id TEXT NOT NULL,
           payload TEXT,
           request_note TEXT,
           status TEXT NOT NULL DEFAULT 'pending',
-          approved_by TEXT REFERENCES members(id),
-          rejected_by TEXT REFERENCES members(id),
+          approved_by TEXT,
+          rejected_by TEXT,
           approval_note TEXT,
           rejection_note TEXT,
           created_at INTEGER NOT NULL,
@@ -2513,6 +2513,83 @@ Dashboard 预览
     }
   }
 
+  // ===== v3.0 SkillHub: skill_trust_records 表列迁移 =====
+  if (tableNames.includes('skill_trust_records')) {
+    try {
+      const trustCols = sqlite.prepare("PRAGMA table_info('skill_trust_records')").all() as { name: string }[];
+      const trustColNames = trustCols.map(c => c.name);
+      
+      if (!trustColNames.includes('operated_by')) {
+        console.log('[TeamClaw] Adding operated_by column to skill_trust_records table...');
+        sqlite.exec('ALTER TABLE skill_trust_records ADD COLUMN operated_by TEXT');
+      }
+      
+      if (!trustColNames.includes('operated_at')) {
+        console.log('[TeamClaw] Adding operated_at column to skill_trust_records table...');
+        sqlite.exec('ALTER TABLE skill_trust_records ADD COLUMN operated_at INTEGER');
+      }
+    } catch (err) {
+      console.error('[TeamClaw] Failed to migrate skill_trust_records columns:', err);
+    }
+  }
+
+  // ===== v3.0 SkillHub: 修复 approval_requests 错误的外键约束 =====
+  if (tableNames.includes('approval_requests')) {
+    try {
+      // 检查是否有外键约束问题（requester_id 引用了 members 而非 users）
+      const fkList = sqlite.prepare("PRAGMA foreign_key_list('approval_requests')").all() as { from: string; table: string }[];
+      const hasWrongFk = fkList.some(fk => fk.from === 'requester_id' && fk.table === 'members');
+      
+      if (hasWrongFk) {
+        console.log('[TeamClaw] Fixing approval_requests foreign key constraint...');
+        // SQLite 不支持删除外键，需要重建表
+        sqlite.exec(`
+          BEGIN TRANSACTION;
+          
+          -- 创建新表（无外键约束）
+          CREATE TABLE approval_requests_new (
+            id TEXT PRIMARY KEY NOT NULL,
+            type TEXT NOT NULL,
+            resource_type TEXT NOT NULL,
+            resource_id TEXT NOT NULL,
+            requester_id TEXT NOT NULL,
+            payload TEXT,
+            request_note TEXT,
+            status TEXT NOT NULL DEFAULT 'pending',
+            approved_by TEXT,
+            rejected_by TEXT,
+            approval_note TEXT,
+            rejection_note TEXT,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL,
+            processed_at INTEGER,
+            expires_at INTEGER
+          );
+          
+          -- 复制数据
+          INSERT INTO approval_requests_new SELECT * FROM approval_requests;
+          
+          -- 删除旧表
+          DROP TABLE approval_requests;
+          
+          -- 重命名新表
+          ALTER TABLE approval_requests_new RENAME TO approval_requests;
+          
+          -- 重建索引
+          CREATE INDEX idx_approval_type_status ON approval_requests(type, status);
+          CREATE INDEX idx_approval_resource ON approval_requests(resource_type, resource_id);
+          CREATE INDEX idx_approval_requester ON approval_requests(requester_id);
+          CREATE INDEX idx_approval_status ON approval_requests(status);
+          
+          COMMIT;
+        `);
+        console.log('[TeamClaw] approval_requests foreign key fixed successfully');
+      }
+    } catch (err) {
+      console.error('[TeamClaw] Failed to fix approval_requests foreign key:', err);
+    }
+  }
+
   if (!tableNames.includes('skill_snapshots')) {
     try {
       console.log('[TeamClaw] Creating "skill_snapshots" table (v3.0 SkillHub)...');
@@ -2543,6 +2620,8 @@ Dashboard 预览
           agent_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
           action TEXT NOT NULL,
           note TEXT,
+          operated_by TEXT NOT NULL,
+          operated_at INTEGER,
           created_at INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_skill_trust_skill ON skill_trust_records(skill_id);
