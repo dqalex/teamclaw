@@ -20,7 +20,6 @@ import { eq, and } from 'drizzle-orm';
 import { randomBytes } from 'crypto';
 import { APP_VERSION, APP_VERSION_DISPLAY } from '@/lib/version';
 import { parseChatActions, hasChatActions } from '@/lib/chat-channel/parser';
-import { executeActions } from '@/lib/chat-channel/executor';
 import type { ExecutorOptions, UnrecognizedAction } from '@/lib/chat-channel/types';
 import { ACTION_DEFINITIONS } from '@/lib/chat-channel/actions';
 import { logger } from '@/lib/gateway-logger';
@@ -31,10 +30,8 @@ export { saveGatewayConfig, getGatewayConfig, deleteGatewayConfig } from '@/lib/
 
 // ==================== 类型定义 ====================
 
-import type { GatewayMessage, GatewayEventHandler } from './gateway-types';
-export type { GatewayMessage, GatewayEventHandler } from './gateway-types';
-
-export type ConnectionStatus = 'connected' | 'disconnected' | 'connecting' | 'error';
+import type { GatewayMessage, GatewayEventHandler, ConnectionStatus } from './gateway-types';
+export type { GatewayMessage, GatewayEventHandler, ConnectionStatus } from './gateway-types';
 
 export type ServerGatewayConfig = {
   id: string;
@@ -501,13 +498,14 @@ export class ServerGatewayClient {
       }
     }
 
-    // 执行 actions
+    // 执行 actions (动态导入避免循环依赖)
     const executorOptions: ExecutorOptions = {
       source: 'chat',
       memberId,
       triggerRefresh: false,  // 服务端不需要触发 Zustand Store 刷新（通过 eventBus 通知前端）
     };
 
+    const { executeActions } = await import('@/lib/chat-channel/executor');
     const result = await executeActions(actions, executorOptions);
 
     logger.info('chat_actions_executed', {

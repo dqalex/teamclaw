@@ -579,10 +579,7 @@ interface ApiResponse<T> {
 
 ### A. 测试报告索引
 
-- [E2E 测试报告](../../tests/reports/e2e-report-20260307.md)
-- [压力测试报告](../../tests/reports/stress-test-report-template.md)
-- [安全测试报告](../../tests/reports/security-test-report-template.md)
-- [单元/集成测试报告](../../tests/reports/TEST_REPORT.md)
+> **注意**：测试报告详情请参阅 [tests/README.md](../../tests/README.md)
 
 ### B. 相关技术债
 

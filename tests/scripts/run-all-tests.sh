@@ -22,7 +22,8 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # 项目根目录
-PROJECT_ROOT="/Users/alex/Documents/alex base/sense/teamclaw-v3"
+# 自动检测项目根目录（脚本位于 tests/scripts/ 下）
+PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 REPORTS_DIR="$PROJECT_ROOT/tests/reports"
 
 # 时间戳

@@ -830,7 +830,7 @@ export const TEAMCLAW_TOOLS = {
   },
 } as const;
 
-export type ComindToolName = keyof typeof TEAMCLAW_TOOLS;
+export type TeamClawToolName = keyof typeof TEAMCLAW_TOOLS;
 
 export function getToolDefinitions() {
   return Object.values(TEAMCLAW_TOOLS);

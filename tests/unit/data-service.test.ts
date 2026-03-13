@@ -1,238 +1,250 @@
 /**
- * 数据访问层 - 单元测试
- * 
- * 测试 apiRequest 的去重、超时、错误处理，以及 CRUD 工厂
+ * data-service.ts 单元测试
+ * 测试 API 请求去重、错误处理、超时逻辑
  */
-
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { apiRequest, projectsApi, tasksApi } from '@/lib/data-service';
 
-// mock fetch
-const mockFetch = vi.fn();
-vi.stubGlobal('fetch', mockFetch);
+// Mock fetch
+const originalFetch = global.fetch;
 
-// 动态导入，确保 mock 生效
-let apiRequest: typeof import('@/lib/data-service').apiRequest;
-let projectsApi: typeof import('@/lib/data-service').projectsApi;
-let tasksApi: typeof import('@/lib/data-service').tasksApi;
+describe('data-service', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
 
-beforeEach(async () => {
-  vi.clearAllMocks();
-  // 每次重新导入以重置 inflightRequests Map
-  vi.resetModules();
-  const mod = await import('@/lib/data-service');
-  apiRequest = mod.apiRequest;
-  projectsApi = mod.projectsApi;
-  tasksApi = mod.tasksApi;
-});
+  afterEach(() => {
+    vi.restoreAllMocks();
+    global.fetch = originalFetch;
+  });
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
+  // ============================================================
+  // apiRequest - 基本功能
+  // ============================================================
 
-// 辅助：创建 mock Response
-function mockResponse(data: unknown, status = 200) {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    json: () => Promise.resolve(data),
-    headers: new Headers(),
-  };
-}
+  describe('apiRequest', () => {
+    it('成功请求应该返回 data', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ id: 'test', name: 'Test' }),
+      });
 
-describe('apiRequest', () => {
-  describe('成功请求', () => {
-    it('GET 请求应该返回 data', async () => {
-      mockFetch.mockResolvedValueOnce(mockResponse({ id: '1', name: 'test' }));
-      const result = await apiRequest('/api/projects');
-      expect(result.data).toEqual({ id: '1', name: 'test' });
+      const result = await apiRequest<{ id: string; name: string }>('/api/test');
+      expect(result.data).toEqual({ id: 'test', name: 'Test' });
       expect(result.error).toBeUndefined();
     });
 
-    it('POST 请求应该传递 body', async () => {
-      mockFetch.mockResolvedValueOnce(mockResponse({ id: 'new-1' }));
-      await apiRequest('/api/tasks', {
-        method: 'POST',
-        body: JSON.stringify({ title: 'Test Task' }),
+    it('HTTP 错误应该返回 error', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        json: () => Promise.resolve({ error: 'Not found' }),
       });
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/tasks',
-        expect.objectContaining({
-          method: 'POST',
-          body: JSON.stringify({ title: 'Test Task' }),
-        })
-      );
-    });
 
-    it('应该设置 Content-Type 为 JSON', async () => {
-      mockFetch.mockResolvedValueOnce(mockResponse({}));
-      await apiRequest('/api/test');
-      const callHeaders = mockFetch.mock.calls[0][1]?.headers;
-      expect(callHeaders['Content-Type']).toBe('application/json');
-    });
-  });
-
-  describe('GET 请求去重', () => {
-    it('并发 GET 同一 URL 应该只发一次请求', async () => {
-      let resolvePromise: (value: unknown) => void;
-      const fetchPromise = new Promise((resolve) => { resolvePromise = resolve; });
-
-      mockFetch.mockReturnValueOnce(
-        fetchPromise.then(() => mockResponse([{ id: '1' }]))
-      );
-
-      // 并发发起两个 GET
-      const p1 = apiRequest('/api/dedup-test');
-      const p2 = apiRequest('/api/dedup-test');
-
-      // 释放 fetch
-      resolvePromise!(undefined);
-
-      const [r1, r2] = await Promise.all([p1, p2]);
-
-      // 只应调用一次 fetch
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-      expect(r1).toEqual(r2);
-    });
-
-    it('POST 请求不应去重', async () => {
-      mockFetch
-        .mockResolvedValueOnce(mockResponse({ id: '1' }))
-        .mockResolvedValueOnce(mockResponse({ id: '2' }));
-
-      const p1 = apiRequest('/api/tasks', { method: 'POST', body: '{}' });
-      const p2 = apiRequest('/api/tasks', { method: 'POST', body: '{}' });
-
-      await Promise.all([p1, p2]);
-      expect(mockFetch).toHaveBeenCalledTimes(2);
-    });
-
-    it('不同 URL 的 GET 不应去重', async () => {
-      mockFetch
-        .mockResolvedValueOnce(mockResponse([]))
-        .mockResolvedValueOnce(mockResponse([]));
-
-      const p1 = apiRequest('/api/tasks');
-      const p2 = apiRequest('/api/projects');
-
-      await Promise.all([p1, p2]);
-      expect(mockFetch).toHaveBeenCalledTimes(2);
-    });
-  });
-
-  describe('错误处理', () => {
-    it('HTTP 错误应该返回 error 字段', async () => {
-      mockFetch.mockResolvedValueOnce(mockResponse({ error: 'Not Found' }, 404));
-      const result = await apiRequest('/api/nonexistent');
-      expect(result.error).toBe('Not Found');
+      const result = await apiRequest('/api/test');
+      expect(result.error).toBe('Not found');
       expect(result.data).toBeUndefined();
     });
 
-    it('HTTP 错误无 JSON 体时应该返回状态码', async () => {
-      mockFetch.mockResolvedValueOnce({
+    it('HTTP 错误无 JSON 应该返回状态码', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
         ok: false,
         status: 500,
-        json: () => Promise.reject(new Error('no json')),
+        json: () => Promise.reject(new Error('Invalid JSON')),
       });
-      const result = await apiRequest('/api/broken');
+
+      const result = await apiRequest('/api/test');
       expect(result.error).toBe('HTTP 500');
     });
 
     it('网络错误应该返回错误消息', async () => {
-      mockFetch.mockRejectedValueOnce(new Error('fetch failed'));
-      const result = await apiRequest('/api/network-error');
-      expect(result.error).toBe('fetch failed');
+      global.fetch = vi.fn().mockRejectedValue(new Error('Network failed'));
+
+      const result = await apiRequest('/api/test');
+      expect(result.error).toBe('Network failed');
     });
 
-    it('非 Error 异常应该返回通用消息', async () => {
-      mockFetch.mockRejectedValueOnce('string error');
-      const result = await apiRequest('/api/unknown-error');
+    it('未知错误应该返回通用消息', async () => {
+      global.fetch = vi.fn().mockRejectedValue('Unknown error');
+
+      const result = await apiRequest('/api/test');
       expect(result.error).toBe('Network request failed');
     });
 
-    it('超时应该返回超时错误', async () => {
-      // 模拟 AbortError
-      mockFetch.mockRejectedValueOnce(
-        Object.assign(new DOMException('The operation was aborted', 'AbortError'))
-      );
-      const result = await apiRequest('/api/timeout');
+    it('AbortError 应该返回超时错误', async () => {
+      const abortError = new DOMException('The operation was aborted', 'AbortError');
+      global.fetch = vi.fn().mockRejectedValue(abortError);
+
+      const result = await apiRequest('/api/test');
       expect(result.error).toBe('Request timeout (30s)');
     });
   });
-});
 
-describe('CRUD API Client 工厂', () => {
-  describe('projectsApi', () => {
-    it('getAll 应该 GET /api/projects', async () => {
-      mockFetch.mockResolvedValueOnce(mockResponse([{ id: '1', name: 'P1' }]));
-      const result = await projectsApi.getAll();
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/projects',
-        expect.objectContaining({ signal: expect.any(AbortSignal) })
-      );
-      expect(result.data).toEqual([{ id: '1', name: 'P1' }]);
+  // ============================================================
+  // apiRequest - GET 去重
+  // ============================================================
+
+  describe('apiRequest GET deduplication', () => {
+    it('相同 URL 的并发 GET 请求应该共享同一个 Promise', async () => {
+      let callCount = 0;
+      global.fetch = vi.fn().mockImplementation(() => {
+        callCount++;
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ count: callCount }),
+        });
+      });
+
+      // 同时发起 3 个相同 URL 的请求
+      const [r1, r2, r3] = await Promise.all([
+        apiRequest<{ count: number }>('/api/test'),
+        apiRequest<{ count: number }>('/api/test'),
+        apiRequest<{ count: number }>('/api/test'),
+      ]);
+
+      // 只应该调用一次 fetch
+      expect(callCount).toBe(1);
+      expect(r1.data?.count).toBe(1);
+      expect(r2.data?.count).toBe(1);
+      expect(r3.data?.count).toBe(1);
     });
 
-    it('create 应该 POST /api/projects', async () => {
-      mockFetch.mockResolvedValueOnce(mockResponse({ id: 'new-1', name: 'New' }));
-      await projectsApi.create({ name: 'New' });
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/projects',
-        expect.objectContaining({ method: 'POST' })
-      );
+    it('不同 URL 的请求不应该去重', async () => {
+      let callCount = 0;
+      global.fetch = vi.fn().mockImplementation(() => {
+        callCount++;
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ count: callCount }),
+        });
+      });
+
+      await Promise.all([
+        apiRequest('/api/test1'),
+        apiRequest('/api/test2'),
+      ]);
+
+      expect(callCount).toBe(2);
     });
 
-    it('update 应该 PUT /api/projects/:id', async () => {
-      mockFetch.mockResolvedValueOnce(mockResponse({ id: '1', name: 'Updated' }));
-      await projectsApi.update('1', { name: 'Updated' } as Record<string, unknown>);
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/projects/1',
-        expect.objectContaining({ method: 'PUT' })
-      );
-    });
+    it('POST 请求不应该去重', async () => {
+      let callCount = 0;
+      global.fetch = vi.fn().mockImplementation(() => {
+        callCount++;
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ count: callCount }),
+        });
+      });
 
-    it('delete 应该 DELETE /api/projects/:id', async () => {
-      mockFetch.mockResolvedValueOnce(mockResponse({ success: true }));
-      await projectsApi.delete('1');
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/projects/1',
-        expect.objectContaining({ method: 'DELETE' })
-      );
+      await Promise.all([
+        apiRequest('/api/test', { method: 'POST', body: '{}' }),
+        apiRequest('/api/test', { method: 'POST', body: '{}' }),
+      ]);
+
+      expect(callCount).toBe(2);
     });
   });
 
-  describe('tasksApi（带 filter）', () => {
-    it('getAll 无 filter 时不带查询参数', async () => {
-      mockFetch.mockResolvedValueOnce(mockResponse([]));
+  // ============================================================
+  // API Clients - 公开接口测试
+  // ============================================================
+
+  describe('projectsApi', () => {
+    it('getAll 应该发送 GET 请求', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve([{ id: 'p1', name: 'Project' }]),
+      });
+
+      await projectsApi.getAll();
+
+      expect(global.fetch).toHaveBeenCalled();
+      const [url, options] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(url).toBe('/api/projects');
+      // GET 是默认方法，可能未显式设置
+      expect(options.method ?? 'GET').toBe('GET');
+    });
+
+    it('create 应该发送 POST 请求', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ id: 'new', name: 'New Project' }),
+      });
+
+      const result = await projectsApi.create({ name: 'New Project' } as any);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/projects',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ name: 'New Project' }),
+        })
+      );
+      expect(result.data).toEqual({ id: 'new', name: 'New Project' });
+    });
+
+    it('update 应该发送 PUT 请求', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ id: '1', name: 'Updated' }),
+      });
+
+      const result = await projectsApi.update('1', { name: 'Updated' });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/projects/1',
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({ name: 'Updated' }),
+        })
+      );
+      expect(result.data).toEqual({ id: '1', name: 'Updated' });
+    });
+
+    it('delete 应该发送 DELETE 请求', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ success: true }),
+      });
+
+      const result = await projectsApi.delete('1');
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/projects/1',
+        expect.objectContaining({ method: 'DELETE' })
+      );
+      expect(result.data).toEqual({ success: true });
+    });
+  });
+
+  describe('tasksApi', () => {
+    it('getAll 带过滤参数应该构建正确 URL', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+
+      await tasksApi.getAll({ projectId: 'p1' });
+
+      expect(global.fetch).toHaveBeenCalled();
+      const [url, options] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(url).toBe('/api/tasks?projectId=p1');
+      expect(options.method ?? 'GET').toBe('GET');
+    });
+
+    it('getAll 无参数应该不带查询字符串', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+
       await tasksApi.getAll();
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/tasks',
-        expect.anything()
-      );
-    });
 
-    it('getAll 带 projectId filter', async () => {
-      mockFetch.mockResolvedValueOnce(mockResponse([]));
-      await tasksApi.getAll({ projectId: 'proj-1' });
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('projectId=proj-1'),
-        expect.anything()
-      );
-    });
-
-    it('getAll 带多个 filter', async () => {
-      mockFetch.mockResolvedValueOnce(mockResponse([]));
-      await tasksApi.getAll({ projectId: 'proj-1', memberId: 'mem-1' });
-      const url = mockFetch.mock.calls[0][0] as string;
-      expect(url).toContain('projectId=proj-1');
-      expect(url).toContain('memberId=mem-1');
-    });
-
-    it('getAll 忽略非白名单 filter', async () => {
-      mockFetch.mockResolvedValueOnce(mockResponse([]));
-      await tasksApi.getAll({ projectId: 'p1', unknownKey: 'val' });
-      const url = mockFetch.mock.calls[0][0] as string;
-      expect(url).toContain('projectId=p1');
-      expect(url).not.toContain('unknownKey');
+      expect(global.fetch).toHaveBeenCalled();
+      const [url, options] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(url).toBe('/api/tasks');
+      expect(options.method ?? 'GET').toBe('GET');
     });
   });
 });

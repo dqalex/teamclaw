@@ -10,9 +10,14 @@ import { eq, and, desc } from 'drizzle-orm';
 import { generateDeliveryId } from '@/lib/id';
 import { resolveAIMemberId, resolveHumanMemberId } from '@/core/member-resolver';
 import { triggerMarkdownSync } from '@/lib/markdown-sync';
-import { getServerGatewayClient } from '@/lib/server-gateway-client';
 import { McpHandlerBase, type HandlerContext, type HandlerResult } from '@/core/mcp/handler-base';
 import type { Delivery } from '@/db/schema';
+
+// 动态导入避免循环依赖: delivery.handler -> server-gateway-client -> chat-channel/executor -> delivery.handler
+async function getGatewayClient() {
+  const { getServerGatewayClient } = await import('@/lib/server-gateway-client');
+  return getServerGatewayClient();
+}
 
 /** 获取 TeamClaw 基础 URL */
 function getBaseUrl(): string {
@@ -596,7 +601,7 @@ class DeliveryHandler extends McpHandlerBase<Delivery> {
     reviewComment?: string,
   ): Promise<void> {
     try {
-      const client = getServerGatewayClient();
+      const client = await getGatewayClient();
       if (!client.isConnected) return;
 
       const [member] = await db.select().from(members).where(

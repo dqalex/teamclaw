@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>CoMind v2 开发者架构总览</title>
+<title>TeamClaw v1 开发者架构总览</title>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -53,7 +53,7 @@
 </head>
 <body>
 
-<h1>🧠 CoMind v2 开发者架构总览 <small>v2.2.3</small></h1>
+<h1>🧠 TeamClaw v1 开发者架构总览 <small>v1.0.0</small></h1>
 <p class="subtitle">开发者视角 — 系统架构、数据流、API、组件、数据库全景 | 基于 Next.js 14 + OpenClaw Gateway + SQLite</p>
 
 <!-- 统计概览 -->
@@ -102,7 +102,7 @@ flowchart TB
         SSE_Client["SSE 客户端<br/>实时事件订阅"]
     end
 
-    subgraph NextJS["🧠 CoMind（Next.js 14）"]
+    subgraph NextJS["🧠 TeamClaw（Next.js 14）"]
         direction TB
         API["50 个 API Route<br/>RESTful + MCP"]
         MW["Middleware<br/>CSRF · CORS · CSP · 限流"]
@@ -114,7 +114,7 @@ flowchart TB
 
     subgraph Data["💾 数据层"]
         SQLite[(SQLite<br/>17 张表<br/>Drizzle ORM)]
-        FS["📂 文件系统<br/>.comind-index · CLAUDE.md<br/>HEARTBEAT.md · tasks/"]
+        FS["📂 文件系统<br/>.teamclaw-index · CLAUDE.md<br/>HEARTBEAT.md · tasks/"]
     end
 
     subgraph Gateway["🌐 OpenClaw Gateway"]
@@ -326,7 +326,7 @@ flowchart TD
 <!-- ====================================== -->
 
 <div class="note purple">
-<strong>MCP（Model Context Protocol）</strong>是 AI Agent 与 CoMind 交互的标准接口。Agent 通过 <code>POST /api/mcp/external</code>（Bearer Token 鉴权）调用工具，身份自动注入。
+<strong>MCP（Model Context Protocol）</strong>是 AI Agent 与 TeamClaw 交互的标准接口。Agent 通过 <code>POST /api/mcp/external</code>（Bearer Token 鉴权）调用工具，身份自动注入。
 </div>
 
 <pre class="mermaid">
@@ -612,14 +612,14 @@ flowchart LR
 flowchart TD
     subgraph WS_Dir["📂 Workspace 目录结构"]
         direction TB
-        IDX[".comind-index<br/>YAML 索引<br/>heartbeat + files 映射"]
+        IDX[".teamclaw-index<br/>YAML 索引<br/>heartbeat + files 映射"]
         CMD["CLAUDE.md<br/>静态规范 + 动态数据段"]
         HB["HEARTBEAT.md<br/>心跳清单入口<br/>标记段幂等更新"]
         TODO["tasks/TODO.md<br/>待处理 + 进行中任务"]
         DONE["tasks/DONE.md<br/>近 24h 完成任务"]
         HB1["tasks/heartbeat-check-progress.md"]
         HB2["tasks/heartbeat-daily-report.md"]
-        HB3["tasks/heartbeat-sync-to-comind.md"]
+        HB3["tasks/heartbeat-sync-to-teamclaw.md"]
     end
 
     subgraph Auto["🤖 自动维护（每 120s）"]
@@ -653,7 +653,7 @@ flowchart TD
 <strong>文件同步特性</strong>：
 <br/>• 版本控制：每次变更保存完整/差异版本到 <code>openclaw_versions</code> 表
 <br/>• 冲突检测：本地和远端同时修改时进入 <code>openclaw_conflicts</code>，支持手动解决
-<br/>• 增量同步：基于 <code>.comind-index</code> 的文件 hash 对比，只同步变更文件
+<br/>• 增量同步：基于 <code>.teamclaw-index</code> 的文件 hash 对比，只同步变更文件
 <br/>• 文件监听：<code>watcher.ts</code> 实时监控 workspace 文件变更（排除 node_modules/.git/tasks 等）
 </div>
 
@@ -667,7 +667,7 @@ sequenceDiagram
     participant GW as 🌐 Gateway
     participant Agent as 🤖 AI Agent
     participant FS as 📂 Workspace
-    participant API as 🧠 CoMind MCP
+    participant API as 🧠 TeamClaw MCP
 
     Note over Cron: 定时触发（Cron Job 配置）
     Cron->>GW: 触发 Job
@@ -677,7 +677,7 @@ sequenceDiagram
         Note over Agent: Agent 优先读取本地文件
         Agent->>FS: 📖 tasks/TODO.md（任务列表）
         Agent->>FS: 📖 tasks/DONE.md（完成列表）
-        Agent->>FS: 📖 .comind-index（文件索引）
+        Agent->>FS: 📖 .teamclaw-index（文件索引）
         Agent->>FS: 📖 CLAUDE.md（项目/成员上下文）
     end
 
@@ -695,7 +695,7 @@ sequenceDiagram
 <tr>
   <td><strong>check-progress</strong><br/>任务进展巡检</td>
   <td>每 30 分钟</td>
-  <td><code>tasks/TODO.md</code><br/><code>.comind-index</code></td>
+  <td><code>tasks/TODO.md</code><br/><code>.teamclaw-index</code></td>
   <td>分类任务 → 检测卡住/超期 → 巡检报告</td>
 </tr>
 <tr>
@@ -705,15 +705,15 @@ sequenceDiagram
   <td>收集数据 → 生成日报文档 → 对话总结</td>
 </tr>
 <tr>
-  <td><strong>sync-to-comind</strong><br/>状态同步</td>
+  <td><strong>sync-to-teamclaw</strong><br/>状态同步</td>
   <td>每 5-10 分钟</td>
-  <td><code>tasks/TODO.md</code><br/><code>.comind-index</code></td>
+  <td><code>tasks/TODO.md</code><br/><code>.teamclaw-index</code></td>
   <td>同步状态面板 → 检测文件变更 → 同步文档</td>
 </tr>
 </table>
 
 <div class="note warn">
-<strong>Token 优化</strong>：心跳 Skill 优先读取本地 <code>tasks/TODO.md</code> + <code>tasks/DONE.md</code>（CoMind 心跳自动维护），避免调用 MCP API <code>list_my_tasks</code>，大幅降低每次心跳的 token 消耗。
+<strong>Token 优化</strong>：心跳 Skill 优先读取本地 <code>tasks/TODO.md</code> + <code>tasks/DONE.md</code>（TeamClaw 心跳自动维护），避免调用 MCP API <code>list_my_tasks</code>，大幅降低每次心跳的 token 消耗。
 </div>
 
 <!-- ====================================== -->
@@ -800,7 +800,7 @@ flowchart TD
 <tr><th>分类</th><th>文件</th><th>说明</th></tr>
 <tr><td rowspan="3"><span class="badge badge-red">心跳</span></td><td><code>heartbeat-check-progress.md</code></td><td>任务进展巡检（高优先级，每次心跳轮换）</td></tr>
 <tr><td><code>heartbeat-daily-report.md</code></td><td>日报生成（中优先级，仅 17:00-23:59）</td></tr>
-<tr><td><code>heartbeat-sync-to-comind.md</code></td><td>状态同步（低优先级，最轻量）</td></tr>
+<tr><td><code>heartbeat-sync-to-teamclaw.md</code></td><td>状态同步（低优先级，最轻量）</td></tr>
 <tr><td rowspan="3"><span class="badge badge-blue">聊天</span></td><td><code>chat-task.md</code></td><td>聊天-任务上下文模板</td></tr>
 <tr><td><code>chat-project.md</code></td><td>聊天-项目上下文模板</td></tr>
 <tr><td><code>chat-schedule.md</code></td><td>聊天-定时任务上下文模板</td></tr>

@@ -33,8 +33,8 @@ Deploy TeamClaw on the same machine running OpenClaw Gateway.
 # Recommended: Clone to user home directory
 
 cd ~
-git clone https://github.com/dqalex/Comind.git
-cd Comind
+git clone https://github.com/dqalex/teamclaw.git
+cd teamclaw
 ```
 
 ### Step 2: Install Dependencies

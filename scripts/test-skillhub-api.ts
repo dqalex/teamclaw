@@ -1,5 +1,8 @@
 /**
- * SkillHub API 测试脚本
+ * SkillHub API 测试脚本（遗留）
+ * 
+ * ⚠️ 此脚本使用自定义测试框架，建议迁移到 tests/integration/ 使用 Vitest。
+ * 对应的 Vitest 版本：tests/integration/skillhub-api.test.ts
  * 
  * 测试范围：
  * 1. 审批系统 API
@@ -7,6 +10,8 @@
  * 3. 快照与信任管理 API
  * 4. MCP 工具集成
  */
+
+import path from 'path';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -169,7 +174,7 @@ async function testSkillRegistration() {
   
   await test('注册 Skill（有效路径）', async () => {
     const { status, data } = await request('POST', '/api/skills', {
-      skillPath: '/Users/alex/Documents/alex base/sense/teamclaw-v3/skills/teamclaw',
+      skillPath: path.resolve(__dirname, '..', 'skills', 'teamclaw'),
     });
     
     // 可能成功（201）或已存在（409）

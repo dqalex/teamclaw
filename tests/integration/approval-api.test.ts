@@ -1,15 +1,16 @@
 /**
- * 审批系统端到端测试
+ * 审批系统 API 集成测试
  * 
  * 测试覆盖：
  * 1. 创建审批请求
- * 2. 批准审批请求
- * 3. 拒绝审批请求
- * 4. 取消审批请求
- * 5. 权限验证
+ * 2. 获取审批请求
+ * 3. 批准审批请求
+ * 4. 拒绝审批请求
+ * 5. 取消审批请求
+ * 6. 权限验证
  * 
  * 运行方式：
- * npx tsx tests/e2e/approval.test.ts
+ * npx vitest run tests/integration/approval-api.test.ts
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';

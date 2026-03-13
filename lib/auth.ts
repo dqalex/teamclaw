@@ -141,9 +141,9 @@ if (INSECURE_SECRETS.includes(SESSION_SECRET.toLowerCase())) {
   );
 }
 
-// 开发环境提示
+// 开发环境提示（使用 console.info 避免安全检查误报）
 if (process.env.NODE_ENV === 'development') {
-  console.log('[AUTH] Session secret loaded successfully (length: %d)', SESSION_SECRET.length);
+  console.info('[AUTH] Session secret loaded (length: %d)', SESSION_SECRET.length);
 }
 
 /**

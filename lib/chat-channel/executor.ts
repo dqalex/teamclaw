@@ -44,10 +44,13 @@ import {
   handleDeleteSchedule,
   handleUpdateSchedule,
 } from '@/app/api/mcp/handlers/schedule.handler';
-import {
-  handleDeliverDocument,
-  handleReviewDelivery,
-} from '@/app/api/mcp/handlers/delivery.handler';
+
+// delivery.handler 动态导入避免循环依赖
+// (delivery.handler -> server-gateway-client -> chat-channel/executor -> delivery.handler)
+async function getDeliveryHandlers() {
+  const { handleDeliverDocument, handleReviewDelivery } = await import('@/app/api/mcp/handlers/delivery.handler');
+  return { handleDeliverDocument, handleReviewDelivery };
+}
 import { handleRegisterMember, handleGetMcpToken } from '@/app/api/mcp/handlers/member.handler';
 import {
   handleGetTemplate,
@@ -542,7 +545,8 @@ async function executeHandler(
       }
       break;
     
-    case 'deliver_document':
+    case 'deliver_document': {
+      const { handleDeliverDocument } = await getDeliveryHandlers();
       result = await handleDeliverDocument({
         title: action.title,
         description: action.content,
@@ -555,8 +559,10 @@ async function executeHandler(
         await useDeliveryStore.getState().fetchDeliveries();
       }
       break;
+    }
     
-    case 'review_delivery':
+    case 'review_delivery': {
+      const { handleReviewDelivery } = await getDeliveryHandlers();
       result = await handleReviewDelivery({
         delivery_id: action.delivery_id,
         status: action.review_status,
@@ -566,6 +572,7 @@ async function executeHandler(
         await useDeliveryStore.getState().fetchDeliveries();
       }
       break;
+    }
     
     case 'register_member':
       result = await handleRegisterMember({

@@ -12,7 +12,7 @@ import { encryptToken } from '@/lib/security';
 import { eq } from 'drizzle-orm';
 import { randomBytes } from 'crypto';
 import { logger } from './gateway-logger';
-import type { ConnectionStatus } from './server-gateway-client';
+import type { ConnectionStatus } from './gateway-types';
 
 /**
  * 保存 Gateway 配置到数据库

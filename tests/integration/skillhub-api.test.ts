@@ -56,7 +56,7 @@ interface SkillSnapshot {
   }>;
 }
 
-describe('SkillHub E2E Tests', () => {
+describe('SkillHub API Integration Tests', () => {
   let createdSkillId: string;
   let createdAgentId: string;
   let createdTaskId: string;

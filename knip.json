@@ -1,0 +1,30 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "app/**/*.{ts,tsx}",
+    "scripts/**/*.ts",
+    "tests/**/*.ts"
+  ],
+  "project": [
+    "**/*.{ts,tsx}"
+  ],
+  "ignore": [
+    "**/*.d.ts",
+    "**/*.config.{ts,js}",
+    "**/generated/**",
+    "**/__mocks__/**"
+  ],
+  "ignoreDependencies": [
+    "@types/*",
+    "typescript",
+    "vitest",
+    "@playwright/test"
+  ],
+  "rules": {
+    "files": "warn",
+    "dependencies": "warn",
+    "devDependencies": "off",
+    "exports": "warn",
+    "types": "warn"
+  }
+}

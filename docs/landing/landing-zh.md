@@ -58,10 +58,10 @@ Dashboard 预览
 - [用户手册](/wiki?doc=VrihWxkCoM9Q)
 - [API 文档](/wiki?doc=FtmyZ2zMsm1c)
 - [博客](/blog)
-- [GitHub](https://github.com/dqalex/Comind)
+- [GitHub](https://github.com/dqalex/teamclaw)
 
 <!-- @slot:footerSocial -->
-- [GitHub](https://github.com/dqalex/Comind)
+- [GitHub](https://github.com/dqalex/teamclaw)
 
 <!-- @slot:footerCopyright -->
-© 2026 TeamClaw. 保留所有权利. v3.0.0
+© 2026 TeamClaw. 保留所有权利. v1.0.0

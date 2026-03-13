@@ -1,0 +1,109 @@
+{
+  "totalFiles": 672,
+  "totalReferences": 6,
+  "byCategory": {
+    "文件/目录名（建议修改）": [
+      {
+        "file": "scripts/audit-comind-references.ts",
+        "line": 127,
+        "content": "if (lowerFile.includes('comind')) {",
+        "context": "  \n  // 5. 文件名或目录名\n  if (lowerFile.includes('comind')) {\n    return { \n      category: '文件/目录名（建议修改）', ",
+        "category": "文件/目录名（建议修改）",
+        "recommendation": "建议修改 - 文件和目录应使用 teamclaw 命名"
+      },
+      {
+        "file": "scripts/audit-comind-references.ts",
+        "line": 136,
+        "content": "(lowerContent.includes('comind') || lowerContent.includes('comind'))) {",
+        "context": "  // 6. 文档标题或产品名称\n  if ((content.includes('# ') || content.includes('title:') || content.includes('## ')) && \n      (lowerContent.includes('comind') || lowerContent.includes('comind'))) {\n    return { \n      category: '文档标题/产品名（建议修改）', ",
+        "category": "文件/目录名（建议修改）",
+        "recommendation": "建议修改 - 文件和目录应使用 teamclaw 命名"
+      },
+      {
+        "file": "scripts/audit-comind-references.ts",
+        "line": 144,
+        "content": "if (content.includes('<title>') && lowerContent.includes('comind')) {",
+        "context": "  \n  // 7. HTML 文件中的标题\n  if (content.includes('<title>') && lowerContent.includes('comind')) {\n    return { \n      category: 'HTML 标题（建议修改）', ",
+        "category": "文件/目录名（建议修改）",
+        "recommendation": "建议修改 - 文件和目录应使用 teamclaw 命名"
+      },
+      {
+        "file": "scripts/audit-comind-references.ts",
+        "line": 180,
+        "content": "// 匹配独立的 comind/Comind/CoMind 单词（不区分大小写）",
+        "context": "  const lines = content.split('\\n');\n  \n  // 匹配独立的 comind/Comind/CoMind 单词（不区分大小写）\n  // 使用单词边界确保不匹配 teamclaw 中的部分\n  const regex = /(?:^|[^a-zA-Z])comind(?:[^a-zA-Z]|$)/gi;",
+        "category": "文件/目录名（建议修改）",
+        "recommendation": "建议修改 - 文件和目录应使用 teamclaw 命名"
+      },
+      {
+        "file": "scripts/audit-comind-references.ts",
+        "line": 182,
+        "content": "const regex = /(?:^|[^a-zA-Z])comind(?:[^a-zA-Z]|$)/gi;",
+        "context": "  // 匹配独立的 comind/Comind/CoMind 单词（不区分大小写）\n  // 使用单词边界确保不匹配 teamclaw 中的部分\n  const regex = /(?:^|[^a-zA-Z])comind(?:[^a-zA-Z]|$)/gi;\n  \n  for (let i = 0; i < lines.length; i++) {",
+        "category": "文件/目录名（建议修改）",
+        "recommendation": "建议修改 - 文件和目录应使用 teamclaw 命名"
+      }
+    ],
+    "环境变量名（建议修改）": [
+      {
+        "file": "skills/teamclaw/scripts/render-template.py",
+        "line": 158,
+        "content": "parser.add_argument(\"--base-url\", default=os.environ.get(\"TEAMCLAW_BASE_URL\", os.environ.get(\"COMIND_BASE_URL\", \"\")), help=\"TeamClaw 实例地址\")",
+        "context": "    parser = argparse.ArgumentParser(description=\"TeamClaw 模板渲染\")\n    parser.add_argument(\"template\", nargs=\"?\", default=None, help=\"模板名称\")\n    parser.add_argument(\"--base-url\", default=os.environ.get(\"TEAMCLAW_BASE_URL\", os.environ.get(\"COMIND_BASE_URL\", \"\")), help=\"TeamClaw 实例地址\")\n    parser.add_argument(\"--token\", default=os.environ.get(\"TEAMCLAW_API_TOKEN\", os.environ.get(\"COMIND_API_TOKEN\", \"\")), help=\"API Token\")\n    parser.add_argument(\"--extra\", action=\"append\", default=[], help=\"额外变量 KEY=VALUE\")",
+        "category": "环境变量名（建议修改）",
+        "recommendation": "建议修改 - 环境变量应使用 TEAMCLAW_ 前缀"
+      }
+    ]
+  },
+  "needsAction": [
+    {
+      "file": "scripts/audit-comind-references.ts",
+      "line": 127,
+      "content": "if (lowerFile.includes('comind')) {",
+      "context": "  \n  // 5. 文件名或目录名\n  if (lowerFile.includes('comind')) {\n    return { \n      category: '文件/目录名（建议修改）', ",
+      "category": "文件/目录名（建议修改）",
+      "recommendation": "建议修改 - 文件和目录应使用 teamclaw 命名"
+    },
+    {
+      "file": "scripts/audit-comind-references.ts",
+      "line": 136,
+      "content": "(lowerContent.includes('comind') || lowerContent.includes('comind'))) {",
+      "context": "  // 6. 文档标题或产品名称\n  if ((content.includes('# ') || content.includes('title:') || content.includes('## ')) && \n      (lowerContent.includes('comind') || lowerContent.includes('comind'))) {\n    return { \n      category: '文档标题/产品名（建议修改）', ",
+      "category": "文件/目录名（建议修改）",
+      "recommendation": "建议修改 - 文件和目录应使用 teamclaw 命名"
+    },
+    {
+      "file": "scripts/audit-comind-references.ts",
+      "line": 144,
+      "content": "if (content.includes('<title>') && lowerContent.includes('comind')) {",
+      "context": "  \n  // 7. HTML 文件中的标题\n  if (content.includes('<title>') && lowerContent.includes('comind')) {\n    return { \n      category: 'HTML 标题（建议修改）', ",
+      "category": "文件/目录名（建议修改）",
+      "recommendation": "建议修改 - 文件和目录应使用 teamclaw 命名"
+    },
+    {
+      "file": "scripts/audit-comind-references.ts",
+      "line": 180,
+      "content": "// 匹配独立的 comind/Comind/CoMind 单词（不区分大小写）",
+      "context": "  const lines = content.split('\\n');\n  \n  // 匹配独立的 comind/Comind/CoMind 单词（不区分大小写）\n  // 使用单词边界确保不匹配 teamclaw 中的部分\n  const regex = /(?:^|[^a-zA-Z])comind(?:[^a-zA-Z]|$)/gi;",
+      "category": "文件/目录名（建议修改）",
+      "recommendation": "建议修改 - 文件和目录应使用 teamclaw 命名"
+    },
+    {
+      "file": "scripts/audit-comind-references.ts",
+      "line": 182,
+      "content": "const regex = /(?:^|[^a-zA-Z])comind(?:[^a-zA-Z]|$)/gi;",
+      "context": "  // 匹配独立的 comind/Comind/CoMind 单词（不区分大小写）\n  // 使用单词边界确保不匹配 teamclaw 中的部分\n  const regex = /(?:^|[^a-zA-Z])comind(?:[^a-zA-Z]|$)/gi;\n  \n  for (let i = 0; i < lines.length; i++) {",
+      "category": "文件/目录名（建议修改）",
+      "recommendation": "建议修改 - 文件和目录应使用 teamclaw 命名"
+    },
+    {
+      "file": "skills/teamclaw/scripts/render-template.py",
+      "line": 158,
+      "content": "parser.add_argument(\"--base-url\", default=os.environ.get(\"TEAMCLAW_BASE_URL\", os.environ.get(\"COMIND_BASE_URL\", \"\")), help=\"TeamClaw 实例地址\")",
+      "context": "    parser = argparse.ArgumentParser(description=\"TeamClaw 模板渲染\")\n    parser.add_argument(\"template\", nargs=\"?\", default=None, help=\"模板名称\")\n    parser.add_argument(\"--base-url\", default=os.environ.get(\"TEAMCLAW_BASE_URL\", os.environ.get(\"COMIND_BASE_URL\", \"\")), help=\"TeamClaw 实例地址\")\n    parser.add_argument(\"--token\", default=os.environ.get(\"TEAMCLAW_API_TOKEN\", os.environ.get(\"COMIND_API_TOKEN\", \"\")), help=\"API Token\")\n    parser.add_argument(\"--extra\", action=\"append\", default=[], help=\"额外变量 KEY=VALUE\")",
+      "category": "环境变量名（建议修改）",
+      "recommendation": "建议修改 - 环境变量应使用 TEAMCLAW_ 前缀"
+    }
+  ],
+  "canKeep": []
+}

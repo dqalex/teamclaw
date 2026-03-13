@@ -1872,7 +1872,7 @@ Works with Industry Leading Models
 - [Contact Support](/contact)
 
 <!-- @slot:footerSocial -->
-- [GitHub](https://github.com/dqalex/Comind)
+- [GitHub](https://github.com/dqalex/teamclaw)
 - [X (Twitter)](https://x.com)
 
 <!-- @slot:footerCopyright -->
@@ -1920,7 +1920,7 @@ Dashboard 预览
 - [联系支持](/contact)
 
 <!-- @slot:footerSocial -->
-- [GitHub](https://github.com/dqalex/Comind)
+- [GitHub](https://github.com/dqalex/teamclaw)
 - [X (Twitter)](https://x.com)
 
 <!-- @slot:footerCopyright -->
@@ -2025,7 +2025,7 @@ Works with Industry Leading Models
 - [Contact Support](/contact)
 
 <!-- @slot:footerSocial -->
-- [GitHub](https://github.com/dqalex/Comind)
+- [GitHub](https://github.com/dqalex/teamclaw)
 - [X (Twitter)](https://x.com)
 
 <!-- @slot:footerCopyright -->
@@ -2074,7 +2074,7 @@ Dashboard 预览
 - [联系支持](/contact)
 
 <!-- @slot:footerSocial -->
-- [GitHub](https://github.com/dqalex/Comind)
+- [GitHub](https://github.com/dqalex/teamclaw)
 - [X (Twitter)](https://x.com)
 
 <!-- @slot:footerCopyright -->

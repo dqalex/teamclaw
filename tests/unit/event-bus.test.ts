@@ -1,218 +1,154 @@
 /**
- * 事件总线 - 单元测试
- * 
- * 注意：event-bus.ts 导出的是全局单例，测试需确保隔离
+ * event-bus.ts 单元测试
+ * 测试 SSE 事件总线的核心功能
  */
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+// Mock globalThis 存储
+const mockGlobalThis: Record<string, unknown> = {};
 
-// 因为 event-bus 有全局副作用（startHeartbeat），我们需要自行构造测试
-// 这里测试 EventBus 的核心逻辑
+// Mock controller
+function createMockController() {
+  const queue: Uint8Array[] = [];
+  return {
+    queue,
+    enqueue: vi.fn((data: Uint8Array) => queue.push(data)),
+    close: vi.fn(),
+  } as unknown as ReadableStreamDefaultController;
+}
 
 describe('EventBus', () => {
-  // 模拟 ReadableStreamDefaultController
-  function createMockController() {
-    const enqueued: Uint8Array[] = [];
-    let closed = false;
-    return {
-      enqueue: vi.fn((chunk: Uint8Array) => {
-        if (closed) throw new Error('Controller closed');
-        enqueued.push(chunk);
-      }),
-      close: vi.fn(() => { closed = true; }),
-      error: vi.fn(),
-      desiredSize: 1,
-      enqueued,
-      simulateClose: () => { closed = true; },
-    };
-  }
+  let eventBus: typeof import('@/lib/event-bus').eventBus;
+  let EventBusClass: typeof import('@/lib/event-bus').EventBus;
 
-  // 手动实现 EventBus 测试版（无全局副作用）
-  class TestEventBus {
-    private clients = new Map<string, { id: string; controller: { enqueue: (chunk: Uint8Array) => void } }>();
-    private clientCounter = 0;
-    private encoder = new TextEncoder();
+  beforeEach(async () => {
+    // 清理 globalThis
+    delete (globalThis as Record<string, unknown>)['__teamclaw_event_bus__'];
+    delete (globalThis as Record<string, unknown>)['__teamclaw_heartbeat_timer__'];
 
-    addClient(controller: { enqueue: (chunk: Uint8Array) => void }): string {
-      const id = `test_${++this.clientCounter}`;
-      this.clients.set(id, { id, controller });
-      return id;
-    }
-
-    removeClient(clientId: string): void {
-      this.clients.delete(clientId);
-    }
-
-    get clientCount(): number {
-      return this.clients.size;
-    }
-
-    emit(event: { type: string; resourceId?: string; data?: Record<string, unknown> }): void {
-      const fullEvent = { ...event, timestamp: Date.now() };
-      const payload = `event: ${fullEvent.type}\ndata: ${JSON.stringify(fullEvent)}\n\n`;
-      const encoded = this.encoder.encode(payload);
-      const deadClients: string[] = [];
-
-      for (const [clientId, client] of this.clients) {
-        try {
-          client.controller.enqueue(encoded);
-        } catch {
-          deadClients.push(clientId);
-        }
-      }
-
-      for (const id of deadClients) {
-        this.clients.delete(id);
-      }
-    }
-
-    heartbeat(): void {
-      const payload = `: heartbeat ${Date.now()}\n\n`;
-      const encoded = this.encoder.encode(payload);
-      const deadClients: string[] = [];
-
-      for (const [clientId, client] of this.clients) {
-        try {
-          client.controller.enqueue(encoded);
-        } catch {
-          deadClients.push(clientId);
-        }
-      }
-
-      for (const id of deadClients) {
-        this.clients.delete(id);
-      }
-    }
-  }
-
-  let bus: TestEventBus;
-
-  beforeEach(() => {
-    bus = new TestEventBus();
+    // 动态导入获取新实例
+    vi.resetModules();
+    const mod = await import('@/lib/event-bus');
+    eventBus = mod.eventBus;
+    // EventBus 类通过内部 class 导出，无法直接访问，测试通过 eventBus 实例
   });
 
-  describe('客户端管理', () => {
-    it('应该添加客户端并返回唯一 ID', () => {
-      const ctrl = createMockController();
-      const id = bus.addClient(ctrl);
-      expect(id).toBeTruthy();
-      expect(bus.clientCount).toBe(1);
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // ============================================================
+  // addClient / removeClient
+  // ============================================================
+
+  describe('addClient', () => {
+    it('应该添加客户端并返回 ID', () => {
+      const controller = createMockController();
+      const id = eventBus.addClient(controller);
+      expect(id).toMatch(/^sse_\d+_\d+$/);
+      expect(eventBus.clientCount).toBe(1);
     });
 
-    it('多个客户端应该有不同 ID', () => {
+    it('应该支持多个客户端', () => {
       const c1 = createMockController();
       const c2 = createMockController();
-      const id1 = bus.addClient(c1);
-      const id2 = bus.addClient(c2);
+      const id1 = eventBus.addClient(c1);
+      const id2 = eventBus.addClient(c2);
       expect(id1).not.toBe(id2);
-      expect(bus.clientCount).toBe(2);
+      expect(eventBus.clientCount).toBe(2);
     });
 
-    it('移除客户端应该减少计数', () => {
-      const ctrl = createMockController();
-      const id = bus.addClient(ctrl);
-      expect(bus.clientCount).toBe(1);
-      bus.removeClient(id);
-      expect(bus.clientCount).toBe(0);
-    });
-
-    it('移除不存在的客户端不应报错', () => {
-      expect(() => bus.removeClient('nonexistent')).not.toThrow();
+    it('超过最大连接数应该抛出错误', () => {
+      // MAX_CLIENTS = 50
+      for (let i = 0; i < 50; i++) {
+        eventBus.addClient(createMockController());
+      }
+      expect(() => eventBus.addClient(createMockController())).toThrow('SSE max clients exceeded');
     });
   });
+
+  describe('removeClient', () => {
+    it('应该移除指定客户端', () => {
+      const controller = createMockController();
+      const id = eventBus.addClient(controller);
+      expect(eventBus.clientCount).toBe(1);
+      eventBus.removeClient(id);
+      expect(eventBus.clientCount).toBe(0);
+    });
+
+    it('移除不存在的客户端应该无影响', () => {
+      eventBus.removeClient('nonexistent');
+      expect(eventBus.clientCount).toBe(0);
+    });
+  });
+
+  // ============================================================
+  // emit
+  // ============================================================
 
   describe('emit', () => {
-    it('应该向所有客户端发送事件', () => {
+    it('应该向所有客户端广播事件', () => {
       const c1 = createMockController();
       const c2 = createMockController();
-      bus.addClient(c1);
-      bus.addClient(c2);
+      eventBus.addClient(c1);
+      eventBus.addClient(c2);
 
-      bus.emit({ type: 'task_update', resourceId: 'task-1' });
+      eventBus.emit({ type: 'task.created', payload: { id: 't1' } });
 
-      expect(c1.enqueue).toHaveBeenCalledOnce();
-      expect(c2.enqueue).toHaveBeenCalledOnce();
+      // 每个控制器应该收到编码的事件
+      expect(c1.enqueue).toHaveBeenCalled();
+      expect(c2.enqueue).toHaveBeenCalled();
     });
 
-    it('发送的数据应该是 SSE 格式', () => {
-      const ctrl = createMockController();
-      bus.addClient(ctrl);
+    it('事件应该包含时间戳', () => {
+      const controller = createMockController();
+      eventBus.addClient(controller);
 
-      bus.emit({ type: 'member_update', resourceId: 'm-1', data: { name: 'test' } });
+      const before = Date.now();
+      eventBus.emit({ type: 'task.updated', payload: { id: 't1' } });
+      const after = Date.now();
 
-      expect(ctrl.enqueue).toHaveBeenCalledOnce();
-      const encoded = ctrl.enqueue.mock.calls[0][0] as Uint8Array;
-      const text = new TextDecoder().decode(encoded);
-
-      // SSE 格式：event: <type>\ndata: <json>\n\n
-      expect(text).toMatch(/^event: member_update\n/);
-      expect(text).toMatch(/data: \{.*"type":"member_update".*\}\n\n$/);
+      const call = (controller as { enqueue: ReturnType<typeof vi.fn> }).enqueue.mock.calls[0];
+      const encoded = call[0] as Uint8Array;
+      const str = new TextDecoder().decode(encoded);
+      
+      // 解析 SSE 格式: event: xxx\ndata: {...}\n\n
+      const dataMatch = str.match(/data: ({.*?})\n/);
+      expect(dataMatch).toBeTruthy();
+      const event = JSON.parse(dataMatch![1]);
+      expect(event.timestamp).toBeGreaterThanOrEqual(before);
+      expect(event.timestamp).toBeLessThanOrEqual(after);
     });
 
-    it('没有客户端时不应报错', () => {
-      expect(() => bus.emit({ type: 'task_update' })).not.toThrow();
-    });
+    it('enqueue 失败应该移除客户端', () => {
+      const controller = createMockController();
+      (controller as { enqueue: ReturnType<typeof vi.fn> }).enqueue.mockImplementation(() => {
+        throw new Error('Controller closed');
+      });
+      eventBus.addClient(controller);
 
-    it('应该自动清理死亡客户端', () => {
-      const alive = createMockController();
-      const dead = createMockController();
-      dead.simulateClose();
-
-      bus.addClient(alive);
-      bus.addClient(dead);
-      expect(bus.clientCount).toBe(2);
-
-      bus.emit({ type: 'task_update' });
-
-      // 死亡客户端应被移除
-      expect(bus.clientCount).toBe(1);
-      expect(alive.enqueue).toHaveBeenCalledOnce();
+      expect(eventBus.clientCount).toBe(1);
+      eventBus.emit({ type: 'test', payload: {} });
+      expect(eventBus.clientCount).toBe(0);
     });
   });
+
+  // ============================================================
+  // heartbeat
+  // ============================================================
 
   describe('heartbeat', () => {
     it('应该向所有客户端发送心跳', () => {
-      const c1 = createMockController();
-      const c2 = createMockController();
-      bus.addClient(c1);
-      bus.addClient(c2);
+      const controller = createMockController();
+      eventBus.addClient(controller);
 
-      bus.heartbeat();
+      eventBus.heartbeat();
 
-      expect(c1.enqueue).toHaveBeenCalledOnce();
-      expect(c2.enqueue).toHaveBeenCalledOnce();
+      expect(controller.enqueue).toHaveBeenCalled();
+      const call = (controller as { enqueue: ReturnType<typeof vi.fn> }).enqueue.mock.calls[0];
+      const encoded = call[0] as Uint8Array;
+      const str = new TextDecoder().decode(encoded);
+      expect(str).toMatch(/^: heartbeat \d+\n\n$/);
     });
-
-    it('心跳数据应该是注释格式', () => {
-      const ctrl = createMockController();
-      bus.addClient(ctrl);
-
-      bus.heartbeat();
-
-      const encoded = ctrl.enqueue.mock.calls[0][0] as Uint8Array;
-      const text = new TextDecoder().decode(encoded);
-      expect(text).toMatch(/^: heartbeat \d+\n\n$/);
-    });
-
-    it('应该清理死亡客户端', () => {
-      const dead = createMockController();
-      dead.simulateClose();
-      bus.addClient(dead);
-
-      bus.heartbeat();
-      expect(bus.clientCount).toBe(0);
-    });
-  });
-});
-
-describe('EventBus 全局单例导入', () => {
-  it('应该能正常导入 eventBus', async () => {
-    const { eventBus } = await import('@/lib/event-bus');
-    expect(eventBus).toBeDefined();
-    expect(typeof eventBus.emit).toBe('function');
-    expect(typeof eventBus.addClient).toBe('function');
-    expect(typeof eventBus.removeClient).toBe('function');
-    expect(typeof eventBus.heartbeat).toBe('function');
-    expect(typeof eventBus.clientCount).toBe('number');
   });
 });

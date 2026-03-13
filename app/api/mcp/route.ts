@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { TEAMCLAW_TOOLS, type ComindToolName } from '@/core/mcp/definitions';
+import { TEAMCLAW_TOOLS, type TeamClawToolName } from '@/core/mcp/definitions';
 import { TOOL_HANDLERS, TEAMCLAW_VERSION } from './handlers/tool-registry';
 import { logMcpCall } from '@/lib/audit-log';
 
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const handler = TOOL_HANDLERS[tool as ComindToolName];
+    const handler = TOOL_HANDLERS[tool as TeamClawToolName];
     if (!handler) {
       return NextResponse.json(
         { success: false, error: `Tool ${tool} not implemented` },

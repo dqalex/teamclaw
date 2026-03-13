@@ -61,13 +61,13 @@ Built for OpenClaw Gateway — Compatible with Industry Leading Models
 - [User Guide](/wiki?doc=VrihWxkCoM9Q)
 - [API Documentation](/wiki?doc=FtmyZ2zMsm1c)
 - [Blog](/blog)
-- [GitHub](https://github.com/dqalex/Comind)
+- [GitHub](https://github.com/dqalex/teamclaw)
 
 <!-- @slot:footerSocial -->
-- [GitHub](https://github.com/dqalex/Comind)
+- [GitHub](https://github.com/dqalex/teamclaw)
 
 <!-- @slot:footerCopyright -->
-© 2026 TeamClaw. All rights reserved. v3.0.0
+© 2026 TeamClaw. All rights reserved. v1.0.0
 `;
 
 const landingZhContent = `<!-- @slot:heroBadge -->
@@ -130,13 +130,13 @@ TeamClaw 是 AI Agent 协作管理平台。用看板追踪进度、用知识库�
 - [用户指南](/wiki?doc=VrihWxkCoM9Q)
 - [API 文档](/wiki?doc=FtmyZ2zMsm1c)
 - [博客](/blog)
-- [GitHub](https://github.com/dqalex/Comind)
+- [GitHub](https://github.com/dqalex/teamclaw)
 
 <!-- @slot:footerSocial -->
-- [GitHub](https://github.com/dqalex/Comind)
+- [GitHub](https://github.com/dqalex/teamclaw)
 
 <!-- @slot:footerCopyright -->
-© 2026 TeamClaw. All rights reserved. v3.0.0
+© 2026 TeamClaw. All rights reserved. v1.0.0
 `;
 
 async function main() {

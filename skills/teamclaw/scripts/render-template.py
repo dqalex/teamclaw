@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CoMind 模板渲染脚本
+TeamClaw 模板渲染脚本
 
 用法:
   python render-template.py <template_name> [--base-url URL] [--token TOKEN] [--extra KEY=VALUE ...]
@@ -20,7 +20,7 @@ CoMind 模板渲染脚本
   chat-task     — 任务聊天上下文
   chat-schedule — 定时任务聊天上下文
 
-当提供 --base-url 和 --token 时，脚本会从 CoMind API 获取实时数据填充模板。
+当提供 --base-url 和 --token 时，脚本会从 TeamClaw API 获取实时数据填充模板。
 否则输出模板原文供参考。
 """
 
@@ -58,7 +58,7 @@ def strip_frontmatter(content: str) -> str:
 
 
 def fetch_system_context(base_url: str, token: str) -> dict:
-    """从 CoMind API 获取系统上下文（成员、项目等）"""
+    """从 TeamClaw API 获取系统上下文（成员、项目等）"""
     # 通过 MCP external API 批量获取数据
     url = f"{base_url.rstrip('/')}/api/mcp/external"
     headers = {
@@ -153,10 +153,10 @@ def format_val(value) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="CoMind 模板渲染")
+    parser = argparse.ArgumentParser(description="TeamClaw 模板渲染")
     parser.add_argument("template", nargs="?", default=None, help="模板名称")
-    parser.add_argument("--base-url", default=os.environ.get("COMIND_BASE_URL", ""), help="CoMind 实例地址")
-    parser.add_argument("--token", default=os.environ.get("COMIND_API_TOKEN", ""), help="API Token")
+    parser.add_argument("--base-url", default=os.environ.get("TEAMCLAW_BASE_URL", os.environ.get("COMIND_BASE_URL", "")), help="TeamClaw 实例地址")
+    parser.add_argument("--token", default=os.environ.get("TEAMCLAW_API_TOKEN", os.environ.get("COMIND_API_TOKEN", "")), help="API Token")
     parser.add_argument("--extra", action="append", default=[], help="额外变量 KEY=VALUE")
     parser.add_argument("--list", action="store_true", help="列出所有可用模板")
     parser.add_argument("--raw", action="store_true", help="输出原始模板（不渲染）")

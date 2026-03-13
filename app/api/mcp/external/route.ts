@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { members } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { TEAMCLAW_TOOLS, type ComindToolName } from '@/core/mcp/definitions';
+import { TEAMCLAW_TOOLS, type TeamClawToolName } from '@/core/mcp/definitions';
 import { TOOL_HANDLERS, MEMBER_SCOPED_TOOLS, TEAMCLAW_VERSION } from '../handlers/tool-registry';
 import { decryptToken } from '@/lib/security';
 import { withRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
@@ -82,7 +82,7 @@ async function executeTool(
     parameters.member_id = memberId;
   }
 
-  const handler = TOOL_HANDLERS[tool as ComindToolName];
+  const handler = TOOL_HANDLERS[tool as TeamClawToolName];
   if (!handler) {
     return { success: false, error: `Tool ${tool} is not implemented` };
   }
@@ -177,7 +177,7 @@ export async function GET() {
   return NextResponse.json({
     version: TEAMCLAW_VERSION,
     name: 'teamclaw-mcp-tools',
-    description: 'Comind MCP 外部调用接口 - 供 AI 成员直接调用',
+    description: 'TeamClaw MCP 外部调用接口 - 供 AI 成员直接调用',
     authentication: {
       type: 'Bearer Token',
       header: 'Authorization: Bearer <member_openclaw_api_token>',

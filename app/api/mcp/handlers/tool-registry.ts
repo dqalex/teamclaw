@@ -5,7 +5,7 @@
  * 由 /api/mcp/route.ts 和 /api/mcp/external/route.ts 共同引用
  */
 
-import type { ComindToolName } from '@/core/mcp/definitions';
+import type { TeamClawToolName } from '@/core/mcp/definitions';
 import { APP_VERSION } from '@/lib/version';
 import {
   handleGetTask, handleUpdateTaskStatus, handleAddTaskComment, handleCreateCheckItem, handleCompleteCheckItem, handleListMyTasks,
@@ -34,7 +34,7 @@ import {
  * 工具名 → handler 映射表
  * 新增工具只需在此处添加一条映射
  */
-export const TOOL_HANDLERS: Record<ComindToolName, (params: Record<string, unknown>) => Promise<{ success: boolean; data?: unknown; error?: string }>> = {
+export const TOOL_HANDLERS: Record<TeamClawToolName, (params: Record<string, unknown>) => Promise<{ success: boolean; data?: unknown; error?: string }>> = {
   get_task: handleGetTask,
   list_my_tasks: handleListMyTasks,
   update_task_status: handleUpdateTaskStatus,

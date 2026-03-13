@@ -467,7 +467,8 @@ async function performSync(
       // 批量清理关联数据
       for (const docId of deletedDocIds) {
         await db.delete(deliveries).where(eq(deliveries.documentId, docId));
-        await db.run(sql`DELETE FROM tasks WHERE attachments LIKE ${'%sync:' + docId + '%'}`);
+        // 使用 Drizzle like() 替代原生 SQL，安全且类型化
+        await db.delete(tasks).where(like(tasks.attachments, `%"sync:${docId}"%`));
       }
       
       // 批量删除 openclawFiles 和 documents

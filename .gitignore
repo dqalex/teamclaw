@@ -37,6 +37,7 @@ yarn-error.log*
 
 # Logs (development only)
 logs/
+deploy.log
 
 # CodeBuddy IDE config (development only)
 .codebuddy/

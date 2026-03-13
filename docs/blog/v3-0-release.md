@@ -240,7 +240,7 @@ draft → pending_approval → active / rejected
 
 遇到问题或有建议？
 
-- **GitHub Issues**: [github.com/dqalex/Comind](https://github.com/dqalex/Comind)
+- **GitHub Issues**: [github.com/dqalex/teamclaw](https://github.com/dqalex/teamclaw)
 - **Wiki 文档**: [User Guide](/wiki?doc=VrihWxkCoM9Q)
 - **API 文档**: [API Reference](/wiki?doc=FtmyZ2zMsm1c)
 

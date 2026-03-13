@@ -81,12 +81,16 @@ async function main() {
 
     console.log('✅ 密码重置成功！');
     console.log('');
-    console.log('═══════════════════════════════════════');
-    console.log('📧 邮箱:', user[0].email);
-    console.log('🔑 新密码:', newPassword);
-    console.log('═══════════════════════════════════════');
-    console.log('');
-    console.log('⚠️  请妥善保存密码，此信息仅显示一次！');
+    console.error('═══════════════════════════════════════');
+    console.error('📧 邮箱:', user[0].email);
+    console.error('🔑 新密码:', newPassword);
+    console.error('═══════════════════════════════════════');
+    console.error('');
+    console.error('⚠️  安全提示：');
+    console.error('   1. 请确保周围无人查看屏幕');
+    console.error('   2. 此输出使用 stderr，不会被重定向到文件');
+    console.error('   3. 建议执行后清理终端历史（history -c）');
+    console.error('   4. 登录后立即修改密码');
 
   } catch (error) {
     console.error('❌ 重置失败:', error);

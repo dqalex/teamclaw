@@ -13,7 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // 标记为动态路由，避免静态生成错误
 export const dynamic = 'force-dynamic';
 import { db, tasks, sopTemplates, activityLogs, members } from '@/db';
-import { and, eq, sql, gte, lte, desc } from 'drizzle-orm';
+import { and, eq, sql, gte, lte, desc, inArray } from 'drizzle-orm';
 import { generateId } from '@/lib/id';
 import { successResponse, errorResponse, ApiErrors } from '@/lib/api-route-factory';
 
@@ -133,8 +133,8 @@ export async function GET(request: NextRequest) {
 
     // 获取模板名称
     const templateIds = Array.from(templateMap.keys());
-    const templates = templateIds.length > 0 
-      ? await db.select().from(sopTemplates).where(sql`${sopTemplates.id} IN (${sql.raw(templateIds.map(id => `'${id}'`).join(','))})`)
+    const templates = templateIds.length > 0
+      ? await db.select().from(sopTemplates).where(inArray(sopTemplates.id, templateIds))
       : [];
     
     for (const template of templates) {
@@ -193,7 +193,7 @@ export async function GET(request: NextRequest) {
       ? await db.select()
           .from(activityLogs)
           .where(and(
-            sql`${activityLogs.memberId} IN (${sql.raw(memberIds.map(id => `'${id}'`).join(','))})`,
+            inArray(activityLogs.memberId, memberIds),
             gte(activityLogs.createdAt, new Date(startTimestamp * 1000))
           ))
           .orderBy(desc(activityLogs.createdAt))

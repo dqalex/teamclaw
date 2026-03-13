@@ -27,7 +27,7 @@ import type {
   GatewayEventHandler,
   GatewayEventType,
   GatewayEventPayloads,
-} from '../gateway-provider';
+} from '../gateway-provider-types';
 
 // OpenClaw 事件到通用事件的映射
 function mapOpenClawEvent(

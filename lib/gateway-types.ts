@@ -4,6 +4,9 @@
  * 由 gateway-client.ts / server-gateway-client.ts / gateway-proxy.ts 共同引用
  */
 
+/** Gateway 连接状态 */
+export type ConnectionStatus = 'connected' | 'disconnected' | 'connecting' | 'error';
+
 /** Gateway WebSocket 消息格式 */
 export type GatewayMessage = {
   type: 'req' | 'res' | 'event';

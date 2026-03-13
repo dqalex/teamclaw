@@ -1,205 +1,215 @@
-# TeamClaw 测试框架
+# TeamClaw 测试框架 v4.0
 
-## 测试目录结构
+## 框架选型
+
+| 框架 | 用途 | 配置文件 |
+|------|------|----------|
+| **Vitest** | 单元测试、集成测试（API 级别） | `vitest.config.ts` |
+| **Playwright** | E2E 浏览器测试、安全测试、压力测试 | `playwright.config.ts` |
+
+**判定规则**：
+- 纯函数 / mock 隔离 → `unit/` + Vitest
+- HTTP 调用真实 API / 操作 DB → `integration/` + Vitest
+- 真实浏览器交互 → `e2e/` + Playwright (`.spec.ts`)
+
+---
+
+## 目录结构
 
 ```
 tests/
-├── e2e/                          # E2E 端到端测试
-│   ├── pages/                    # Page Object 模型
-│   │   └── AuthHelper.ts         # 认证辅助工具
-│   ├── auth.spec.ts              # 认证测试
-│   ├── tasks.spec.ts             # 任务基础测试
-│   ├── projects.spec.ts          # 项目基础测试
-│   ├── wiki.spec.ts              # Wiki 测试
-│   ├── members.spec.ts           # 成员测试
-│   ├── navigation.spec.ts        # 导航测试
-│   ├── dashboard.spec.ts         # 仪表盘测试
-│   ├── settings.spec.ts          # 设置测试
-│   ├── agents.spec.ts            # Agent 测试
-│   ├── sessions.spec.ts          # 会话测试
-│   ├── skills.spec.ts            # 技能测试
-│   ├── sop.spec.ts               # SOP 测试
-│   ├── schedule.spec.ts          # 定时任务测试
-│   ├── deliveries.spec.ts        # 投递测试
-│   ├── task-lifecycle.spec.ts    # 任务生命周期测试
-│   ├── document-workflow.spec.ts # 文档工作流测试
-│   ├── delivery-workflow.spec.ts # 投递工作流测试
-│   ├── project-collaboration.spec.ts # 项目协作测试
-│   └── multi-user-permissions.spec.ts # 多用户权限测试
+├── unit/                              # 单元测试 (Vitest)
+│   ├── validators.test.ts             # 输入校验器
+│   ├── security.test.ts               # 安全工具（escapeHtml, sanitize）
+│   ├── utils.test.ts                  # 数据脱敏、工具策略
+│   ├── event-bus.test.ts              # SSE EventBus
+│   ├── data-service.test.ts           # 数据访问层 apiRequest
+│   ├── rate-limit.test.ts             # API 限流
+│   ├── template-engine.test.ts        # 模板引擎 renderTemplate
+│   ├── api-errors.test.ts             # API 错误常量
+│   ├── id.test.ts                     # Base58 ID 生成器
+│   ├── doc-templates-and-mcp.test.ts  # 文档模板 + MCP 定义
+│   ├── agent-mcp-token.test.ts        # Agent MCP Token
+│   ├── chat-channel.test.ts           # 对话信道解析器/验证/日志
+│   └── chat-channel-high-concurrency.test.ts  # 高并发架构 mock 测试
 │
-├── stress/                       # 压力测试
-│   └── stress-test.spec.ts       # 压力测试套件
+├── integration/                       # 集成测试 (Vitest)
+│   ├── auth-permission.test.ts        # 认证权限（多用户角色）
+│   ├── task-api.test.ts               # 任务 CRUD + 状态流转
+│   ├── project-api.test.ts            # 项目 CRUD + 成员管理
+│   ├── document-api.test.ts           # 文档 CRUD + Wiki
+│   ├── sop-flow.test.ts               # SOP 模板 + 阶段推进
+│   ├── sop-skill-package.test.ts      # SOP Skill 安装包
+│   ├── skill-api-permission.test.ts   # Skill 权限混合模式
+│   ├── skillhub-api.test.ts           # SkillHub 注册/状态/信任
+│   ├── approval-api.test.ts           # 审批系统 CRUD + 权限
+│   ├── render-template-import-export.test.ts  # 渲染模板导入导出
+│   └── sop-template-import-export.test.ts     # SOP 模板导入导出
 │
-├── security/                     # 安全测试
-│   └── security-test.spec.ts     # 安全测试套件
+├── e2e/                               # E2E 浏览器测试 (Playwright)
+│   ├── pages/                         # Page Object 模式封装
+│   │   ├── AuthHelper.ts
+│   │   ├── BasePage.ts
+│   │   ├── TasksPage.ts, ProjectsPage.ts, WikiPage.ts, ...
+│   │   └── SkillHubPage.ts
+│   ├── auth.spec.ts                   # 认证流程
+│   ├── tasks.spec.ts                  # 任务管理
+│   ├── projects.spec.ts               # 项目管理
+│   ├── wiki.spec.ts                   # Wiki 文档
+│   ├── members.spec.ts                # 成员管理
+│   ├── navigation.spec.ts             # 导航布局
+│   ├── dashboard.spec.ts              # 仪表盘
+│   ├── settings.spec.ts               # 设置页面
+│   ├── agents.spec.ts                 # Agent 管理
+│   ├── sessions.spec.ts               # Session 管理
+│   ├── skills.spec.ts                 # Skill 管理
+│   ├── sop.spec.ts                    # SOP 模板
+│   ├── schedule.spec.ts               # 定时任务
+│   ├── deliveries.spec.ts             # 投递管理
+│   ├── skillhub.spec.ts               # SkillHub 页面
+│   ├── task-lifecycle.spec.ts         # 任务生命周期（跨页面）
+│   ├── document-workflow.spec.ts      # 文档协作流程
+│   ├── delivery-workflow.spec.ts      # 投递审核流程（多用户）
+│   ├── project-collaboration.spec.ts  # 项目协作流程（多用户）
+│   └── multi-user-permissions.spec.ts # 多用户权限
 │
-├── unit/                         # 单元测试
-│   ├── validators.test.ts        # 验证器测试
-│   ├── security.test.ts          # 安全工具测试
-│   ├── utils.test.ts             # 工具函数测试
-│   ├── event-bus.test.ts         # 事件总线测试
-│   ├── data-service.test.ts      # 数据服务测试
-│   ├── rate-limit.test.ts        # 限流测试
-│   ├── template-engine.test.ts   # 模板引擎测试
-│   ├── api-errors.test.ts        # API 错误测试
-│   ├── id.test.ts                # ID 生成测试
-│   └── doc-templates-and-mcp.test.ts # 文档模板测试
+├── req/                               # 需求驱动的回归/验收测试 (Vitest)
+│   ├── REQ-012/                       # 渐进式上下文
+│   │   ├── README.md
+│   │   ├── feature.test.ts
+│   │   ├── upstream.test.ts
+│   │   ├── downstream.test.ts
+│   │   └── p1-p2-progressive.test.ts
+│   ├── REQ-020/                       # 高并发架构
+│   │   ├── README.md
+│   │   ├── feature.test.ts
+│   │   ├── upstream.test.ts
+│   │   └── downstream.test.ts
+│   └── ARCH-OPT-001/                  # 架构优化
+│       ├── README.md
+│       ├── file-validator.test.ts
+│       ├── props-naming.test.ts
+│       └── sql-validator.test.ts
 │
-├── integration/                  # 集成测试
-│   ├── auth-permission.test.ts   # 认证权限测试
-│   ├── task-api.test.ts          # 任务 API 测试
-│   ├── project-api.test.ts       # 项目 API 测试
-│   ├── document-api.test.ts      # 文档 API 测试
-│   ├── chat-channel.test.ts      # 聊天信道测试
-│   └── sop-flow.test.ts          # SOP 流程测试
+├── security/                          # 安全测试 (Playwright)
+│   └── security-test.spec.ts
 │
-├── helpers/                      # 测试辅助工具
-│   ├── report-generator.ts       # 报告生成器
-│   ├── auth-helper.ts            # 认证辅助
-│   └── test-fixture.ts           # 测试数据工厂
+├── stress/                            # 压力测试 (Playwright)
+│   └── stress-test.spec.ts
 │
-├── scripts/                      # 测试脚本
-│   └── run-all-tests.sh          # 标准测试流程脚本
+├── helpers/                           # 测试辅助工具（共享）
+│   ├── api-client.ts                  # HTTP 客户端（本地/远程切换）
+│   ├── api-helper.ts                  # E2E Playwright API 调用（Cookie 处理）
+│   ├── auth-helper.ts                 # 认证辅助（注册/登录/Session）
+│   ├── test-fixture.ts                # 测试数据工厂
+│   ├── report-generator.ts            # 测试报告生成器
+│   ├── test-reporter.ts               # R1/R2 基线对比
+│   └── e2e-report-generator.ts        # E2E 报告生成（Playwright JSON → MD）
 │
-├── reports/                      # 测试报告
-│   ├── e2e-report-*.md           # E2E 测试报告
-│   ├── stress-test-report-*.md   # 压力测试报告
-│   ├── security-test-report-*.md # 安全测试报告
-│   └── playwright-report/        # Playwright HTML 报告
+├── scripts/                           # 测试流程脚本
+│   └── run-all-tests.sh               # 标准测试流程编排
 │
-├── __mocks__/                    # Mock 文件
-├── req/                          # 需求文档
-├── e2e-report-generator.ts       # E2E 报告生成脚本
-├── README.md                     # 本文件
-└── TEST_REPORT.md                # 测试报告摘要
+├── __mocks__/                         # Mock 文件
+│   └── server-only.ts                 # Mock server-only 模块
+│
+├── .auth/                             # Playwright 认证状态存储
+└── screenshots/                       # E2E 截图输出
 ```
+
+---
 
 ## 测试命令
 
-### 运行测试
-
 ```bash
-# 运行所有测试
-npm run test:all
-
-# 运行单元测试
+# 单元测试
 npm run test:unit
 
-# 运行集成测试
+# 集成测试
 npm run test:integration
 
-# 运行 E2E 测试
+# E2E 测试（需要运行中的开发服务器）
 npm run test:e2e
 
-# 运行压力测试
+# 压力测试
 npm run test:stress
 
-# 运行安全测试
+# 安全测试
 npm run test:security
 
-# 生成测试覆盖率报告
-npm run test:coverage
+# 需求回归测试
+npx vitest run tests/req/
 
-# 查看 E2E 测试报告
-npm run test:e2e:report
+# 全部测试
+bash tests/scripts/run-all-tests.sh all
 ```
 
-### 测试流程
+---
 
-标准测试流程由 `tests/scripts/run-all-tests.sh` 脚本执行：
+## 架构检查命令
 
-1. **关闭所有开发服务器** - 确保干净的测试环境
-2. **清除缓存** - 删除 .next、node_modules/.cache 等
-3. **代码构建** - 执行 `npm run build`
-4. **启动开发服务器** - 后台启动 `npm run dev`
-5. **开始测试** - 按顺序执行各类测试
-6. **生成报告** - 将报告保存到 `tests/reports/`
-
-### 手动执行测试
+使用 Knip 和 dependency-cruiser 检测代码质量问题：
 
 ```bash
-# 手动执行完整测试流程
-bash tests/scripts/run-all-tests.sh all
+# 运行全部架构检查（Knip + dependency-cruiser）
+npm run arch:check
 
-# 只执行 E2E 测试
-bash tests/scripts/run-all-tests.sh e2e
+# 仅运行 Knip - 检测未使用代码/依赖/导出
+npm run arch:knip
 
-# 只执行压力测试
-bash tests/scripts/run-all-tests.sh stress
-
-# 只执行安全测试
-bash tests/scripts/run-all-tests.sh security
+# 仅运行 dependency-cruiser - 检测循环依赖和架构违规
+npm run arch:cruise
 ```
 
-## 测试配置文件
+**架构检查工具说明：**
 
-| 文件 | 用途 |
-|------|------|
-| `playwright.config.ts` | E2E 测试配置 |
-| `playwright.stress.config.ts` | 压力测试配置 |
-| `playwright.security.config.ts` | 安全测试配置 |
-| `vitest.config.ts` | 单元/集成测试配置 |
+| 工具 | 检测内容 | 配置文件 |
+|------|---------|----------|
+| **Knip** | 未使用文件、未列出依赖、未使用导出 | `knip.json` |
+| **dependency-cruiser** | 循环依赖、禁止导入、架构层级违规 | `.dependency-cruiser.cjs` |
 
-## 测试报告说明
+**建议执行时机：**
+- 功能开发完成后，CI 集成前
+- 定期代码审查（每周/每迭代）
+- 重构前评估影响范围
 
-### E2E 测试报告
+---
 
-- **位置**: `tests/reports/e2e-report-*.md`
-- **内容**: 测试通过率、失败详情、优化建议
-
-### 压力测试报告
-
-- **位置**: `tests/reports/stress-test-report-*.md`
-- **内容**: 并发性能、响应时间、RPS、系统资源
-
-### 安全测试报告
-
-- **位置**: `tests/reports/security-test-report-*.md`
-- **内容**: 漏洞详情、安全合规检查、修复建议
-
-## 测试覆盖模块
+## 测试覆盖矩阵
 
 | 模块 | 单元测试 | 集成测试 | E2E 测试 | 压力测试 | 安全测试 |
 |------|---------|---------|---------|---------|---------|
-| 认证系统 | - | ✅ | ✅ | - | ✅ |
-| 任务管理 | - | ⚠️ | ✅ | ✅ | ✅ |
-| 项目管理 | - | ⚠️ | ✅ | - | ✅ |
-| 文档管理 | - | ⚠️ | ✅ | ✅ | - |
-| 成员管理 | - | - | ✅ | - | ✅ |
-| Wiki | - | - | ✅ | - | - |
-| 聊天信道 | - | ✅ | - | ✅ | - |
-| SOP 流程 | - | ✅ | ✅ | - | - |
-| 投递管理 | - | - | ✅ | - | - |
-| 权限控制 | - | - | ✅ | - | ✅ |
+| 认证系统 | - | ✅ auth-permission | ✅ auth.spec | - | ✅ |
+| 任务管理 | - | ✅ task-api | ✅ tasks.spec, task-lifecycle | ✅ | ✅ |
+| 项目管理 | - | ✅ project-api | ✅ projects.spec, project-collaboration | - | ✅ |
+| 文档管理 | ✅ doc-templates | ✅ document-api | ✅ wiki.spec, document-workflow | ✅ | - |
+| 成员管理 | - | - | ✅ members.spec | - | ✅ |
+| 聊天信道 | ✅ chat-channel, chat-channel-high-concurrency | - | - | ✅ | - |
+| SOP 流程 | - | ✅ sop-flow, sop-skill-package | ✅ sop.spec | - | - |
+| SkillHub | - | ✅ skillhub-api, skill-api-permission | ✅ skillhub.spec | - | - |
+| 审批系统 | - | ✅ approval-api | - | - | - |
+| 投递管理 | - | - | ✅ deliveries.spec, delivery-workflow | - | - |
+| 权限控制 | - | ✅ auth-permission | ✅ multi-user-permissions | - | ✅ |
+| 工具函数 | ✅ validators, security, utils, id, rate-limit, api-errors, template-engine | - | - | - | - |
+| 模板导入导出 | - | ✅ render-template, sop-template | - | - | - |
+
+---
 
 ## 环境变量
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
 | `PLAYWRIGHT_TEST` | 标识测试环境，跳过限流 | `true` |
-| `TEST_TARGET` | 测试目标 (`local`/`remote`) | `local` |
+| `TEST_TARGET` | 测试目标 (`local` / `remote`) | `local` |
 | `BASE_URL` | 测试基础 URL | `http://localhost:3000` |
 
 ## 注意事项
 
-1. **Cookie 问题**: 使用 `page.evaluate` + `fetch` 代替 `page.request` 来确保 Cookie 携带
-2. **location.origin**: 在 `page.evaluate` 前先 `page.goto('/')` 确保 `window.location.origin` 可用
-3. **限流**: 测试环境自动跳过限流（`PLAYWRIGHT_TEST=true`）
-4. **并发**: E2E 测试限制 2 并发，压力测试允许 4 并发
-5. **超时**: E2E 测试默认 60s 超时，压力测试 120s 超时
-
-## 持续集成
-
-测试脚本支持 CI 环境：
-
-```bash
-# CI 环境运行
-CI=true npm run test:all
-
-# 生成覆盖率报告
-npm run test:coverage
-```
+1. **Cookie 问题**: E2E 测试使用 `page.evaluate` + `fetch` 代替 `page.request` 确保 Cookie 携带
+2. **限流**: 测试环境自动跳过限流（`PLAYWRIGHT_TEST=true`）
+3. **并发**: E2E 测试限 2 并发，压力测试 4 并发
+4. **超时**: E2E 测试 60s 超时，压力测试 120s 超时
+5. **命名规范**: Playwright 用 `.spec.ts`，Vitest 用 `.test.ts`
 
 ---
 
-*TeamClaw 测试框架 v3.0*
+*TeamClaw 测试框架 v4.0 — 更新日期 2026-03-13*

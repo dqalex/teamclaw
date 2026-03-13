@@ -1,5 +1,5 @@
 /**
- * PM2 ecosystem configuration for CoMind
+ * PM2 ecosystem configuration for TeamClaw
  */
 const fs = require('fs');
 const path = require('path');

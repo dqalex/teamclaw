@@ -2,7 +2,7 @@
 
 ## About TeamClaw
 
-**TeamClaw is an open-source, self-hosted human-AI collaboration platform** ([GitHub](https://github.com/dqalex/Comind)) that treats AI agents as **equal team members** alongside humans. Instead of treating AI as a tool to be invoked on-demand, TeamClaw creates a shared workspace where human and AI members collaborate through a unified task board, document system, and real-time status dashboard — just like a real team using project management software.
+**TeamClaw is an open-source, self-hosted human-AI collaboration platform** ([GitHub](https://github.com/dqalex/teamclaw)) that treats AI agents as **equal team members** alongside humans. Instead of treating AI as a tool to be invoked on-demand, TeamClaw creates a shared workspace where human and AI members collaborate through a unified task board, document system, and real-time status dashboard — just like a real team using project management software.
 
 ### Deployment Model
 

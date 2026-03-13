@@ -6,7 +6,7 @@
 
 TeamClaw is an open-source human-AI collaboration platform that enables AI Agents to participate in project management as real team members — picking up tasks, writing documents, submitting deliveries, and reporting progress.
 
-> Current version: v3.0.0
+> Current version: v1.0.0
 
 ---
 
@@ -118,8 +118,8 @@ Complete English and Chinese coverage, with all UI text managed through i18n.
 
 ```bash
 # Clone the repository
-git clone https://github.com/dqalex/Comind.git
-cd Comind
+git clone https://github.com/dqalex/teamclaw.git
+cd teamclaw
 
 # Install dependencies
 npm install
@@ -219,12 +219,46 @@ teamclaw/
 
 ## Documentation
 
+### User Documentation
+
 | Document | Description |
 |----------|-------------|
 | [User Guide](docs/product/USER_GUIDE.md) | Complete feature guide & usage instructions |
+| [PRD](docs/product/PRD.md) | Product requirements document |
+| [UI Design Spec](docs/product/UI_DESIGN_SPEC.md) | UI/UX design specifications |
+
+### Technical Documentation
+
+| Document | Description |
+|----------|-------------|
 | [Developer Guide](docs/technical/DEVELOPMENT.md) | Architecture, modules, development guide |
 | [API Reference](docs/technical/API.md) | REST API documentation |
+| [Components](docs/technical/COMPONENTS.md) | UI component library reference |
+| [Architecture Optimization](docs/technical/ARCHITECTURE_OPTIMIZATION.md) | System architecture design |
+| [Multi-User Access Control](docs/technical/MULTI_USER_ACCESS_CONTROL.md) | Authentication & authorization design |
+| [Approval System Design](docs/technical/APPROVAL_SYSTEM_DESIGN.md) | Universal approval workflow |
+| [OpenClaw Sync Design](docs/technical/OPENCLAW_SYNC_DESIGN.md) | Bi-directional Markdown sync |
+
+### OpenClaw Integration
+
+| Document | Description |
+|----------|-------------|
+| [Workspace Standard](docs/openclaw/WORKSPACE_STANDARD.md) | OpenClaw workspace standards |
+| [Claude Integration](docs/openclaw/CLAUDE.md) | Claude Code integration guide |
+
+### Process & Operations
+
+| Document | Description |
+|----------|-------------|
 | [Changelog](docs/process/CHANGELOG.md) | Version history |
+| [Requirements](docs/process/REQUIREMENTS.md) | Feature requirements tracking |
+| [Tech Debt](docs/process/TECH_DEBT.md) | Known technical debt items |
+
+### Blog & Announcements
+
+| Document | Description |
+|----------|-------------|
+| [v3.0 Release Notes](docs/blog/v3-0-release.md) | Version 3.0 release announcement |
 
 
 ## Deployment Troubleshooting
