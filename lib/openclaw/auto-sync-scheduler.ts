@@ -112,8 +112,11 @@ export function getAutoSyncStatus(): Array<{ workspaceId: string; intervalMinute
  */
 export async function startAllAutoSync(): Promise<number> {
   try {
-    const workspaces = await db.select().from(openclawWorkspaces)
-      .where(eq(openclawWorkspaces.syncEnabled, true));
+    // 查询所有 workspace，然后在 JS 层过滤（避免 Drizzle ORM 在 standalone 模式下的布尔查询问题）
+    const allWorkspaces = await db.select().from(openclawWorkspaces);
+    const workspaces = allWorkspaces.filter(ws => ws.syncEnabled);
+
+    console.log(`[AutoSync] Found ${allWorkspaces.length} workspaces, ${workspaces.length} enabled for sync`);
 
     let started = 0;
     for (const ws of workspaces) {
