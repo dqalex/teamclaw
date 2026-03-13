@@ -204,19 +204,73 @@ export async function ssrfCheck(
 
 // ==================== Token 加密存储 ====================
 
-const ENCRYPTION_KEY = process.env.TOKEN_ENCRYPTION_KEY;
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
 
-function requireEncryptionKey(): void {
-  if (!ENCRYPTION_KEY && process.env.NODE_ENV === 'production') {
-    throw new Error('[Security] TOKEN_ENCRYPTION_KEY is required in production. Set this environment variable to encrypt sensitive tokens.');
+/**
+ * 获取或创建加密密钥
+ * 
+ * 优先级：
+ * 1. 环境变量 TOKEN_ENCRYPTION_KEY
+ * 2. 自动生成并保存到 .env.local（首次部署时）
+ * 3. 开发环境使用默认密钥
+ */
+let _cachedKey: string | null = null;
+
+function getOrCreateEncryptionKey(): string {
+  // 优先使用环境变量
+  if (process.env.TOKEN_ENCRYPTION_KEY) {
+    return process.env.TOKEN_ENCRYPTION_KEY;
+  }
+  
+  // 使用缓存
+  if (_cachedKey) {
+    return _cachedKey;
+  }
+  
+  // 开发环境：使用默认密钥
+  if (process.env.NODE_ENV !== 'production') {
+    _cachedKey = 'teamclaw-dev-encryption-key-change-in-production';
+    return _cachedKey;
+  }
+  
+  // 生产环境：自动生成并保存
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const envPath = path.join(process.cwd(), '.env.local');
+    
+    // 生成 32 字节随机密钥
+    const newKey = crypto.randomBytes(32).toString('base64');
+    
+    // 追加到 .env.local
+    const envLine = `\n# Auto-generated token encryption key\nTOKEN_ENCRYPTION_KEY="${newKey}"\n`;
+    fs.appendFileSync(envPath, envLine, 'utf8');
+    
+    console.log('[Security] Auto-generated TOKEN_ENCRYPTION_KEY and saved to .env.local');
+    
+    _cachedKey = newKey;
+    return newKey;
+  } catch (err) {
+    console.error('[Security] Failed to auto-generate TOKEN_ENCRYPTION_KEY:', err);
+    // 降级：使用基于数据库路径的稳定密钥
+    const fallbackKey = crypto
+      .createHash('sha256')
+      .update(`teamclaw-${process.cwd()}-${process.env.USER || 'default'}`)
+      .digest('base64');
+    console.warn('[Security] Using fallback encryption key (less secure)');
+    _cachedKey = fallbackKey;
+    return fallbackKey;
   }
 }
 
+function requireEncryptionKey(): void {
+  // 现在总是能获取到密钥（自动生成），不再抛出错误
+  getOrCreateEncryptionKey();
+}
+
 function deriveKey(key: string): Buffer {
-  const crypto = require('crypto');
   return crypto.createHash('sha256').update(key).digest();
 }
 
@@ -224,16 +278,11 @@ function deriveKey(key: string): Buffer {
  * AES-256-GCM 加密 Token
  */
 export function encryptToken(plaintext: string): string {
-  requireEncryptionKey();
+  const key = getOrCreateEncryptionKey();
+  const derivedKey = deriveKey(key);
   
-  if (!ENCRYPTION_KEY) {
-    return plaintext;
-  }
-  
-  const crypto = require('crypto');
-  const key = deriveKey(ENCRYPTION_KEY);
   const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH });
+  const cipher = crypto.createCipheriv(ALGORITHM, derivedKey, iv, { authTagLength: AUTH_TAG_LENGTH });
   
   const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
   const authTag = cipher.getAuthTag();
@@ -246,14 +295,11 @@ export function encryptToken(plaintext: string): string {
  * AES-256-GCM 解密 Token
  */
 export function decryptToken(encrypted: string): string {
-  requireEncryptionKey();
-  if (!ENCRYPTION_KEY) {
-    return encrypted;
-  }
+  const key = getOrCreateEncryptionKey();
   
   try {
     if (encrypted.startsWith('enc:')) {
-      const key = deriveKey(ENCRYPTION_KEY);
+      const derivedKey = deriveKey(key);
       const combined = Buffer.from(encrypted.slice(4), 'base64');
       
       if (combined.length < IV_LENGTH + AUTH_TAG_LENGTH) {
@@ -264,7 +310,7 @@ export function decryptToken(encrypted: string): string {
       const authTag = combined.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH);
       const ciphertext = combined.subarray(IV_LENGTH + AUTH_TAG_LENGTH);
       
-      const decipher = crypto.createDecipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH });
+      const decipher = crypto.createDecipheriv(ALGORITHM, derivedKey, iv, { authTagLength: AUTH_TAG_LENGTH });
       decipher.setAuthTag(authTag);
       
       const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
@@ -275,7 +321,7 @@ export function decryptToken(encrypted: string): string {
     const decoded = Buffer.from(encrypted, 'base64').toString();
     let result = '';
     for (let i = 0; i < decoded.length; i++) {
-      const charCode = decoded.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length);
+      const charCode = decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length);
       result += String.fromCharCode(charCode);
     }
     if (/^[\x20-\x7E]+$/.test(result)) {
@@ -291,6 +337,5 @@ export function decryptToken(encrypted: string): string {
  * 检查字符串是否已加密
  */
 export function isEncrypted(value: string): boolean {
-  if (!ENCRYPTION_KEY) return false;
   return value.startsWith('enc:');
 }
