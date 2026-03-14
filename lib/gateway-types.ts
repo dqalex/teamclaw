@@ -4,8 +4,15 @@
  * 由 gateway-client.ts / server-gateway-client.ts / gateway-proxy.ts 共同引用
  */
 
-/** Gateway 连接状态 */
-export type ConnectionStatus = 'connected' | 'disconnected' | 'connecting' | 'error';
+/** Gateway 连接状态
+ * - connected: 已连接
+ * - disconnected: 未连接（可重试）
+ * - connecting: 连接中
+ * - error_auth: 认证失败（token 错误，需检查配置）
+ * - error_connection: 连接失败（地址错误或 Gateway 未启动）
+ * - error: 其他错误
+ */
+export type ConnectionStatus = 'connected' | 'disconnected' | 'connecting' | 'error_auth' | 'error_connection' | 'error';
 
 /** Gateway WebSocket 消息格式 */
 export type GatewayMessage = {

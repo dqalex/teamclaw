@@ -241,12 +241,16 @@ export class ServerGatewayClient {
             }
           }
 
-          // 处理连接拒绝
+          // 处理连接拒绝（认证失败等）
           if (msg.type === 'res' && !msg.ok && !this.connected) {
             const errMsg = typeof msg.error === 'string' 
               ? msg.error 
               : (msg.error as { message?: string })?.message || 'Connection rejected';
             log.error('connection_rejected', { error: errMsg });
+            // 首次连接就被拒绝，说明配置有误（token 错误等），不再重试
+            if (this.reconnectAttempts === 0) {
+              this.updateConfigStatus('error_auth', errMsg);
+            }
             settle(false, new Error(errMsg));
             return;
           }
@@ -257,6 +261,10 @@ export class ServerGatewayClient {
 
       this.ws.on('error', (error: Error) => {
         log.error('ws_error', {}, error.message);
+        // 首次连接就出错（网络不可达等），标记为连接错误
+        if (this.reconnectAttempts === 0) {
+          this.updateConfigStatus('error_connection', error.message);
+        }
         settle(false, error);
       });
 
@@ -266,6 +274,11 @@ export class ServerGatewayClient {
         this.stopHeartbeat();
         
         if (!settled) {
+          // 首次连接就断开，可能是地址错误或 Gateway 未启动
+          if (this.reconnectAttempts === 0) {
+            const reasonStr = reason.toString() || 'Connection closed unexpectedly';
+            this.updateConfigStatus('error_connection', reasonStr);
+          }
           settle(false, new Error(`WebSocket closed (code: ${code})`));
         } else {
           // 已连接后断开，触发重连

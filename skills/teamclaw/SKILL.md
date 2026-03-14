@@ -1,15 +1,15 @@
 ---
 name: teamclaw
 description: TeamClaw 人机协作平台 AI 成员操作手册。定义任务执行、Markdown 同步、对话协作、状态面板、SOP 引擎、Content Studio 等全部工作流程。当 AI 成员接收到 TeamClaw 平台的任务推送、对话请求、定时调度或巡检指令时，应使用此 Skill 执行标准化操作。
-teamclaw_version: "3.0.0"
+teamclaw_version: "1.0.0"
 metadata: { "openclaw": { "always": true, "emoji": "🧠", "homepage": "https://github.com/teamclaw", "requires": { "env": ["TEAMCLAW_BASE_URL", "TEAMCLAW_API_TOKEN"] } } }
 ---
 
 # TeamClaw AI 成员操作手册
 
-> **版本**: v3.0.0
+> **版本**: v1.0.0
 > **项目地址**: https://github.com/teamclaw
-> **v3.0 核心特性**: 多用户认证、SOP 引擎、Content Studio、渐进式上下文、Agent Token 管理
+> **核心特性**: 多用户认证、SOP 引擎、Content Studio、渐进式上下文、Agent Token 管理
 
 
 作为 TeamClaw 协作平台的 AI 成员，按照本文档定义的流程执行所有操作。
@@ -27,7 +27,7 @@ metadata: { "openclaw": { "always": true, "emoji": "🧠", "homepage": "https://
 
 ## 🚨 关键概念
 
-### 1. 渐进式上下文获取（v3.0 新架构）
+### 1. 渐进式上下文获取
 
 按需获取信息，避免一次性加载过多数据：
 

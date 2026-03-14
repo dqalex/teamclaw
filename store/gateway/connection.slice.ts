@@ -12,25 +12,28 @@ export const connectionActions = {
       const res = await fetch('/api/gateway/config');
       const json = await res.json();
       if (json.data) {
+        const status = json.data.status;
         set({
           connectionMode: json.data.mode,
-          serverProxyConnected: json.data.mode === 'server_proxy' && json.data.status === 'connected',
+          serverProxyConnected: json.data.mode === 'server_proxy' && status === 'connected',
+          connectionStatus: status,
           ...(json.data.url ? { gwUrl: json.data.url } : {}),
         });
       } else {
-        set({ connectionMode: null, serverProxyConnected: false });
+        set({ connectionMode: null, serverProxyConnected: false, connectionStatus: null });
       }
     } catch (e) {
       console.error('syncServerProxyStatus:', e);
-      set({ connectionMode: null, serverProxyConnected: false });
+      set({ connectionMode: null, serverProxyConnected: false, connectionStatus: null });
     }
   },
 
   // 直接设置连接信息（避免重复 fetch）
-  setConnectionInfo: (set: StoreSet, _get: StoreGet, mode: 'server_proxy' | null, status: 'connected' | 'disconnected' | null, url?: string) => {
+  setConnectionInfo: (set: StoreSet, _get: StoreGet, mode: 'server_proxy' | null, status: 'connected' | 'disconnected' | 'connecting' | 'error_auth' | 'error_connection' | 'error' | null, url?: string) => {
     set({
       connectionMode: mode,
       serverProxyConnected: mode === 'server_proxy' && status === 'connected',
+      connectionStatus: status,
       ...(url ? { gwUrl: url } : {}),
     });
   },

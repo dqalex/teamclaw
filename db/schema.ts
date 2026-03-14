@@ -738,7 +738,7 @@ export const gatewayConfigs = sqliteTable('gateway_configs', {
   mode: text('mode', { enum: ['server_proxy', 'browser_direct'] }).notNull().default('server_proxy'),
   
   // 连接状态
-  status: text('status', { enum: ['connected', 'disconnected', 'connecting', 'error'] }).notNull().default('disconnected'),
+  status: text('status', { enum: ['connected', 'disconnected', 'connecting', 'error', 'error_auth', 'error_connection'] }).notNull().default('disconnected'),
   lastConnectedAt: integer('last_connected_at', { mode: 'timestamp' }),
   lastError: text('last_error'),
   reconnectAttempts: integer('reconnect_attempts').default(0),

@@ -20,6 +20,7 @@ export interface GatewayState {
   gwUrl: string;
   connectionMode: 'server_proxy' | null;
   serverProxyConnected: boolean;
+  connectionStatus: 'connected' | 'disconnected' | 'connecting' | 'error_auth' | 'error_connection' | 'error' | null;
   helloPayload: HelloOkPayload | null;
 
   // 数据
@@ -110,6 +111,7 @@ export const initialGatewayState = {
   gwUrl: '',
   connectionMode: null,
   serverProxyConnected: false,
+  connectionStatus: null,
   helloPayload: null,
   snapshot: null,
   health: null,

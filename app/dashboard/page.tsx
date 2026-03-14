@@ -32,6 +32,7 @@ export default function DashboardPage() {
   const connected = useGatewayStore((s) => s.connected);
   const connectionMode = useGatewayStore((s) => s.connectionMode);
   const serverProxyConnected = useGatewayStore((s) => s.serverProxyConnected);
+  const connectionStatus = useGatewayStore((s) => s.connectionStatus);
   const gwError = useGatewayStore((s) => s.error);
   const snapshot = useGatewayStore((s) => s.snapshot);
   const health = useGatewayStore((s) => s.health);
@@ -163,14 +164,40 @@ export default function DashboardPage() {
             {!isGwConnected && (
               <div className="mt-4 p-4 rounded-xl border" style={{ borderColor: 'var(--border)', background: 'var(--surface-hover)' }}>
                 <div className="flex items-center gap-3">
-                  <Settings className="w-5 h-5 text-amber-500" />
-                  <div>
-                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                      {t('dashboard.configureGateway')}
-                    </p>
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
-                      {t('dashboard.configureGatewayDesc')}
-                    </p>
+                  {connectionStatus?.startsWith('error_') ? (
+                    <AlertCircle className="w-5 h-5 text-red-500" />
+                  ) : (
+                    <Settings className="w-5 h-5 text-amber-500" />
+                  )}
+                  <div className="flex-1">
+                    {connectionStatus === 'error_auth' ? (
+                      <>
+                        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                          Gateway 认证失败
+                        </p>
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                          Token 无效或已过期，请在设置中检查 Gateway 配置
+                        </p>
+                      </>
+                    ) : connectionStatus === 'error_connection' ? (
+                      <>
+                        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                          Gateway 连接失败
+                        </p>
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                          无法连接到 Gateway，请检查地址是否正确或 Gateway 是否已启动
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                          {t('dashboard.configureGateway')}
+                        </p>
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                          {t('dashboard.configureGatewayDesc')}
+                        </p>
+                      </>
+                    )}
                   </div>
                   <Link href="/settings?tab=gateway" className="ml-auto">
                     <Button size="sm">
