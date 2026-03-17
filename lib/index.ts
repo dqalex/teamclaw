@@ -66,3 +66,74 @@ export {
   type ToolSection,
   type ToolInfo,
 } from './tool-policy';
+
+// ============================================================
+// 审批服务
+// ============================================================
+export {
+  // 查询
+  getApprovalRequests,
+  getApprovalRequestById,
+  canViewApprovalRequest,
+  canProcessApprovalRequest,
+  hasPendingApprovalRequest,
+  getResourceApprovalStatus,
+  // 创建
+  createApprovalRequest,
+  // 处理
+  processApprovalRequest,
+  approveApprovalRequest,
+  rejectApprovalRequest,
+  cancelApprovalRequest,
+  // 类型
+  type ApprovalType,
+  type ApprovalStatus,
+  type ApprovalAction,
+  type CreateApprovalRequestInput,
+  type ProcessApprovalInput,
+  type ApprovalFilters,
+  type ApprovalQueryOptions,
+  type ApprovalResult,
+} from './services/approval-service';
+
+// ============================================================
+// 同步服务
+// ============================================================
+export {
+  // Markdown 操作
+  extractSlotsFromMarkdown,
+  updateMarkdownSlot,
+  updateMarkdownSlots,
+  generateMarkdownFromTemplate,
+  // HTML 操作
+  extractSlotsFromHTML,
+  injectSlotsToHTML,
+  generatePreviewHTML,
+  generateIframeInjectionScript,
+  cleanEditorAttrs,
+  // 双向同步
+  syncMarkdownToHTML,
+  syncHTMLToMarkdown,
+  fullSync,
+  syncEditBackToMarkdown,
+  // 槽位验证
+  validateSlots,
+  getSlotsSummary,
+  // 安全处理
+  sanitizeHTML,
+  // 文档状态管理
+  createSyncState,
+  updateSyncStateFromMarkdown,
+  updateSyncStateFromHTML,
+  // 类型
+  type SlotDef,
+  type SlotValue,
+  type SlotSyncResult,
+  type SlotType,
+  type SyncResult,
+  type DocumentSyncState,
+  type BatchSyncInput,
+  type BatchSyncOutput,
+  // 常量
+  MD_RICHTEXT_STYLES,
+} from './services/sync-service';

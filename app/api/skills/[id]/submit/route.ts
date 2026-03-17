@@ -8,11 +8,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { skills, approvalRequests } from '@/db/schema';
+import { skills } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { eventBus } from '@/lib/event-bus';
 import { withAuth, type AuthResult, type RouteContext } from '@/lib/with-auth';
-import { generateId } from '@/lib/id';
+import { createApprovalRequest, hasPendingApprovalRequest } from '@/lib/services/approval-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,6 +62,15 @@ export const POST = withAuth(async (
       );
     }
     
+    // 检查是否已有待审批的请求
+    const hasPending = await hasPendingApprovalRequest('skill_publish', id);
+    if (hasPending) {
+      return NextResponse.json(
+        { error: 'Pending approval request already exists' },
+        { status: 400 }
+      );
+    }
+    
     const now = new Date();
     
     // 更新 Skill 状态
@@ -74,10 +83,7 @@ export const POST = withAuth(async (
       .where(eq(skills.id, id));
     
     // 创建审批请求
-    const approvalId = generateId();
-    
-    await db.insert(approvalRequests).values({
-      id: approvalId,
+    const approvalResult = await createApprovalRequest({
       type: 'skill_publish',
       resourceType: 'skill',
       resourceId: id,
@@ -88,10 +94,22 @@ export const POST = withAuth(async (
         category: skill.category,
       },
       requestNote: 'Submit for approval',
-      status: 'pending',
-      createdAt: now,
-      updatedAt: now,
     });
+    
+    if (!approvalResult.success) {
+      // 回滚 Skill 状态
+      await db
+        .update(skills)
+        .set({ status: 'draft', updatedAt: new Date() })
+        .where(eq(skills.id, id));
+      
+      return NextResponse.json(
+        { error: approvalResult.error },
+        { status: 400 }
+      );
+    }
+    
+    const approvalId = approvalResult.data!.request.id;
     
     // 发送 SSE 事件
     eventBus.emit({
