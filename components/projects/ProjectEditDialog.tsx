@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Input, Textarea, Select, Card } from '@/components/ui';
-import { X, Save, Users, Settings, Crown, Shield, User, Eye, Plus, Trash2 } from 'lucide-react';
+import { X, Save, Users, Settings, Crown, Shield, User, Eye, Plus, Trash2, BookOpen } from 'lucide-react';
+import { useDocumentStore } from '@/store';
+import type { KnowledgeConfig } from '@/db/schema';
 import clsx from 'clsx';
 
 interface ProjectMember {
@@ -20,9 +22,10 @@ interface ProjectEditDialogProps {
   projectName: string;
   projectDesc: string;
   projectVisibility: 'private' | 'team' | 'public';
+  knowledgeConfig?: KnowledgeConfig | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (name: string, desc: string, visibility: 'private' | 'team' | 'public') => Promise<void>;
+  onSave: (name: string, desc: string, visibility: 'private' | 'team' | 'public', knowledgeConfig?: KnowledgeConfig) => Promise<void>;
 }
 
 const roleIcons: Record<string, React.ReactNode> = {
@@ -32,13 +35,14 @@ const roleIcons: Record<string, React.ReactNode> = {
   viewer: <Eye className="w-3.5 h-3.5 text-slate-400" />,
 };
 
-type TabType = 'settings' | 'members';
+type TabType = 'settings' | 'members' | 'knowledge';
 
 export function ProjectEditDialog({
   projectId,
   projectName,
   projectDesc,
   projectVisibility,
+  knowledgeConfig: initialKnowledgeConfig,
   isOpen,
   onClose,
   onSave,
@@ -58,15 +62,27 @@ export function ProjectEditDialog({
   const [addingMember, setAddingMember] = useState(false);
   const [loadingMembers, setLoadingMembers] = useState(false);
 
+  // v3.1: 知识库配置状态
+  const documents = useDocumentStore((s) => s.documents);
+  const [knowledgeDocId, setKnowledgeDocId] = useState<string>(initialKnowledgeConfig?.documentId || '');
+  const [knowledgeLayers, setKnowledgeLayers] = useState<string[]>(initialKnowledgeConfig?.layers || ['L1']);
+
+  // 过滤出 guide 类型的文档作为知识库候选
+  const guideDocs = useMemo(() => {
+    return documents.filter(d => d.type === 'guide' || d.type === 'reference');
+  }, [documents]);
+
   // 同步 props 到 state
   useEffect(() => {
     if (isOpen) {
       setName(projectName);
       setDesc(projectDesc);
       setVisibility(projectVisibility);
+      setKnowledgeDocId(initialKnowledgeConfig?.documentId || '');
+      setKnowledgeLayers(initialKnowledgeConfig?.layers || ['L1']);
       setActiveTab('settings');
     }
-  }, [isOpen, projectName, projectDesc, projectVisibility]);
+  }, [isOpen, projectName, projectDesc, projectVisibility, initialKnowledgeConfig]);
 
   // 加载成员
   useEffect(() => {
@@ -108,7 +124,10 @@ export function ProjectEditDialog({
   const handleSave = async () => {
     if (!name.trim()) return;
     setSaving(true);
-    await onSave(name.trim(), desc.trim() || '', visibility);
+    const newKnowledgeConfig: KnowledgeConfig | undefined = knowledgeDocId
+      ? { documentId: knowledgeDocId, layers: knowledgeLayers.length ? knowledgeLayers : ['L1'] }
+      : undefined;
+    await onSave(name.trim(), desc.trim() || '', visibility, newKnowledgeConfig);
     setSaving(false);
     onClose();
   };
@@ -211,6 +230,19 @@ export function ProjectEditDialog({
               </span>
             )}
           </button>
+          <button
+            onClick={() => setActiveTab('knowledge')}
+            className={clsx(
+              'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors',
+              activeTab === 'knowledge'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent hover:border-slate-200'
+            )}
+            style={{ color: activeTab === 'knowledge' ? undefined : 'var(--text-tertiary)' }}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            {t('projects.knowledgeBase') || '知识库'}
+          </button>
         </div>
 
         {/* Content */}
@@ -260,6 +292,75 @@ export function ProjectEditDialog({
                   {visibility === 'private' && t('projects.visPrivateDesc')}
                   {visibility === 'team' && t('projects.visTeamDesc')}
                   {visibility === 'public' && t('projects.visPublicDesc')}
+                </p>
+              </div>
+            </div>
+          ) : activeTab === 'knowledge' ? (
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="text-xs mb-1.5 block font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  {t('projects.knowledgeDoc') || '知识库文档'}
+                </label>
+                <Select
+                  value={knowledgeDocId}
+                  onChange={e => setKnowledgeDocId(e.target.value)}
+                  className="text-sm"
+                >
+                  <option value="">{t('common.none') || '无'}</option>
+                  {guideDocs.map(doc => (
+                    <option key={doc.id} value={doc.id}>
+                      {doc.title}
+                    </option>
+                  ))}
+                </Select>
+                <p className="text-[11px] mt-1.5" style={{ color: 'var(--text-tertiary)' }}>
+                  {t('projects.knowledgeDocHint') || '选择 Wiki 中的指南文档作为项目知识库，任务推送时将自动植入关键信息'}
+                </p>
+              </div>
+
+              {knowledgeDocId && (
+                <div>
+                  <label className="text-xs mb-1.5 block font-medium" style={{ color: 'var(--text-secondary)' }}>
+                    {t('projects.knowledgeLayers') || '读取层级'}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {['L1', 'L2', 'L3', 'L4', 'L5'].map(layer => (
+                      <label
+                        key={layer}
+                        className={clsx(
+                          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs cursor-pointer transition-colors',
+                          knowledgeLayers.includes(layer)
+                            ? 'border-primary-500 bg-primary-50 text-primary-600 dark:bg-primary-950'
+                            : 'border-slate-200 hover:border-slate-300'
+                        )}
+                        style={{ borderColor: knowledgeLayers.includes(layer) ? undefined : 'var(--border)' }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={knowledgeLayers.includes(layer)}
+                          onChange={e => {
+                            if (e.target.checked) {
+                              setKnowledgeLayers(prev => [...prev, layer]);
+                            } else {
+                              setKnowledgeLayers(prev => prev.filter(l => l !== layer));
+                            }
+                          }}
+                          className="w-3.5 h-3.5 rounded"
+                        />
+                        {layer}
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-[11px] mt-1.5" style={{ color: 'var(--text-tertiary)' }}>
+                    {t('projects.knowledgeLayersHint') || 'L1=核心规则(必读) L2=详细标准 L3=案例库 L4=经验记录 L5=维护日志'}
+                  </p>
+                </div>
+              )}
+
+              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  <strong>{t('common.tip') || '提示'}:</strong>{' '}
+                  {t('projects.knowledgeTip') || '项目知识库中的 L1 层内容将在任务推送给 AI 时自动植入，作为关键上下文信息。建议使用 KnowHow 格式编写文档（## L1 / ## L2 等标题分层）。'}
                 </p>
               </div>
             </div>

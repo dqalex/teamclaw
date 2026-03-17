@@ -57,6 +57,22 @@ teamclaw_version: "{{teamclaw_version}}"
 
 ---
 
+{{#has_critical_info}}
+## ⚡ 关键信息（必读）
+
+{{#project_critical_info}}
+### 项目级关键信息
+{{project_critical_info}}
+{{/project_critical_info}}
+
+{{#milestone_critical_info}}
+### 里程碑级关键信息
+{{milestone_critical_info}}
+{{/milestone_critical_info}}
+
+---
+{{/has_critical_info}}
+
 {{#project_name}}
 ## 所属项目
 - **项目名称**: {{project_name}}
@@ -108,6 +124,14 @@ teamclaw_version: "{{teamclaw_version}}"
 - ⚠️ **主动在对话中汇报** - 不能默默执行
 - ⚠️ **关联文档必读** - 任务关联的文档通常包含执行所需的背景信息
 - ⚠️ **对话通道 Actions 是唯一获取上下文的方式** - 没有独立的 MCP 工具可用
+{{#agent_workspace_path}}
+- 📁 **你的工作区目录**: `{{agent_workspace_path}}`
+{{/agent_workspace_path}}
+{{#teamclaw_index_path}}
+- 📇 **索引文件位置**: `{{teamclaw_index_path}}`（包含项目-目录映射关系，可通过此索引找到各项目在本地工作区的位置）
+{{/teamclaw_index_path}}
+- ⚠️ **遇到前置依赖需布置任务给用户** - 单个任务用 `create_task` 创建并分配给用户；多任务建议先在工作区创建文档规划，再同步到 TeamClaw
+- ⚠️ **项目文档必须提交到 TeamClaw** - 单文档用 `create_document` 创建；多文档建议先在工作区创建，再同步到 TeamClaw
 
 ---
 

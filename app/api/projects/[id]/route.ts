@@ -77,7 +77,7 @@ export const PUT = withAuth(async (
     }
 
     const updateData: Record<string, unknown> = { updatedAt: new Date() };
-    const allowedFields = ['name', 'description', 'visibility'];
+    const allowedFields = ['name', 'description', 'visibility', 'knowledgeConfig'];
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
         if (field === 'visibility') {
@@ -85,6 +85,9 @@ export const PUT = withAuth(async (
           if (validVisibility.includes(body.visibility)) {
             updateData.visibility = body.visibility;
           }
+        } else if (field === 'knowledgeConfig') {
+          // v3.1: 知识库配置（复用 SOP 的 KnowledgeConfig 结构）
+          updateData.knowledge_config = body.knowledgeConfig;
         } else {
           updateData[field] = sanitizeString(body[field], field === 'description' ? 10000 : 200);
         }

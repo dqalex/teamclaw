@@ -1306,12 +1306,27 @@ Dashboard 预览
         status TEXT NOT NULL DEFAULT 'open',
         due_date INTEGER,
         sort_order INTEGER NOT NULL DEFAULT 0,
+        knowledge_config TEXT,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
       );
       CREATE INDEX IF NOT EXISTS idx_milestones_project_id ON milestones(project_id);
       CREATE INDEX IF NOT EXISTS idx_milestones_status ON milestones(status);
     `);
+  }
+
+  // v3.1: 确保 milestones 表有 knowledge_config 列
+  if (tableNames.includes('milestones')) {
+    const milestoneCols = sqlite.prepare("PRAGMA table_info(milestones)").all() as { name: string }[];
+    const milestoneColNames = milestoneCols.map(c => c.name);
+    if (!milestoneColNames.includes('knowledge_config')) {
+      console.log('[TeamClaw] Adding v3.1 column "milestones.knowledge_config"...');
+      try {
+        sqlite.exec(`ALTER TABLE milestones ADD COLUMN knowledge_config TEXT`);
+      } catch (err) {
+        console.error('[TeamClaw] Failed to add milestones.knowledge_config:', err);
+      }
+    }
   }
 
   // 6. 确保 documents 表有 v2 新增列
@@ -1362,6 +1377,20 @@ Dashboard 预览
         } catch (err) {
           console.error(`[TeamClaw] Failed to add documents.${col}:`, err);
         }
+      }
+    }
+  }
+
+  // v3.1: 确保 projects 表有 knowledge_config 列
+  if (tableNames.includes('projects')) {
+    const projectCols = sqlite.prepare("PRAGMA table_info(projects)").all() as { name: string }[];
+    const projectColNames = projectCols.map(c => c.name);
+    if (!projectColNames.includes('knowledge_config')) {
+      console.log('[TeamClaw] Adding v3.1 column "projects.knowledge_config"...');
+      try {
+        sqlite.exec(`ALTER TABLE projects ADD COLUMN knowledge_config TEXT`);
+      } catch (err) {
+        console.error('[TeamClaw] Failed to add projects.knowledge_config:', err);
       }
     }
   }

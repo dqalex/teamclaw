@@ -8,6 +8,7 @@ import { useConfirmAction } from '@/hooks/useConfirmAction';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { ProjectEditDialog } from '@/components/projects/ProjectEditDialog';
 import { useProjectStore, useTaskStore, useDocumentStore } from '@/store';
+import type { KnowledgeConfig } from '@/db/schema';
 import { useGatewayStore } from '@/store/gateway.store';
 import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
@@ -161,12 +162,13 @@ export default function ProjectsPage() {
     setEditVisibility(p.visibility || 'private');
   };
 
-  const saveEdit = async (name: string, desc: string, visibility: 'private' | 'team' | 'public') => {
+  const saveEdit = async (name: string, desc: string, visibility: 'private' | 'team' | 'public', knowledgeConfig?: KnowledgeConfig) => {
     if (editingId && name.trim()) {
       await updateProjectAsync(editingId, { 
         name: name.trim(), 
         description: desc.trim() || undefined,
-        visibility 
+        visibility,
+        knowledgeConfig,
       });
     }
     setEditingId(null);
@@ -439,6 +441,7 @@ export default function ProjectsPage() {
         projectName={editName}
         projectDesc={editDesc}
         projectVisibility={editVisibility}
+        knowledgeConfig={editingId ? projects.find(p => p.id === editingId)?.knowledgeConfig : undefined}
         isOpen={!!editingId}
         onClose={() => setEditingId(null)}
         onSave={saveEdit}

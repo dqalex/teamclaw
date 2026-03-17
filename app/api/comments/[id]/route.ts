@@ -36,8 +36,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
     await db.delete(comments).where(eq(comments.id, id));
-    // 问题 #19：删除评论后通知前端刷新任务
-    eventBus.emit({ type: 'task_update', resourceId: existing.taskId });
+    // 发出 comment_update 事件，让前端自动刷新评论
+    eventBus.emit({ type: 'comment_update', resourceId: existing.taskId, data: { taskId: existing.taskId } });
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 });

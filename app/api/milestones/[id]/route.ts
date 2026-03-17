@@ -44,11 +44,15 @@ export async function PUT(
     }
 
     const updateData: Record<string, unknown> = { updatedAt: new Date() };
-    const allowedFields = ['title', 'description', 'status', 'dueDate', 'sortOrder'];
+    const allowedFields = ['title', 'description', 'status', 'dueDate', 'sortOrder', 'knowledgeConfig'];
 
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
-        updateData[field] = body[field];
+        if (field === 'knowledgeConfig') {
+          updateData.knowledge_config = body.knowledgeConfig;
+        } else {
+          updateData[field] = body[field];
+        }
       }
     }
 

@@ -101,7 +101,6 @@ export default function TasksPage() {
             pushing={tp.pushing}
             pushError={tp.pushError}
             gwConnected={tp.gwConnected}
-            userSessionKey={tp.userSessionKey}
             STATUS_COLUMNS={tp.STATUS_COLUMNS}
             showBatchStatusMenu={tp.showBatchStatusMenu}
             setShowBatchStatusMenu={tp.setShowBatchStatusMenu}
@@ -150,6 +149,7 @@ export default function TasksPage() {
             currentProjectId={tp.currentProjectId}
             isSwimLaneView={tp.isSwimLaneView}
             collapsedLanes={tp.collapsedLanes}
+            collapsedStatusColumns={tp.collapsedStatusColumns}
             dragTaskId={tp.dragTaskId}
             dragMilestoneId={tp.dragMilestoneId}
             dragOverTarget={tp.dragOverTarget}
@@ -160,6 +160,7 @@ export default function TasksPage() {
             onMilestoneDragStart={tp.handleMilestoneDragStart}
             onMilestoneDrop={tp.handleMilestoneDrop}
             onToggleLane={tp.toggleLane}
+            onToggleStatusColumn={tp.toggleStatusColumn}
             onToggleSelection={tp.toggleTaskSelection}
             onOpenDrawer={tp.setDrawerTaskId}
             onMenuToggle={(taskId, e) => {

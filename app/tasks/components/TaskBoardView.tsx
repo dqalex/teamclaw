@@ -46,6 +46,7 @@ interface TaskBoardViewProps {
   currentProjectId: string | null;
   isSwimLaneView: boolean;
   collapsedLanes: Set<string>;
+  collapsedStatusColumns: Set<StatusColumn>;
   // 拖拽
   dragTaskId: string | null;
   dragMilestoneId: string | null;
@@ -58,6 +59,7 @@ interface TaskBoardViewProps {
   onMilestoneDrop: (e: React.DragEvent, projectId: string | null, targetMilestoneId: string | null) => void;
   // 操作
   onToggleLane: (laneId: string) => void;
+  onToggleStatusColumn: (col: StatusColumn) => void;
   onToggleSelection: (taskId: string) => void;
   onOpenDrawer: (taskId: string) => void;
   onMenuToggle: (taskId: string, e: React.MouseEvent) => void;
@@ -75,7 +77,7 @@ interface TaskBoardViewProps {
 // 渲染状态列
 function StatusColumnView({
   col, columnTasks, projectId, milestoneId = null,
-  isOver, onDragOver, onDragLeave, onDrop,
+  isOver, isCollapsed, onToggleCollapse, onDragOver, onDragLeave, onDrop,
   dragHereLabel, renderCard,
 }: {
   col: StatusColumnConfig;
@@ -83,6 +85,8 @@ function StatusColumnView({
   projectId: string | null;
   milestoneId?: string | null;
   isOver: boolean;
+  isCollapsed: boolean;
+  onToggleCollapse?: () => void;
   onDragOver: (e: React.DragEvent, col: StatusColumn, projectId: string | null, milestoneId?: string | null) => void;
   onDragLeave: () => void;
   onDrop: (e: React.DragEvent, col: StatusColumn, projectId: string | null, milestoneId?: string | null) => void;
@@ -96,19 +100,30 @@ function StatusColumnView({
       onDragLeave={onDragLeave}
       onDrop={(e) => onDrop(e, col.key, projectId, milestoneId)}
     >
-      <div className="flex items-center gap-2 mb-2 px-1">
+      <button
+        className="flex items-center gap-2 mb-2 px-1 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
+        onClick={onToggleCollapse}
+        disabled={!onToggleCollapse}
+      >
+        {onToggleCollapse && (
+          isCollapsed
+            ? <ChevronRight className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />
+            : <ChevronDown className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />
+        )}
         <span className={clsx('w-2 h-2 rounded-full', col.color)} />
         <span className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>{col.label}</span>
         <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{columnTasks.length}</span>
-      </div>
-      <div className="flex-1 space-y-2 overflow-y-auto">
-        {columnTasks.map(task => renderCard(task))}
-        {columnTasks.length === 0 && (
-          <div className="text-center py-6 text-[11px] rounded-lg border border-dashed" style={{ color: 'var(--text-tertiary)', borderColor: 'var(--border)' }}>
-            {dragHereLabel}
-          </div>
-        )}
-      </div>
+      </button>
+      {!isCollapsed && (
+        <div className="flex-1 space-y-2 overflow-y-auto">
+          {columnTasks.map(task => renderCard(task))}
+          {columnTasks.length === 0 && (
+            <div className="text-center py-6 text-[11px] rounded-lg border border-dashed" style={{ color: 'var(--text-tertiary)', borderColor: 'var(--border)' }}>
+              {dragHereLabel}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -116,10 +131,10 @@ function StatusColumnView({
 export default function TaskBoardView(props: TaskBoardViewProps) {
   const {
     swimlaneData, tasksByStatus, STATUS_COLUMNS, PRIORITY_MAP, sopTemplates,
-    selectedTaskIds, selectionMode, currentProjectId, isSwimLaneView, collapsedLanes,
+    selectedTaskIds, selectionMode, currentProjectId, isSwimLaneView, collapsedLanes, collapsedStatusColumns,
     dragTaskId, dragMilestoneId, dragOverTarget,
     onDragStart, onDragOver, onDragLeave, onDrop, onMilestoneDragStart, onMilestoneDrop,
-    onToggleLane, onToggleSelection, onOpenDrawer, onMenuToggle, onShowMilestoneManager,
+    onToggleLane, onToggleStatusColumn, onToggleSelection, onOpenDrawer, onMenuToggle, onShowMilestoneManager,
     getMemberName, t, syncedLabel, dragHereLabel, taskCountLabel, noTasksHint, milestoneTitle,
   } = props;
 
@@ -153,7 +168,7 @@ export default function TaskBoardView(props: TaskBoardViewProps) {
 
   // 渲染里程碑分组内的 4 列
   const renderMilestoneColumns = (group: MilestoneGroup, projectId: string | null, padding = '') => (
-    <div className={clsx('grid grid-cols-4 gap-4', padding)}>
+    <div className={clsx('grid gap-4', collapsedStatusColumns.has('completed' as StatusColumn) ? 'grid-cols-[1fr_1fr_1fr_auto]' : 'grid-cols-4')}>
       {STATUS_COLUMNS.map(col => (
         <StatusColumnView
           key={col.key}
@@ -162,6 +177,8 @@ export default function TaskBoardView(props: TaskBoardViewProps) {
           projectId={projectId}
           milestoneId={group.milestoneId}
           isOver={isOverCol(col.key, projectId, group.milestoneId)}
+          isCollapsed={collapsedStatusColumns.has(col.key)}
+          onToggleCollapse={col.key === 'completed' ? () => onToggleStatusColumn(col.key) : undefined}
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
           onDrop={onDrop}
@@ -287,6 +304,8 @@ export default function TaskBoardView(props: TaskBoardViewProps) {
               columnTasks={tasksByStatus[col.key]}
               projectId={currentProjectId}
               isOver={isOverCol(col.key, currentProjectId, null)}
+              isCollapsed={collapsedStatusColumns.has(col.key)}
+              onToggleCollapse={() => onToggleStatusColumn(col.key)}
               onDragOver={onDragOver}
               onDragLeave={onDragLeave}
               onDrop={onDrop}

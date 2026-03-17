@@ -23,7 +23,6 @@ interface TaskBatchBarProps {
   pushing: boolean;
   pushError: string | null;
   gwConnected: boolean;
-  userSessionKey: string | null;  // v3.0 多用户：用户专用会话键
   STATUS_COLUMNS: StatusColumnConfig[];
   showBatchStatusMenu: boolean;
   setShowBatchStatusMenu: (v: boolean) => void;
@@ -36,7 +35,7 @@ interface TaskBatchBarProps {
 }
 
 export default function TaskBatchBar({
-  selectedCount, pushing, pushError, gwConnected, userSessionKey,
+  selectedCount, pushing, pushError, gwConnected,
   STATUS_COLUMNS, showBatchStatusMenu, setShowBatchStatusMenu,
   onBatchStatusChange, onBatchDelete, onBatchPush,
   onSelectAll, onClearSelection, onClearPushError,
@@ -77,7 +76,7 @@ export default function TaskBatchBar({
             <Trash2 className="w-3.5 h-3.5" />
             批量删除
           </Button>
-          {gwConnected && userSessionKey && (
+          {gwConnected && (
             <Button size="sm" onClick={onBatchPush} disabled={pushing}>
               <Send className="w-3.5 h-3.5" />
               {pushing ? '推送中...' : '批量推送'}

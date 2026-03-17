@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { chatSessions, chatMessages, tasks, deliveries, comments, taskLogs, openclawStatus } from '@/db/schema';
+import { chatSessions, chatMessages, tasks, deliveries, comments, taskLogs, openclawStatus, members } from '@/db/schema';
 
 // 标记为动态路由，避免静态生成错误
 export const dynamic = 'force-dynamic';
@@ -126,8 +126,12 @@ export const PUT = withAuth(async (
     }
 
     await db.update(tasks).set(updateData).where(eq(tasks.id, resolvedId));
-    
+
     const [updated] = await db.select().from(tasks).where(eq(tasks.id, resolvedId));
+
+    // 通知 AI 创建者：任务状态变更
+    await notifyAICreatorOnTaskUpdate(existing, updated, auth.userId!);
+
     eventBus.emit({ type: 'task_update', resourceId: resolvedId });
     triggerMarkdownSync('teamclaw:tasks');
     return apiSuccess(updated);
@@ -196,7 +200,7 @@ export const DELETE = withAuth(async (
       }
       tx.delete(tasks).where(eq(tasks.id, resolvedId)).run();
     });
-    
+
     eventBus.emit({ type: 'task_update', resourceId: resolvedId });
     triggerMarkdownSync('teamclaw:tasks');
     return apiSuccess({ success: true });
@@ -205,3 +209,95 @@ export const DELETE = withAuth(async (
     return serverError('Failed to delete task');
   }
 });
+
+// ============================================================
+// 任务状态变更通知 AI 创建者
+// ============================================================
+
+const STATUS_LABELS: Record<string, string> = {
+  todo: '待办',
+  in_progress: '进行中',
+  reviewing: '审核中',
+  completed: '已完成',
+};
+
+/**
+ * 通知 AI 创建者任务状态变更
+ * 条件：
+ * 1. 创建者是 AI 成员
+ * 2. 任务状态有实质性变化（排除微小进度变化）
+ * 3. Gateway 已连接
+ */
+async function notifyAICreatorOnTaskUpdate(
+  oldTask: { id: string; title: string; creatorId: string; status: string; progress: number | null },
+  newTask: { id: string; title: string; status: string; progress: number | null },
+  operatorUserId: string
+): Promise<void> {
+  try {
+    // 检查是否有实质性变化
+    const statusChanged = oldTask.status !== newTask.status;
+    const progressChanged = Math.abs((oldTask.progress || 0) - (newTask.progress || 0)) >= 20; // 进度变化 >= 20%
+
+    if (!statusChanged && !progressChanged) {
+      return; // 无实质性变化，不通知
+    }
+
+    // 查找创建者成员
+    const [creator] = await db.select().from(members).where(eq(members.id, oldTask.creatorId));
+    if (!creator || creator.type !== 'ai') {
+      return; // 创建者不是 AI，不通知
+    }
+
+    // 动态导入避免循环依赖
+    const { getServerGatewayClient } = await import('@/lib/server-gateway-client');
+    const { RPC_METHODS } = await import('@/lib/rpc-methods');
+
+    const gateway = getServerGatewayClient();
+    if (!gateway || !gateway.isConnected) {
+      console.warn('[TaskNotify] Gateway not connected, skip notification');
+      return;
+    }
+
+    // 构建通知消息
+    const sessionKey = `agent:${creator.openclawAgentId}:dm:${operatorUserId}`;
+    const oldStatusLabel = STATUS_LABELS[oldTask.status] || oldTask.status;
+    const newStatusLabel = STATUS_LABELS[newTask.status] || newTask.status;
+
+    const lines: string[] = [];
+    lines.push(`[TeamClaw 任务状态更新]`);
+    lines.push(`**任务**: ${oldTask.title} (${oldTask.id})`);
+
+    if (statusChanged) {
+      lines.push(`**状态变更**: ${oldStatusLabel} → ${newStatusLabel}`);
+    }
+    if (progressChanged) {
+      lines.push(`**进度变更**: ${oldTask.progress || 0}% → ${newTask.progress || 0}%`);
+    }
+
+    // 如果任务完成，添加提示
+    if (newTask.status === 'completed') {
+      lines.push('');
+      lines.push(`✅ 任务已完成，您可以继续执行后续操作。`);
+    }
+
+    const message = lines.join('\n');
+
+    // 发送通知
+    await gateway.request(RPC_METHODS.CHAT_SEND, {
+      sessionKey,
+      message,
+      idempotencyKey: `task-notify-${oldTask.id}-${Date.now()}`,
+    });
+
+    console.log('[TaskNotify] Notification sent to AI creator:', {
+      taskId: oldTask.id,
+      creatorId: oldTask.creatorId,
+      sessionKey,
+      statusChanged,
+      progressChanged,
+    });
+  } catch (error) {
+    // 通知失败不影响主流程
+    console.error('[TaskNotify] Failed to notify AI creator:', error);
+  }
+}

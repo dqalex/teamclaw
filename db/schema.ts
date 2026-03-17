@@ -10,6 +10,8 @@ export const projects = sqliteTable('projects', {
   // v3.0: 项目权限字段
   ownerId: text('owner_id').references(() => users.id, { onDelete: 'set null' }),
   visibility: text('visibility', { enum: ['private', 'team', 'public'] }).notNull().default('private'),
+  // v3.1: 知识库配置（复用 SOP 的 KnowledgeConfig）
+  knowledgeConfig: text('knowledge_config', { mode: 'json' }).$type<KnowledgeConfig>(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 });
@@ -250,6 +252,8 @@ export const milestones = sqliteTable('milestones', {
   status: text('status', { enum: ['open', 'in_progress', 'completed', 'cancelled'] }).notNull().default('open'),
   dueDate: integer('due_date', { mode: 'timestamp' }),
   sortOrder: integer('sort_order').notNull().default(0),
+  // v3.1: 知识库配置（复用 SOP 的 KnowledgeConfig）
+  knowledgeConfig: text('knowledge_config', { mode: 'json' }).$type<KnowledgeConfig>(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 });

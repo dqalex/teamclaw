@@ -13,6 +13,31 @@ import { renderTemplateWithContext } from '@/lib/template-engine';
 import { parseKnowHow, extractLayers } from '@/lib/knowhow-parser';
 import type { SOPStage, StageRecord, KnowledgeConfig } from '@/db/schema';
 
+/**
+ * 从知识库配置读取关键信息（L1 层）
+ * 复用 SOP 知识库解析逻辑
+ */
+async function getCriticalInfoFromKnowledgeConfig(config: KnowledgeConfig | null | undefined): Promise<string | null> {
+  if (!config?.documentId) return null;
+
+  try {
+    const [doc] = await db.select().from(documents).where(eq(documents.id, config.documentId));
+    if (!doc?.content || typeof doc.content !== 'string') return null;
+
+    const parsed = parseKnowHow(doc.content);
+    // 读取 L1 层作为关键信息（概要层，适合推送时植入）
+    const validLayers = ['L1', 'L2', 'L3', 'L4', 'L5'] as const;
+    type ValidLayer = typeof validLayers[number];
+    const layers: ValidLayer[] = config.layers?.length
+      ? (config.layers as string[]).filter((l): l is ValidLayer => (validLayers as readonly string[]).includes(l))
+      : ['L1'];
+    return extractLayers(parsed, layers);
+  } catch (err) {
+    console.warn('[task-push] Failed to extract knowledge content:', err);
+    return null;
+  }
+}
+
 // 标记为动态路由，避免静态生成错误
 export const dynamic = 'force-dynamic';
 
@@ -112,14 +137,46 @@ async function checkWorkspaceActive(sessionKey: string): Promise<boolean> {
   return isWorkspaceActive(sessionKey);
 }
 
+/** 获取 Agent 工作区信息（从 sessionKey 解析 agentId，查询关联的 workspace） */
+async function getAgentWorkspaceInfo(sessionKey: string): Promise<{ path: string; indexPath: string } | null> {
+  try {
+    // 解析 sessionKey: agent:${agentId}:dm:${userId}
+    const parts = sessionKey.split(':');
+    if (parts.length < 2 || parts[0] !== 'agent') {
+      return null;
+    }
+    const agentId = parts[1];
+
+    // 查找该 agent 关联的 workspace
+    const [workspace] = await db
+      .select({ path: openclawWorkspaces.path })
+      .from(openclawWorkspaces)
+      .innerJoin(members, eq(openclawWorkspaces.memberId, members.id))
+      .where(eq(members.openclawAgentId, agentId))
+      .limit(1);
+
+    if (!workspace?.path) {
+      return null;
+    }
+
+    return {
+      path: workspace.path,
+      indexPath: `${workspace.path}/.teamclaw-index`,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** 普通任务推送（使用 task-push 模板） */
 async function handleNormalPush(task: typeof tasks.$inferSelect, sessionKey: string) {
-  // 获取项目信息
+  // 获取项目信息（含知识库配置）
   let projectInfo = {
     project_id: '',
     project_name: '未分类',
     project_description: null as string | null,
     project_source: 'local',
+    knowledgeConfig: null as KnowledgeConfig | null,
   };
 
   if (task.projectId) {
@@ -130,14 +187,16 @@ async function handleNormalPush(task: typeof tasks.$inferSelect, sessionKey: str
         project_name: project.name,
         project_description: project.description,
         project_source: project.source,
+        knowledgeConfig: project.knowledgeConfig as KnowledgeConfig | null,
       };
     }
   }
 
-  // 获取里程碑信息
+  // 获取里程碑信息（含知识库配置）
   let milestoneInfo = {
     milestone_id: null as string | null,
     milestone_title: null as string | null,
+    knowledgeConfig: null as KnowledgeConfig | null,
   };
 
   if (task.milestoneId) {
@@ -146,6 +205,7 @@ async function handleNormalPush(task: typeof tasks.$inferSelect, sessionKey: str
       milestoneInfo = {
         milestone_id: milestone.id,
         milestone_title: milestone.title,
+        knowledgeConfig: milestone.knowledgeConfig as KnowledgeConfig | null,
       };
     }
   }
@@ -156,6 +216,13 @@ async function handleNormalPush(task: typeof tasks.$inferSelect, sessionKey: str
 
   // 检查 Workspace 是否激活（用于渐进式上下文提示）
   const workspaceActive = await checkWorkspaceActive(sessionKey);
+
+  // 从 sessionKey 解析 agentId，查询其工作区目录和索引位置
+  const agentWorkspaceInfo = await getAgentWorkspaceInfo(sessionKey);
+
+  // v3.1: 读取项目/里程碑知识库关键信息（复用 SOP 知识库机制）
+  const projectCriticalInfo = await getCriticalInfoFromKnowledgeConfig(projectInfo.knowledgeConfig);
+  const milestoneCriticalInfo = await getCriticalInfoFromKnowledgeConfig(milestoneInfo.knowledgeConfig);
 
   const message = await renderTemplateWithContext('task-push', {
     timestamp: new Date().toLocaleString('zh-CN'),
@@ -172,12 +239,18 @@ async function handleNormalPush(task: typeof tasks.$inferSelect, sessionKey: str
     project_source: projectInfo.project_source,
     milestone_id: milestoneInfo.milestone_id,
     milestone_title: milestoneInfo.milestone_title,
+    // v3.1: 关键信息植入
+    project_critical_info: projectCriticalInfo,
+    milestone_critical_info: milestoneCriticalInfo,
+    has_critical_info: !!(projectCriticalInfo || milestoneCriticalInfo),
     conversation_id: sessionKey,
     mapped_workspaces: mappedWorkspacesData,
     mapped_files: mappedFilesData,
     files_section: filesSection,
     context_section: null,
     workspace_active: workspaceActive,
+    agent_workspace_path: agentWorkspaceInfo?.path || null,
+    teamclaw_index_path: agentWorkspaceInfo?.indexPath || null,
   });
 
   if (!message) {

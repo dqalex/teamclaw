@@ -101,7 +101,8 @@ export async function POST(request: NextRequest) {
     };
 
     await db.insert(comments).values(newComment);
-    eventBus.emit({ type: 'task_update', resourceId: taskId });
+    // 发出 comment_update 事件，让前端自动刷新评论
+    eventBus.emit({ type: 'comment_update', resourceId: taskId, data: { taskId } });
     triggerMarkdownSync('teamclaw:tasks');
     return createdResponse(newComment);
   } catch (error) {

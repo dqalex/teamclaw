@@ -4,15 +4,15 @@ import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConfirmAction } from '@/hooks/useConfirmAction';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { useMilestoneStore, useProjectStore, useTaskStore } from '@/store';
+import { useMilestoneStore, useProjectStore, useTaskStore, useDocumentStore } from '@/store';
 import { Button, Input, Select, Card } from '@/components/ui';
 import {
   Plus, Trash2, Edit2, X, Calendar,
   Milestone as MilestoneIcon,
-  ChevronDown, ChevronRight,
+  ChevronDown, ChevronRight, BookOpen,
 } from 'lucide-react';
 import clsx from 'clsx';
-import type { Milestone } from '@/db/schema';
+import type { Milestone, KnowledgeConfig } from '@/db/schema';
 
 interface MilestoneManagerProps {
   projectId: string;
@@ -33,9 +33,10 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
   const createMilestone = useMilestoneStore((s) => s.createMilestone);
   const updateMilestoneAsync = useMilestoneStore((s) => s.updateMilestoneAsync);
   const deleteMilestoneAsync = useMilestoneStore((s) => s.deleteMilestoneAsync);
-  
+
   const projects = useProjectStore((s) => s.projects);
-  
+  const documents = useDocumentStore((s) => s.documents);
+
   const tasks = useTaskStore((s) => s.tasks);
   const deleteAction = useConfirmAction<string>();
 
@@ -47,7 +48,14 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
     status: 'open' as string,
     dueDate: '',
     sortOrder: 0,
+    knowledgeDocId: '',
+    knowledgeLayers: ['L1'] as string[],
   });
+
+  // 过滤出 guide 类型的文档作为知识库候选
+  const guideDocs = useMemo(() => {
+    return documents.filter(d => d.type === 'guide' || d.type === 'reference');
+  }, [documents]);
 
   const project = projects.find(p => p.id === projectId);
   const projectMilestones = useMemo(
@@ -71,13 +79,16 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
   }, [projectMilestones, tasks]);
 
   const resetForm = useCallback(() => {
-    setFormData({ title: '', description: '', status: 'open', dueDate: '', sortOrder: 0 });
+    setFormData({ title: '', description: '', status: 'open', dueDate: '', sortOrder: 0, knowledgeDocId: '', knowledgeLayers: ['L1'] });
     setShowCreateForm(false);
     setEditingId(null);
   }, []);
 
   const handleCreate = useCallback(async () => {
     if (!formData.title.trim()) return;
+    const knowledgeConfig: KnowledgeConfig | undefined = formData.knowledgeDocId
+      ? { documentId: formData.knowledgeDocId, layers: formData.knowledgeLayers }
+      : undefined;
     await createMilestone({
       title: formData.title.trim(),
       description: formData.description.trim() || null,
@@ -85,18 +96,23 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
       status: formData.status as Milestone['status'],
       dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
       sortOrder: formData.sortOrder || projectMilestones.length,
+      knowledgeConfig,
     });
     resetForm();
   }, [formData, projectId, projectMilestones.length, createMilestone, resetForm]);
 
   const handleUpdate = useCallback(async () => {
     if (!editingId || !formData.title.trim()) return;
+    const knowledgeConfig: KnowledgeConfig | undefined = formData.knowledgeDocId
+      ? { documentId: formData.knowledgeDocId, layers: formData.knowledgeLayers }
+      : undefined;
     await updateMilestoneAsync(editingId, {
       title: formData.title.trim(),
       description: formData.description.trim() || null,
       status: formData.status as Milestone['status'],
       dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
       sortOrder: formData.sortOrder,
+      knowledgeConfig,
     });
     resetForm();
   }, [editingId, formData, updateMilestoneAsync, resetForm]);
@@ -110,6 +126,8 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
       status: ms.status,
       dueDate: ms.dueDate ? new Date(ms.dueDate).toISOString().split('T')[0] : '',
       sortOrder: ms.sortOrder ?? 0,
+      knowledgeDocId: ms.knowledgeConfig?.documentId || '',
+      knowledgeLayers: ms.knowledgeConfig?.layers || ['L1'],
     });
   }, []);
 
@@ -168,6 +186,56 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
           className="w-24"
         />
       </div>
+      {/* 知识库配置 */}
+      <div className="border-t pt-3" style={{ borderColor: 'var(--border)' }}>
+        <div className="flex items-center gap-1.5 mb-2">
+          <BookOpen className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />
+          <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{t('projects.knowledgeBase') || '知识库'}</span>
+        </div>
+        <div className="space-y-2">
+          <Select
+            value={formData.knowledgeDocId}
+            onChange={e => setFormData({ ...formData, knowledgeDocId: e.target.value })}
+            className="text-sm"
+          >
+            <option value="">{t('common.none') || '无'}</option>
+            {guideDocs.map(doc => (
+              <option key={doc.id} value={doc.id}>{doc.title}</option>
+            ))}
+          </Select>
+          {formData.knowledgeDocId && (
+            <div className="flex flex-wrap gap-1.5">
+              {['L1', 'L2', 'L3', 'L4', 'L5'].map(layer => (
+                <label
+                  key={layer}
+                  className={clsx(
+                    'flex items-center gap-1 px-2 py-1 rounded text-[10px] cursor-pointer border',
+                    formData.knowledgeLayers.includes(layer)
+                      ? 'border-primary-500 bg-primary-50 text-primary-600 dark:bg-primary-950'
+                      : 'border-slate-200'
+                  )}
+                  style={{ borderColor: formData.knowledgeLayers.includes(layer) ? undefined : 'var(--border)' }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={formData.knowledgeLayers.includes(layer)}
+                    onChange={e => {
+                      if (e.target.checked) {
+                        setFormData(prev => ({ ...prev, knowledgeLayers: [...prev.knowledgeLayers, layer] }));
+                      } else {
+                        setFormData(prev => ({ ...prev, knowledgeLayers: prev.knowledgeLayers.filter(l => l !== layer) }));
+                      }
+                    }}
+                    className="w-3 h-3 rounded"
+                  />
+                  {layer}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="flex justify-end gap-2">
         <Button size="sm" variant="secondary" onClick={resetForm}>{t('common.cancel')}</Button>
         <Button size="sm" onClick={isEdit ? handleUpdate : handleCreate}>

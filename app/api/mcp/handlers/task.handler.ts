@@ -5,7 +5,7 @@
  */
 
 import { db } from '@/db';
-import { tasks, comments, taskLogs, members } from '@/db/schema';
+import { tasks, comments, taskLogs, members, projects, milestones, documents } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { generateLogId, generateCommentId, generateCheckItemId, generateTaskId } from '@/lib/id';
 import { triggerMarkdownSync } from '@/lib/markdown-sync';
@@ -212,8 +212,8 @@ class TaskHandler extends McpHandlerBase<Task> {
     };
 
     // 验证 status 枚举值
-    const statusValidation = this.validateEnum(status, 
-      ['todo', 'in_progress', 'reviewing', 'completed'] as const, 
+    const statusValidation = this.validateEnum(status,
+      ['todo', 'in_progress', 'reviewing', 'completed'] as const,
       'status'
     );
     if (statusValidation) return statusValidation;
@@ -246,9 +246,71 @@ class TaskHandler extends McpHandlerBase<Task> {
         triggerMarkdownSync('teamclaw:tasks');
         this.log('Status updated', task_id, { status, progress });
 
-        return this.success('Status updated', { task_id, status, progress, message });
+        // v3.1: 任务完成时，检查是否有知识库可沉淀经验
+        let knowledgeCrystallizationHint = null;
+        if (status === 'completed') {
+          knowledgeCrystallizationHint = await this.buildKnowledgeCrystallizationHint(task);
+        }
+
+        return this.success('Status updated', {
+          task_id,
+          status,
+          progress,
+          message,
+          ...(knowledgeCrystallizationHint && { knowledge_crystallization_hint: knowledgeCrystallizationHint }),
+        });
       }
     );
+  }
+
+  /**
+   * 构建知识结晶提示 - 复用现有知识库机制
+   * 当任务完成时，提示 Agent 将经验沉淀到项目/里程碑知识库
+   */
+  private async buildKnowledgeCrystallizationHint(task: Task): Promise<Record<string, unknown> | null> {
+    const hints: string[] = [];
+    const targets: Array<{ type: 'project' | 'milestone'; name: string; docId: string }> = [];
+
+    // 检查项目知识库
+    if (task.projectId) {
+      const [project] = await db.select().from(projects).where(eq(projects.id, task.projectId));
+      if (project?.knowledgeConfig?.documentId) {
+        const [doc] = await db.select().from(documents).where(eq(documents.id, project.knowledgeConfig.documentId));
+        if (doc) {
+          targets.push({ type: 'project', name: project.name, docId: doc.id });
+          hints.push(`项目「${project.name}」知识库: document_id="${doc.id}"`);
+        }
+      }
+    }
+
+    // 检查里程碑知识库
+    if (task.milestoneId) {
+      const [milestone] = await db.select().from(milestones).where(eq(milestones.id, task.milestoneId));
+      if (milestone?.knowledgeConfig?.documentId) {
+        const [doc] = await db.select().from(documents).where(eq(documents.id, milestone.knowledgeConfig.documentId));
+        if (doc) {
+          targets.push({ type: 'milestone', name: milestone.title, docId: doc.id });
+          hints.push(`里程碑「${milestone.title}」知识库: document_id="${doc.id}"`);
+        }
+      }
+    }
+
+    if (targets.length === 0) return null;
+
+    return {
+      message: '💡 任务已完成！执行过程中遇到的坑点、解决方案、关键决策，建议沉淀到知识库 L4 层（经验记录）供后续任务参考。',
+      why: '知识库采用分层设计：L1 核心规则（推送时自动植入）、L2 详细标准、L3 案例库、L4 经验记录（动态增长）、L5 维护日志。将经验写入 L4，后续执行类似任务的 AI 可以读取这些经验避免重复踩坑。',
+      instruction: '使用 update_knowledge 工具，将经验追加到对应知识库的 L4 层',
+      available_targets: targets,
+      hint_text: hints.join('\n'),
+      example: `// 将本次任务的经验沉淀到知识库
+{"actions": [{"type": "update_knowledge", "document_id": "${targets[0]?.docId}", "content": "踩坑点：xxx\\n解决方案：yyy\\n关键决策：zzz"}]}`,
+      tips: [
+        '经验要简洁，聚焦「坑点 + 解决方案」',
+        '如果有多个经验，可以多次调用 update_knowledge',
+        'L4 层会动态增长，定期由人类整理归档到 L2/L3',
+      ],
+    };
   }
 
   /**

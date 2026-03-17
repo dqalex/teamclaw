@@ -57,6 +57,7 @@ export function useTasksPage() {
   const [dragMilestoneId, setDragMilestoneId] = useState<string | null>(null);
   const [dragOverTarget, setDragOverTarget] = useState<{ col: StatusColumn; projectId: string | null; milestoneId: string | null } | null>(null);
   const [collapsedLanes, setCollapsedLanes] = useState<Set<string>>(new Set());
+  const [collapsedStatusColumns, setCollapsedStatusColumns] = useState<Set<StatusColumn>>(new Set());
   const deleteAction = useConfirmAction<string>();
 
   // 里程碑管理
@@ -288,6 +289,10 @@ export function useTasksPage() {
     setCollapsedLanes(prev => { const next = new Set(prev); next.has(laneId) ? next.delete(laneId) : next.add(laneId); return next; });
   }, []);
 
+  const toggleStatusColumn = useCallback((col: StatusColumn) => {
+    setCollapsedStatusColumns(prev => { const next = new Set(prev); next.has(col) ? next.delete(col) : next.add(col); return next; });
+  }, []);
+
   // --- 多选操作 ---
   const toggleTaskSelection = useCallback((taskId: string) => {
     setSelectedTaskIds(prev => { const next = new Set(prev); next.has(taskId) ? next.delete(taskId) : next.add(taskId); return next; });
@@ -351,7 +356,7 @@ export function useTasksPage() {
     t,
     // Store 数据
     tasks, projects, members, milestones, sopTemplates,
-    currentProjectId, gwConnected, userSessionKey,
+    currentProjectId, gwConnected,
     error,
     // 配置
     STATUS_COLUMNS, PRIORITY_MAP,
@@ -380,6 +385,7 @@ export function useTasksPage() {
     handleDragStart, handleMilestoneDragStart, handleDragOver, handleDragLeave, handleDrop, handleMilestoneDrop,
     // 折叠
     collapsedLanes, toggleLane,
+    collapsedStatusColumns, toggleStatusColumn,
     // 删除
     deleteAction, deleteTaskAsync,
     // 数据
