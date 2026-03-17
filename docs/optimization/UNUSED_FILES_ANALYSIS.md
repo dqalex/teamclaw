@@ -192,33 +192,46 @@
 
 ## 三、删除建议汇总
 
-### 立即可删除（低风险）
+### Phase 1: 立即可删除（低风险）✅ 已完成
 
-| 序号 | 文件 | 理由 |
-|------|------|------|
-| 1 | `components/markdown-editor/editor-styles.ts` | 旧 Markdown 编辑器已废弃 |
-| 2 | `components/studio/index.ts` | Studio 组件未使用 |
-| 3 | `lib/gateway-provider-types.ts` | Provider 模式已废弃 |
-| 4 | `lib/gateway-provider.ts` | Provider 模式已废弃 |
-| 5 | `lib/providers/openclaw-provider.ts` | 已标记废弃 |
-| 6 | `db/adapters/index.ts` | 适配器模式未使用 |
+| 序号 | 文件 | 理由 | 状态 |
+|------|------|------|------|
+| 1 | `components/markdown-editor/editor-styles.ts` | 旧 Markdown 编辑器已废弃 | ✅ 已删除 |
+| 2 | `components/studio/index.ts` | Studio 组件未使用 | ✅ 已删除 |
+| 3 | `lib/gateway-provider-types.ts` | Provider 模式已废弃 | ✅ 已删除 |
+| 4 | `lib/gateway-provider.ts` | Provider 模式已废弃 | ✅ 已删除 |
+| 5 | `lib/providers/openclaw-provider.ts` | 已标记废弃 | ✅ 已删除 |
+| 6 | `db/adapters/index.ts` | 适配器模式未使用 | ✅ 已删除 |
 
-### 需确认后删除（中风险）
+### Phase 1 延续: Landing Page 遗留组件 ✅ 已完成
 
-| 序号 | 文件 | 确认事项 |
-|------|------|----------|
-| 7 | `core/mcp/executor.ts` | 是否有代码调用 `executeActionInstruction` |
-| 8 | `core/mcp/handlers/skill.ts` | 是否有前端代码调用 Skill MCP |
-| 9 | `db/adapters/sqlite.ts` | `db/index.ts` 是否已覆盖功能 |
-| 10 | `db/adapters/postgres.ts` | 是否需要 PostgreSQL 支持 |
-| 11 | `db/config.ts` | 是否需要数据库抽象工厂 |
-| 12 | `components/projects/ProjectMemberDialog.tsx` | 项目页是否有替代实现 |
-| 13 | `hooks/useSlotSync.ts` | 渲染模板功能是否还在使用 |
-| 14 | `hooks/useEntityData.ts` | 是否推广使用或删除 |
-| 15 | `hooks/useGatewayData.ts` | 是否推广使用或删除 |
-| 16 | `lib/skill-access.ts` | 是否需要 Skill 权限控制 |
-| 17 | `lib/i18n/index.ts` | 是否替换为异步加载 |
-| 18 | `lib/openclaw/index.ts` | 同步服务是否还在使用 |
+| 序号 | 文件 | 理由 | 状态 |
+|------|------|------|------|
+| 7 | `components/landing/Features.tsx` | Landing Page 已改造为渲染模板 | ✅ 已删除 |
+| 8 | `components/landing/Hero.tsx` | 使用 rt-landing-page.ts + landing_pages 表 | ✅ 已删除 |
+| 9 | `components/landing/Footer.tsx` | 不再使用静态 React 组件 | ✅ 已删除 |
+
+### Phase 2A: 确认后删除（中风险）✅ 已完成
+
+| 序号 | 文件 | 审查结果 | 状态 |
+|------|------|----------|------|
+| 10 | `core/mcp/executor.ts` | 无调用，使用 `lib/chat-channel/executor.ts` | ✅ 已删除 |
+| 11 | `core/mcp/handlers/skill.ts` | 无调用，已迁移到服务端 | ✅ 已删除 |
+| 12 | `db/adapters/sqlite.ts` | 仅内部引用，无外部使用 | ✅ 已删除 |
+| 13 | `db/adapters/postgres.ts` | 仅内部引用，无外部使用 | ✅ 已删除 |
+| 14 | `db/config.ts` | 导出函数未被使用 | ✅ 已删除 |
+| 15 | `components/projects/ProjectMemberDialog.tsx` | 全项目无引用，已内联实现 | ✅ 已删除 |
+| 16 | `hooks/useSlotSync.ts` | 未使用，底层 `lib/slot-sync.ts` 保留 | ✅ 已删除 |
+| 17 | `hooks/useEntityData.ts` | 未使用，各组件直接订阅 Store | ✅ 已删除 |
+| 18 | `hooks/useGatewayData.ts` | 未使用，各组件直接订阅 Store | ✅ 已删除 |
+| 19 | `lib/openclaw/index.ts` | 无引用，同步服务已废弃 | ✅ 已删除 |
+
+### Phase 2B: 决策后删除/保留 ✅ 已完成
+
+| 序号 | 文件 | 决策 | 理由 |
+|------|------|------|------|
+| 20 | `lib/skill-access.ts` | **保留** | 需要 Skill 权限控制（多用户隔离）|
+| 21 | `lib/i18n/index.ts` | **删除** | 与 `lib/i18n.ts` 完全重复 |
 
 ### 建议保留并推广使用（有价值）
 
@@ -251,22 +264,32 @@
 
 ## 四、执行建议
 
-### Phase 1: 安全删除（立即执行）
+### Phase 1: 安全删除（已完成 ✅）
+
 ```bash
-# 6 个文件，低风险
+# 已删除 9 个文件，减少 981 行代码
 git rm components/markdown-editor/editor-styles.ts
 git rm components/studio/index.ts
 git rm lib/gateway-provider-types.ts
 git rm lib/gateway-provider.ts
 git rm lib/providers/openclaw-provider.ts
 git rm db/adapters/index.ts
+git rm components/landing/Features.tsx
+git rm components/landing/Hero.tsx
+git rm components/landing/Footer.tsx
 ```
 
-### Phase 2: 确认后删除（需要代码审查）
-1. 搜索 `executor.ts` 和 `skill.ts` 的调用
-2. 检查 `db/index.ts` 是否已覆盖适配器功能
-3. 检查项目页成员管理实现
-4. 检查渲染模板功能状态
+**提交记录**: `c7d046e refactor: 删除9个未使用文件（Phase 1）`
+
+### Phase 2A: 确认后删除（10个文件）✅ 已完成
+- [x] 搜索 `executor.ts` 和 `skill.ts` 的调用 — 无引用
+- [x] 检查 `db/index.ts` 是否已覆盖适配器功能 — 已覆盖
+- [x] 检查项目页成员管理实现 — 已内联
+- [x] 检查渲染模板功能状态 — 底层库保留
+
+### Phase 2B: 决策后处理（2个文件）✅ 已完成
+- [x] `lib/skill-access.ts` — 保留（需要 Skill 权限控制）
+- [x] `lib/i18n/index.ts` — 删除（与 `lib/i18n.ts` 重复）
 
 ### Phase 3: 推广使用（重构）
 1. 识别使用 `useFilteredList.ts` 的页面
@@ -282,10 +305,22 @@ git mv components/landing/* archive/landing/
 
 ---
 
-## 五、预期收益
+## 五、执行进度
+
+| Phase | 文件数 | 状态 | 提交 |
+|-------|--------|------|------|
+| Phase 1: 安全删除 | 9 个 | ✅ 已完成 | c7d046e |
+| Phase 2A: 确认后删除 | 10 个 | ✅ 已完成 | - |
+| Phase 2B: 决策后处理 | 2 个 | ✅ 已完成 | - |
+| Phase 3: 推广使用 | 3 个 | 📋 评估中 | - |
+| **剩余未使用文件** | **3 个** | - | - |
+
+**总计已删除：21 个文件**
+
+## 六、预期收益
 
 | 指标 | 现状 | 目标 |
 |------|------|------|
-| 未使用文件 | 24 个 | 0-5 个 |
-| 代码行数 | ~45,000 | ~42,000 (-7%) |
+| 未使用文件 | 24 → 15 个 | 0-5 个 |
+| 代码行数 | ~44,000 | ~40,000 (-11%) |
 | 架构清晰度 | 中等 | 高 |
