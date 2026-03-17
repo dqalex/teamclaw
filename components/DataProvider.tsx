@@ -18,9 +18,8 @@ import {
 } from '@/store';
 import { useGatewayStore } from '@/store/gateway.store';
 import { useChatStore } from '@/store/chat.store';
-import { sseHandlerRegistry } from '@/lib/sse-events';
+import { sseHandlerRegistry, dataLogger } from '@/lib';
 import type { ChatEventPayload } from '@/types';
-import { dataLogger } from '@/lib/logger';
 import { useSSEConnection } from '@/hooks/useSSEConnection';
 import { useGatewaySync } from '@/hooks/useGatewaySync';
 import { useStaleStatusCheck } from '@/hooks/useStaleStatusCheck';

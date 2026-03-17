@@ -8,7 +8,7 @@ import {
   normalizeToolName,
   isAllowedByPolicy,
   resolveToolProfilePolicy,
-} from '@/lib/tool-policy';
+} from '@/lib';
 import { Loader2, RefreshCw, Save, ToggleLeft, ToggleRight } from 'lucide-react';
 
 interface ToolsPanelProps {

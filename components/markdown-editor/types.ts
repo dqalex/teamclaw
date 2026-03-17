@@ -2,7 +2,7 @@
  * MarkdownEditor 类型定义
  */
 
-import type { SlotDef } from '@/lib/slot-sync';
+import type { SlotDef } from '@/lib';
 import type { ElementSelection } from '@/components/studio/HtmlPreview';
 
 // 选中文本信息

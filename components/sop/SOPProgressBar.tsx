@@ -6,7 +6,7 @@ import type { SOPStage, StageRecord, InputDef } from '@/db/schema';
 import clsx from 'clsx';
 import { Check, RotateCcw, SkipForward, Play, Palette, Send } from 'lucide-react';
 import { Input, Textarea } from '@/components/ui';
-import { SOP_STAGE_CONFIG, getStageConfig } from '@/lib/sop-config';
+import { SOP_STAGE_CONFIG, getStageConfig } from '@/lib';
 
 /** SOP 阶段操作参数 */
 interface SOPStageAction {

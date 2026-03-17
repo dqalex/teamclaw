@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import type { AgentListEntry } from '@/lib/gateway-client';
+import type { AgentListEntry } from '@/lib/gateway-types';
 import type { AgentHealthSummary } from '@/types';
 import clsx from 'clsx';
 
