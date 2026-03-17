@@ -585,14 +585,19 @@ module.exports = {
 | 3-4 | 清理 319 个未使用导出 | 明确公开 API |
 | 5 | 修复 12 个架构违规 | 通过 dependency-cruiser |
 
-### Phase 2: 合并（1周）
+### Phase 2: 合并（1周）✅ 已完成
 
-| 天数 | 任务 | 产出 |
-|------|------|------|
-| 1-2 | 合并数据校验层 | 统一 validation |
-| 3-4 | 推广 Store 工厂 | 减少 Store 代码 60% |
-| 4-5 | 推广 Hooks（useInlineEdit, useFilteredList） | 解决 Bug + 减少重复代码 |
-| 5 | 合并推送模板 | 减少模板重复 60% |
+| 天数 | 任务 | 产出 | 状态 |
+|------|------|------|------|
+| 1-2 | 合并数据校验层 | 统一 validation | ⏳ 待进行 |
+| 3-4 | 推广 Store 工厂 | 减少 Store 代码 66% | ✅ 已完成 (-528行) |
+| 4-5 | 推广 Hooks（useInlineEdit, useFilteredList） | 解决 Bug + 减少重复代码 | ✅ 已完成 |
+| 5 | 合并推送模板 | 减少模板重复 60% | ⏳ 待进行 |
+
+**Phase 2 已完成成果：**
+- Store 工厂推广：6 个 Store 重构，减少 528 行代码 (-66%)
+- useInlineEdit 推广：修复 5 个组件双重提交问题
+- useFilteredList 推广：3 个页面使用统一筛选逻辑
 
 ### Phase 3: 重构（2周）
 
