@@ -121,16 +121,16 @@
 | `db/adapters/*.ts` | 未使用（SQLite 直连） | **删除** |
 | `db/config.ts` | 孤立文件 | **删除** |
 | `hooks/useEntityData.ts` | 未使用 | **删除** |
-| `hooks/useFilteredList.ts` | 未使用 | **删除** |
 | `hooks/useGatewayData.ts` | 未使用 | **删除** |
-| `hooks/useInlineEdit.ts` | 未使用 | **删除** |
 | `hooks/useSlotSync.ts` | 未使用 | **删除** |
+| `hooks/useFilteredList.ts` | 未使用，但价值高 | **保留并推广** |
+| `hooks/useInlineEdit.ts` | 未使用，但价值高 | **保留并推广** |
+| `lib/store-factory.ts` | 未使用，但价值高 | **保留并推广** |
 | `lib/gateway-provider*.ts` | 未使用 | **删除** |
 | `lib/i18n/index.ts` | 未使用 | **删除** |
 | `lib/openclaw/index.ts` | 未使用 | **删除** |
 | `lib/providers/openclaw-provider.ts` | 未使用 | **删除** |
 | `lib/skill-access.ts` | 未使用 | **删除** |
-| `lib/store-factory.ts` | 未使用 | **删除或推广使用** |
 
 **脚本自动化：**
 ```bash
@@ -280,12 +280,99 @@ const useTaskStore = create((set, get) => ({
 
 // 修改后（工厂模式）:
 const useTaskStore = createCrudStore<Task, NewTask>({
-  basePath: '/api/tasks',
-  name: 'task',
-  filterKeys: ['projectId', 'memberId'],
-  optimisticUpdate: true,
+  api: tasksApi,
+  name: 'tasks',
+  autoAddOnCreate: true,
+  autoUpdateOnUpdate: true,
+  autoRemoveOnDelete: true,
 });
 ```
+
+**推广计划：**
+- 新 Store 优先使用 `createCrudStore`
+- 现有 Store 在重构时逐步迁移
+- 预计减少 Store 层 70% 重复代码（约 2000 行）
+
+**3. Hooks 推广使用**
+
+**3.1 useFilteredList - 统一列表筛选**
+
+```typescript
+// 适用场景：17 个页面/组件有列表筛选需求
+// 推广收益：减少 ~300 行重复代码
+
+// 修改前（各页面自行实现）:
+const filteredTasks = useMemo(() => {
+  return tasks
+    .filter(t => t.title.includes(searchQuery))
+    .filter(t => statusFilter ? t.status === statusFilter : true)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}, [tasks, searchQuery, statusFilter]);
+
+// 修改后（使用 Hook）:
+const { filteredItems, searchQuery, setSearchQuery, toggleFilter } = useFilteredList({
+  items: tasks,
+  config: {
+    searchFields: ['title', 'description'],
+    filters: {
+      pending: (t) => t.status === 'pending',
+      completed: (t) => t.status === 'completed',
+    },
+    defaultSortField: 'createdAt',
+    defaultSortDirection: 'desc',
+  },
+});
+```
+
+**推广页面清单：**
+- `app/tasks/page.tsx` - 任务列表筛选
+- `app/skills/page.tsx` - Skill 列表筛选
+- `app/deliveries/page.tsx` - 交付物列表筛选
+- `app/sop/page.tsx` - SOP 模板列表筛选
+- `app/users/page.tsx` - 用户列表筛选
+- `app/sessions/page.tsx` - Session 列表筛选
+- `components/GlobalSearch.tsx` - 全局搜索结果筛选
+
+**3.2 useInlineEdit - 解决 Enter/Blur 双重提交**
+
+```typescript
+// 适用场景：内联编辑输入框
+// 推广收益：解决已知 Bug，统一 UX
+
+// 修改前（各组件自行处理，容易出错）:
+const [submittedByEnter, setSubmittedByEnter] = useState(false);
+const handleBlur = (value: string) => {
+  if (!submittedByEnter) save(value);
+  setSubmittedByEnter(false);
+};
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (e.key === 'Enter') {
+    setSubmittedByEnter(true);
+    save(value);
+  }
+};
+
+// 修改后（使用 Hook）:
+const { handleKeyDown, handleBlur, isSaving } = useInlineEdit({
+  onSave: async (value) => {
+    await updateTitle(value);
+  },
+});
+```
+
+**推广组件清单：**
+- 文档标题编辑
+- 任务名称编辑
+- 成员名称编辑
+- 项目标题编辑
+- 任何内联输入框场景
+
+**推广优先级：**
+| 优先级 | 文件 | 预计成本 | 收益 |
+|--------|------|----------|------|
+| P0 | `useInlineEdit.ts` | 2-4h | 解决已知 Bug |
+| P1 | `useFilteredList.ts` | 4-8h | 减少 300 行重复 |
+| P2 | `store-factory.ts` | 逐步迁移 | 长期减少技术债 |
 
 **3. 推送模板合并**
 
@@ -504,6 +591,7 @@ module.exports = {
 |------|------|------|
 | 1-2 | 合并数据校验层 | 统一 validation |
 | 3-4 | 推广 Store 工厂 | 减少 Store 代码 60% |
+| 4-5 | 推广 Hooks（useInlineEdit, useFilteredList） | 解决 Bug + 减少重复代码 |
 | 5 | 合并推送模板 | 减少模板重复 60% |
 
 ### Phase 3: 重构（2周）
