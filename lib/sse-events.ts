@@ -20,6 +20,7 @@ export type SSEEventType =
   // 基础模块事件
   | 'openclaw_status'
   | 'task_update'
+  | 'comment_update'
   | 'delivery_update'
   | 'schedule_update'
   | 'document_update'
@@ -70,6 +71,7 @@ export const SSE_EVENT_TYPES: SSEEventType[] = [
   // 基础模块
   'openclaw_status',
   'task_update',
+  'comment_update',
   'delivery_update',
   'schedule_update',
   'document_update',
@@ -111,6 +113,7 @@ export const SSE_EVENT_CATEGORIES = {
   basic: [
     'openclaw_status',
     'task_update',
+    'comment_update',
     'delivery_update',
     'schedule_update',
     'document_update',
@@ -146,6 +149,7 @@ export const SSE_EVENT_REFRESH_MAP: Record<SSEEventType, string[]> = {
   // 基础模块
   openclaw_status: ['openclawStatus'],
   task_update: ['tasks', 'projects'],
+  comment_update: ['comments'],
   delivery_update: ['deliveries'],
   schedule_update: ['scheduledTasks'],
   document_update: ['documents'],

@@ -46,10 +46,19 @@ export type QueryActionType =
   | 'search_documents'
   | 'get_template'
   | 'list_templates'
-  | 'list_schedules';
+  | 'list_schedules'
+  | 'list_milestones'
+  | 'list_render_templates'
+  | 'get_render_template'
+  | 'get_sop_previous_output'
+  | 'get_sop_knowledge_layer'
+  | 'list_skills'
+  | 'list_my_deliveries'
+  | 'get_delivery';
 
 /** 写入类操作 */
 export type WriteActionType =
+  | 'create_task'
   | 'update_task_status'
   | 'add_comment'
   | 'create_check_item'
@@ -57,6 +66,10 @@ export type WriteActionType =
   | 'create_document'
   | 'update_document'
   | 'deliver_document'
+  | 'create_milestone'
+  | 'update_milestone'
+  | 'delete_milestone'
+  | 'invoke_skill'
   | 'review_delivery'
   | 'register_member';
 
@@ -116,6 +129,12 @@ export interface TaskParams {
   content?: string;
   text?: string;
   item_id?: string;
+  // create_task 相关参数
+  description?: string;
+  assignees?: string[];
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  deadline?: string;
+  milestone?: string;
 }
 
 /** 文档相关参数 */
@@ -134,6 +153,8 @@ export interface DeliveryParams {
   delivery_id?: string;
   review_status?: ReviewStatus;
   review_comment?: string;
+  delivery_status?: 'pending' | 'approved' | 'rejected' | 'revision_needed' | 'all';
+  limit?: number;
 }
 
 /** 状态相关参数 */
@@ -182,6 +203,7 @@ export interface SOPParams {
   output?: string;
   output_type?: string;
   layer?: string;
+  stage_id?: string;
   template_id?: string;
   category?: string;
   stages?: unknown[];
@@ -193,8 +215,29 @@ export interface SOPParams {
   html_template?: string;
 }
 
+/** 里程碑相关参数 */
+export interface MilestoneParams {
+  milestone_id?: string;
+  sort_order?: number;
+  due_date?: string;
+}
+
+/** Skill 相关参数 */
+export interface SkillParams {
+  skill_key?: string;
+  parameters?: Record<string, unknown>;
+  context?: {
+    project_id?: string;
+    document_id?: string;
+  };
+  // list_skills 参数
+  search?: string;
+  category?: string;
+  limit?: number;
+}
+
 /** 统一 Action 定义 */
-export interface Action extends BaseAction, TaskParams, DocumentParams, DeliveryParams, StatusParams, ScheduleParams, QueryParams, MemberParams, SOPParams {
+export interface Action extends BaseAction, TaskParams, DocumentParams, DeliveryParams, StatusParams, ScheduleParams, QueryParams, MemberParams, SOPParams, MilestoneParams, SkillParams {
   // 模板相关
   template_name?: string;
   

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMemberStore, useCommentStore } from '@/store';
 import { Textarea, Button } from '@/components/ui';
@@ -22,6 +22,11 @@ export default function TaskComments({ taskId, projectId }: TaskCommentsProps) {
   
   const [newComment, setNewComment] = useState('');
   const submitByEnterRef = useRef(false);
+  
+  // 组件挂载时加载评论
+  useEffect(() => {
+    fetchCommentsByTask(taskId);
+  }, [taskId, fetchCommentsByTask]);
   
   // 当前任务的评论
   const taskComments = useMemo(() =>

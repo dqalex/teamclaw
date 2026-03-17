@@ -171,19 +171,69 @@ metadata: { "openclaw": { "always": true, "emoji": "🧠", "homepage": "https://
 |------|---------|------|
 | `get_task` | task_id | 获取任务详情（包含附件、评论）|
 | `get_project` | project_id | 获取项目详情（成员、任务列表）|
+| `get_project_members` | project_id | 获取项目成员列表 |
 | `list_my_tasks` | - | 获取我的任务列表 |
 | `get_document` | document_id 或 title | 获取 Wiki 文档内容 |
+| `search_documents` | query | 搜索 Wiki 文档 |
+| `get_template` | template_name | 获取渲染后的模板内容 |
+| `list_templates` | - | 列出所有可用模板 |
+| `list_schedules` | - | 列出定时任务 |
+| `list_milestones` | project_id | 列出项目里程碑 |
+| `list_render_templates` | - | 列出渲染模板 |
+| `get_render_template` | template_id | 获取渲染模板详情 |
+| `get_sop_previous_output` | task_id | 获取 SOP 前序阶段产出 |
+| `get_sop_knowledge_layer` | task_id | 获取 SOP 知识层（L1-L4）|
 
 **写入类：**
 
 | 类型 | 必填字段 | 说明 |
 |------|---------|------|
+| `create_task` | title | 创建新任务，可分配给人类或其他 AI |
 | `update_task_status` | task_id, status | 更新任务状态（in_progress/completed/reviewing）|
 | `add_comment` | task_id, content | 添加评论 |
 | `create_check_item` | task_id, text | 创建检查项 |
+| `complete_check_item` | task_id, item_id | 完成检查项 |
 | `create_document` | title, content | 创建 Wiki 文档 |
+| `update_document` | document_id, content | 更新 Wiki 文档 |
 | `deliver_document` | title, platform | 提交交付 |
+| `create_milestone` | title, project_id | 创建里程碑 |
+| `update_milestone` | milestone_id | 更新里程碑 |
+| `delete_milestone` | milestone_id | 删除里程碑 |
+| `invoke_skill` | skill_key | 调用 Skill 执行任务 |
+
+**状态类：**
+
+| 类型 | 必填字段 | 说明 |
+|------|---------|------|
 | `update_status` | status | 更新 AI 实时状态面板 |
+| `set_queue` | queued_tasks | 设置任务队列 |
+| `set_do_not_disturb` | interruptible | 设置免打扰模式 |
+
+**SOP 执行类：**
+
+| 类型 | 必填字段 | 说明 |
+|------|---------|------|
+| `advance_sop_stage` | task_id | 推进到下一 SOP 阶段 |
+| `request_sop_confirm` | task_id, confirm_message, stage_output | 请求人工确认 |
+| `get_sop_context` | task_id | 获取 SOP 执行上下文 |
+| `save_stage_output` | task_id, output | 保存阶段产出 |
+| `update_knowledge` | document_id, content | 更新知识库 |
+
+**SOP 模板类：**
+
+| 类型 | 必填字段 | 说明 |
+|------|---------|------|
+| `create_sop_template` | name, stages | AI 自主创建 SOP 模板 |
+| `update_sop_template` | template_id | AI 修改/优化 SOP 模板 |
+| `create_render_template` | name, html_template | 创建渲染模板 |
+| `update_render_template` | template_id | 更新渲染模板 |
+
+**扩展类：**
+
+| 类型 | 必填字段 | 说明 |
+|------|---------|------|
+| `sync_identity` | - | 同步 AI 身份信息到 IDENTITY.md |
+| `get_mcp_token` | - | 获取 MCP API Token（用于调用 /api/mcp/external）|
 
 **重要**：任务推送场景没有独立的 `get_task`、`update_task_status` 等工具可用，**必须通过对话通道 Actions 调用**！
 
@@ -204,6 +254,9 @@ metadata: { "openclaw": { "always": true, "emoji": "🧠", "homepage": "https://
   "schedule_type": "daily",
   "schedule_time": "09:00"
 }}
+```
+
+> 注：`create_schedule` / `update_schedule` / `delete_schedule` 仍需 MCP API，Actions 暂不支持。
 ```
 
 ---

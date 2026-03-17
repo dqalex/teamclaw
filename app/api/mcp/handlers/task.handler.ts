@@ -7,8 +7,9 @@
 import { db } from '@/db';
 import { tasks, comments, taskLogs, members } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { generateLogId, generateCommentId, generateCheckItemId } from '@/lib/id';
+import { generateLogId, generateCommentId, generateCheckItemId, generateTaskId } from '@/lib/id';
 import { triggerMarkdownSync } from '@/lib/markdown-sync';
+import { eventBus } from '@/lib/event-bus';
 import { McpHandlerBase, type HandlerContext, type HandlerResult } from '@/core/mcp/handler-base';
 import type { Task, CheckItem } from '@/db/schema';
 
@@ -52,6 +53,8 @@ class TaskHandler extends McpHandlerBase<Task> {
     switch (action) {
       case 'get':
         return this.handleGetTask(params);
+      case 'create':
+        return this.handleCreateTask(params);
       case 'update_status':
         return this.handleUpdateTaskStatus(params);
       case 'add_comment':
@@ -65,6 +68,90 @@ class TaskHandler extends McpHandlerBase<Task> {
       default:
         return this.failure(`Unknown action: ${action}`);
     }
+  }
+
+  /**
+   * 创建任务
+   * 
+   * AI 可以通过对话信道创建任务，分配给人类或其他 AI
+   */
+  private async handleCreateTask(params: Record<string, unknown>): Promise<HandlerResult> {
+    const validation = this.validateRequired(params, 'title');
+    if (validation) return validation;
+
+    const {
+      title,
+      description,
+      project_id,
+      assignees,
+      priority = 'medium',
+      deadline,
+      milestone,
+      member_id,
+    } = params as {
+      title: string;
+      description?: string;
+      project_id?: string;
+      assignees?: string[];
+      priority?: 'low' | 'medium' | 'high' | 'urgent';
+      deadline?: string;
+      milestone?: string;
+      member_id?: string;
+    };
+
+    // 验证 priority 枚举值并映射到数据库支持的值
+    const priorityValidation = this.validateEnum(priority, 
+      ['low', 'medium', 'high', 'urgent'] as const, 
+      'priority'
+    );
+    if (priorityValidation) return priorityValidation;
+
+    // 映射 priority：urgent -> high（数据库不支持 urgent）
+    const dbPriority: 'low' | 'medium' | 'high' = priority === 'urgent' ? 'high' : (priority || 'medium');
+
+    // 创建任务
+    const taskId = generateTaskId();
+    const newTask = {
+      id: taskId,
+      title,
+      description: description || null,
+      projectId: project_id || null,
+      source: 'local' as const,
+      assignees: assignees || (member_id ? [member_id] : []),
+      creatorId: member_id || 'ai-agent',
+      status: 'todo' as const,
+      progress: 0,
+      priority: dbPriority,
+      deadline: deadline ? new Date(deadline) : null,
+      checkItems: [],
+      attachments: [],
+      parentTaskId: null,
+      crossProjects: [],
+      sopTemplateId: null,
+      currentStageId: null,
+      stageHistory: [],
+      sopInputs: null,
+      milestoneId: milestone || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    await db.insert(tasks).values(newTask);
+    
+    // 发射事件刷新前端
+    this.emitUpdate(taskId);
+    triggerMarkdownSync('teamclaw:tasks');
+    
+    this.log('Task created', taskId, { title, assignees });
+
+    return this.success('Task created', {
+      id: taskId,
+      title,
+      status: 'todo',
+      priority,
+      assignees: newTask.assignees,
+      url: buildTaskUrl(taskId),
+    });
   }
 
   /**
@@ -196,7 +283,14 @@ class TaskHandler extends McpHandlerBase<Task> {
         };
         await db.insert(comments).values(comment);
 
+        // 发射 task_update 事件（刷新任务列表）
         this.emitUpdate(task_id);
+        // 发射 comment_update 事件（刷新评论列表）
+        eventBus.emit({
+          type: 'comment_update',
+          resourceId: comment.id,
+          data: { taskId: task_id },
+        });
         this.log('Comment added', task_id);
 
         return this.success('Comment added', { comment });
@@ -419,4 +513,8 @@ export async function handleCompleteCheckItem(params: Record<string, unknown>) {
 
 export async function handleListMyTasks(params: Record<string, unknown>) {
   return taskHandler.execute({ ...params, action: 'list_my_tasks' }, {});
+}
+
+export async function handleCreateTask(params: Record<string, unknown>) {
+  return taskHandler.execute({ ...params, action: 'create' }, {});
 }

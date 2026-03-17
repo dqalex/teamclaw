@@ -14,6 +14,7 @@ import {
   useSOPTemplateStore,
   useRenderTemplateStore,
   useSkillStore,
+  useCommentStore,
 } from '@/store';
 import { useGatewayStore } from '@/store/gateway.store';
 import { useChatStore } from '@/store/chat.store';
@@ -42,6 +43,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const fetchOpenClawStatus = useOpenClawStatusStore((s) => s.fetchStatus);
   const fetchTasks = useTaskStore((s) => s.fetchTasks);
+  const fetchCommentsByTask = useCommentStore((s) => s.fetchCommentsByTask);
   const fetchDeliveries = useDeliveryStore((s) => s.fetchDeliveries);
   const fetchScheduledTasks = useScheduledTaskStore((s) => s.fetchTasks);
   const fetchDocuments = useDocumentStore((s) => s.fetchDocuments);
@@ -69,6 +71,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       // 基础模块事件
       openclaw_status: () => fetchOpenClawStatus(),
       task_update: () => { fetchTasks(); fetchProjects(); },
+      comment_update: (data?: unknown) => {
+        // data 包含 taskId，用于刷新特定任务的评论
+        const eventData = data as { taskId?: string } | undefined;
+        if (eventData?.taskId) {
+          fetchCommentsByTask(eventData.taskId);
+        }
+      },
       delivery_update: () => fetchDeliveries(),
       schedule_update: () => fetchScheduledTasks(),
       document_update: () => fetchDocuments(),
@@ -132,7 +141,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => sseHandlerRegistry.clear();
-  }, [fetchOpenClawStatus, fetchTasks, fetchProjects, fetchDeliveries, fetchScheduledTasks, fetchDocuments, fetchMembers, fetchMilestones, fetchChatSessions, refreshAgents, refreshSessions, refreshCronJobs, refreshSkills, refreshHealth, loadConfig, syncServerProxyStatus, dispatchChatEvent, fetchSOPTemplates, fetchRenderTemplates, fetchSkills]);
+  }, [fetchOpenClawStatus, fetchTasks, fetchProjects, fetchDeliveries, fetchScheduledTasks, fetchDocuments, fetchMembers, fetchMilestones, fetchChatSessions, refreshAgents, refreshSessions, refreshCronJobs, refreshSkills, refreshHealth, loadConfig, syncServerProxyStatus, dispatchChatEvent, fetchSOPTemplates, fetchRenderTemplates, fetchSkills, fetchCommentsByTask]);
 
   const sync = useCallback(() => {
     const now = Date.now();

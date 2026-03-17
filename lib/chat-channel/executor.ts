@@ -22,6 +22,7 @@ import {
   handleCreateCheckItem,
   handleCompleteCheckItem,
   handleListMyTasks,
+  handleCreateTask,
 } from '@/app/api/mcp/handlers/task.handler';
 import {
   handleGetDocument,
@@ -48,8 +49,8 @@ import {
 // delivery.handler 动态导入避免循环依赖
 // (delivery.handler -> server-gateway-client -> chat-channel/executor -> delivery.handler)
 async function getDeliveryHandlers() {
-  const { handleDeliverDocument, handleReviewDelivery } = await import('@/app/api/mcp/handlers/delivery.handler');
-  return { handleDeliverDocument, handleReviewDelivery };
+  const { handleDeliverDocument, handleReviewDelivery, handleListMyDeliveries, handleGetDelivery } = await import('@/app/api/mcp/handlers/delivery.handler');
+  return { handleDeliverDocument, handleReviewDelivery, handleListMyDeliveries, handleGetDelivery };
 }
 import { handleRegisterMember, handleGetMcpToken } from '@/app/api/mcp/handlers/member.handler';
 import {
@@ -66,7 +67,23 @@ import {
   handleUpdateSopTemplate,
   handleCreateRenderTemplate,
   handleUpdateRenderTemplate,
+  handleListRenderTemplates,
+  handleGetRenderTemplate,
 } from '@/app/api/mcp/handlers/sop.handler';
+import {
+  handleCreateMilestone,
+  handleListMilestones,
+  handleUpdateMilestone,
+  handleDeleteMilestone,
+} from '@/app/api/mcp/handlers/milestone.handler';
+import {
+  handleGetSopPreviousOutput,
+  handleGetSopKnowledgeLayer,
+} from '@/app/api/mcp/handlers/context.handler';
+import {
+  handleInvokeSkill,
+  handleListSkills,
+} from '@/app/api/mcp/handlers/skill.handler';
 
 // 导入 Store 刷新
 import { useTaskStore } from '@/store/task.store';
@@ -78,6 +95,7 @@ import { useScheduledTaskStore } from '@/store/schedule.store';
 import { useDeliveryStore } from '@/store/delivery.store';
 import { useSOPTemplateStore } from '@/store/sop-template.store';
 import { useRenderTemplateStore } from '@/store/render-template.store';
+import { useMilestoneStore } from '@/store/milestone.store';
 
 // ============================================================================
 // 执行器
@@ -223,6 +241,7 @@ type StoreType = 'tasks' | 'documents' | 'projects' | 'members' | 'deliveries' |
 function getStoreType(actionType: ActionType): StoreType | null {
   const map: Record<string, StoreType> = {
     // 任务相关
+    create_task: 'tasks',
     update_task_status: 'tasks',
     add_comment: 'tasks',
     create_check_item: 'tasks',
@@ -478,7 +497,79 @@ async function executeHandler(
       });
       break;
 
+    case 'list_milestones':
+      result = await handleListMilestones({ project_id: action.project_id });
+      break;
+
+    case 'list_render_templates':
+      result = await handleListRenderTemplates({
+        category: action.category,
+        status: action.status || 'active',
+      });
+      break;
+
+    case 'get_render_template':
+      result = await handleGetRenderTemplate({ template_id: action.template_id });
+      break;
+
+    case 'get_sop_previous_output':
+      result = await handleGetSopPreviousOutput({
+        task_id: action.task_id,
+        stage_id: action.stage_id,
+      });
+      break;
+
+    case 'get_sop_knowledge_layer':
+      result = await handleGetSopKnowledgeLayer({
+        task_id: action.task_id,
+        layer: action.layer || 'L1',
+      });
+      break;
+
+    case 'list_skills':
+      result = await handleListSkills({
+        category: action.category,
+        search: action.search,
+        limit: action.limit || 20,
+      });
+      break;
+
+    case 'list_my_deliveries': {
+      const { handleListMyDeliveries: listDeliveries } = await getDeliveryHandlers();
+      result = await listDeliveries({
+        status: action.delivery_status || 'all',
+        limit: action.limit || 20,
+        member_id: options.memberId,
+      });
+      break;
+    }
+
+    case 'get_delivery': {
+      const { handleGetDelivery: getDelivery } = await getDeliveryHandlers();
+      result = await getDelivery({
+        delivery_id: action.delivery_id,
+      });
+      break;
+    }
+
     // ============ 写入类 ============
+    
+    case 'create_task':
+      result = await handleCreateTask({
+        title: action.title,
+        description: action.description,
+        project_id: action.project_id,
+        assignees: action.assignees,
+        priority: action.priority,
+        deadline: action.deadline,
+        milestone: action.milestone,
+        member_id: options.memberId,
+      });
+      if (result.success && options.triggerRefresh !== false) {
+        await useTaskStore.getState().fetchTasks();
+        await useProjectStore.getState().fetchProjects();
+      }
+      break;
     
     case 'update_task_status':
       result = await handleUpdateTaskStatus({
@@ -560,7 +651,59 @@ async function executeHandler(
       }
       break;
     }
-    
+
+    case 'create_milestone':
+      result = await handleCreateMilestone({
+        title: action.title,
+        project_id: action.project_id,
+        description: action.description,
+        status: action.status,
+        due_date: action.due_date,
+        sort_order: action.sort_order,
+      });
+      if (result.success && options.triggerRefresh !== false) {
+        await useMilestoneStore.getState().fetchMilestones();
+      }
+      break;
+
+    case 'update_milestone':
+      result = await handleUpdateMilestone({
+        milestone_id: action.milestone_id,
+        title: action.title,
+        description: action.description,
+        status: action.status,
+        due_date: action.due_date,
+        sort_order: action.sort_order,
+      });
+      if (result.success && options.triggerRefresh !== false) {
+        await useMilestoneStore.getState().fetchMilestones();
+      }
+      break;
+
+    case 'delete_milestone':
+      result = await handleDeleteMilestone({ milestone_id: action.milestone_id });
+      if (result.success && options.triggerRefresh !== false) {
+        await useMilestoneStore.getState().fetchMilestones();
+        await useTaskStore.getState().fetchTasks();
+      }
+      break;
+
+    case 'invoke_skill':
+      result = await handleInvokeSkill({
+        skill_key: action.skill_key,
+        task_id: action.task_id,
+        parameters: action.parameters,
+        context: action.context,
+        member_id: options.memberId,
+      });
+      // Skill 执行可能产生多种结果，刷新相关 store
+      if (result.success && options.triggerRefresh !== false) {
+        await useTaskStore.getState().fetchTasks();
+        await useDocumentStore.getState().fetchDocuments();
+        await useDeliveryStore.getState().fetchDeliveries();
+      }
+      break;
+
     case 'review_delivery': {
       const { handleReviewDelivery } = await getDeliveryHandlers();
       result = await handleReviewDelivery({

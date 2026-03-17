@@ -118,7 +118,106 @@ export const ACTION_DEFINITIONS: Record<ActionType, ActionDefinition> = {
     requiresAuth: true,
   },
 
+  list_milestones: {
+    type: 'list_milestones',
+    name: '列出里程碑',
+    description: '获取项目的里程碑列表',
+    category: 'query',
+    requiredParams: ['project_id'],
+    optionalParams: [],
+    supportedInChat: true,
+    requiresAuth: true,
+  },
+
+  list_render_templates: {
+    type: 'list_render_templates',
+    name: '列出渲染模板',
+    description: '获取渲染模板列表',
+    category: 'query',
+    requiredParams: [],
+    optionalParams: ['category', 'status'],
+    supportedInChat: true,
+    requiresAuth: true,
+  },
+
+  get_render_template: {
+    type: 'get_render_template',
+    name: '获取渲染模板',
+    description: '获取渲染模板详情',
+    category: 'query',
+    requiredParams: ['template_id'],
+    optionalParams: [],
+    supportedInChat: true,
+    requiresAuth: true,
+  },
+
+  get_sop_previous_output: {
+    type: 'get_sop_previous_output',
+    name: '获取 SOP 前序产出',
+    description: '获取 SOP 任务的前序阶段产出',
+    category: 'query',
+    requiredParams: ['task_id'],
+    optionalParams: ['stage_id'],
+    supportedInChat: true,
+    requiresAuth: true,
+  },
+
+  get_sop_knowledge_layer: {
+    type: 'get_sop_knowledge_layer',
+    name: '获取 SOP 知识层',
+    description: '获取 SOP 任务的知识库层（L1-L4）',
+    category: 'query',
+    requiredParams: ['task_id'],
+    optionalParams: ['layer'],
+    supportedInChat: true,
+    requiresAuth: true,
+  },
+
+  list_skills: {
+    type: 'list_skills',
+    name: '列出 Skill',
+    description: '获取可用的 Skill 列表',
+    category: 'query',
+    requiredParams: [],
+    optionalParams: ['category', 'search', 'limit'],
+    supportedInChat: true,
+    requiresAuth: true,
+  },
+
+  list_my_deliveries: {
+    type: 'list_my_deliveries',
+    name: '列出我的交付',
+    description: '获取当前 AI 成员的交付物列表',
+    category: 'query',
+    requiredParams: [],
+    optionalParams: ['status', 'limit'],
+    supportedInChat: true,
+    requiresAuth: true,
+  },
+
+  get_delivery: {
+    type: 'get_delivery',
+    name: '获取交付详情',
+    description: '获取交付物详情，包括审核意见、关联文档、关联任务等信息',
+    category: 'query',
+    requiredParams: ['delivery_id'],
+    optionalParams: [],
+    supportedInChat: true,
+    requiresAuth: true,
+  },
+
   // ============ 写入类操作 ============
+  
+  create_task: {
+    type: 'create_task',
+    name: '创建任务',
+    description: '创建新任务。AI 可以通过此操作在协作中创建任务分配给人类或其他 AI',
+    category: 'write',
+    requiredParams: ['title'],
+    optionalParams: ['description', 'project_id', 'assignees', 'priority', 'deadline', 'milestone'],
+    supportedInChat: true,
+    requiresAuth: true,
+  },
   
   update_task_status: {
     type: 'update_task_status',
@@ -196,7 +295,51 @@ export const ACTION_DEFINITIONS: Record<ActionType, ActionDefinition> = {
     supportedInChat: true,
     requiresAuth: true,
   },
-  
+
+  create_milestone: {
+    type: 'create_milestone',
+    name: '创建里程碑',
+    description: '创建项目里程碑',
+    category: 'write',
+    requiredParams: ['title', 'project_id'],
+    optionalParams: ['description', 'status', 'due_date', 'sort_order'],
+    supportedInChat: true,
+    requiresAuth: true,
+  },
+
+  update_milestone: {
+    type: 'update_milestone',
+    name: '更新里程碑',
+    description: '更新里程碑信息',
+    category: 'write',
+    requiredParams: ['milestone_id'],
+    optionalParams: ['title', 'description', 'status', 'due_date', 'sort_order'],
+    supportedInChat: true,
+    requiresAuth: true,
+  },
+
+  delete_milestone: {
+    type: 'delete_milestone',
+    name: '删除里程碑',
+    description: '删除里程碑',
+    category: 'write',
+    requiredParams: ['milestone_id'],
+    optionalParams: [],
+    supportedInChat: true,
+    requiresAuth: true,
+  },
+
+  invoke_skill: {
+    type: 'invoke_skill',
+    name: '调用 Skill',
+    description: '调用 Skill 执行任务。Skill 是预定义的工作流程模板，可自动化完成复杂任务',
+    category: 'write',
+    requiredParams: ['skill_key'],
+    optionalParams: ['task_id', 'parameters', 'context'],
+    supportedInChat: true,
+    requiresAuth: true,
+  },
+
   review_delivery: {
     type: 'review_delivery',
     name: '审核交付',
@@ -250,7 +393,7 @@ export const ACTION_DEFINITIONS: Record<ActionType, ActionDefinition> = {
     category: 'status',
     requiredParams: ['interruptible'],
     optionalParams: ['member_id', 'reason'],
-    supportedInChat: false,
+    supportedInChat: true,
     requiresAuth: true,
   },
 
@@ -353,7 +496,7 @@ export const ACTION_DEFINITIONS: Record<ActionType, ActionDefinition> = {
     category: 'sop',
     requiredParams: ['name', 'stages'],
     optionalParams: ['category', 'system_prompt', 'required_tools', 'quality_checklist'],
-    supportedInChat: false,
+    supportedInChat: true,
     requiresAuth: true,
   },
   
@@ -364,7 +507,7 @@ export const ACTION_DEFINITIONS: Record<ActionType, ActionDefinition> = {
     category: 'sop',
     requiredParams: ['template_id'],
     optionalParams: ['name', 'stages', 'category', 'system_prompt'],
-    supportedInChat: false,
+    supportedInChat: true,
     requiresAuth: true,
   },
   
@@ -375,7 +518,7 @@ export const ACTION_DEFINITIONS: Record<ActionType, ActionDefinition> = {
     category: 'sop',
     requiredParams: ['name', 'html_template'],
     optionalParams: ['category', 'slots', 'sections'],
-    supportedInChat: false,
+    supportedInChat: true,
     requiresAuth: true,
   },
   
@@ -386,7 +529,7 @@ export const ACTION_DEFINITIONS: Record<ActionType, ActionDefinition> = {
     category: 'sop',
     requiredParams: ['template_id'],
     optionalParams: ['name', 'html_template', 'slots', 'sections'],
-    supportedInChat: false,
+    supportedInChat: true,
     requiresAuth: true,
   },
 
@@ -478,6 +621,8 @@ export function validateActionParams(
  */
 export function getActionDescription(type: ActionType, params: Record<string, unknown>): string {
   switch (type) {
+    case 'create_task':
+      return `创建任务: ${params.title}`;
     case 'update_task_status':
       return `更新任务状态: ${params.task_id} → ${params.status}`;
     case 'add_comment':
@@ -518,6 +663,30 @@ export function getActionDescription(type: ActionType, params: Record<string, un
       return `创建渲染模板: ${params.name}`;
     case 'update_render_template':
       return `更新渲染模板: ${params.template_id}`;
+    case 'create_milestone':
+      return `创建里程碑: ${params.title}`;
+    case 'update_milestone':
+      return `更新里程碑: ${params.milestone_id}`;
+    case 'delete_milestone':
+      return `删除里程碑: ${params.milestone_id}`;
+    case 'list_milestones':
+      return `获取里程碑列表: 项目 ${params.project_id}`;
+    case 'list_render_templates':
+      return `获取渲染模板列表`;
+    case 'get_render_template':
+      return `获取渲染模板: ${params.template_id}`;
+    case 'get_sop_previous_output':
+      return `获取 SOP 前序产出: 任务 ${params.task_id}`;
+    case 'get_sop_knowledge_layer':
+      return `获取 SOP 知识层: 任务 ${params.task_id}`;
+    case 'list_skills':
+      return `获取 Skill 列表${params.category ? ` (${params.category})` : ''}`;
+    case 'list_my_deliveries':
+      return `获取我的交付列表${params.status ? ` (${params.status})` : ''}`;
+    case 'get_delivery':
+      return `获取交付详情: ${params.delivery_id}`;
+    case 'invoke_skill':
+      return `调用 Skill: ${params.skill_key}`;
     default:
       return `执行操作: ${type}`;
   }

@@ -699,11 +699,39 @@ export class ServerGatewayClient {
    * 构建可用 action 列表提示
    */
   private buildAvailableActionsHint(): string {
-    const chatActions = Object.values(ACTION_DEFINITIONS)
-      .filter(def => def.supportedInChat)
-      .map(def => `"${def.type}"`)
-      .join(', ');
-    return `支持的 chat action type: ${chatActions}`;
+    const definitions = Object.values(ACTION_DEFINITIONS).filter(def => def.supportedInChat);
+
+    // 按类别分组
+    const byCategory = {
+      query: definitions.filter(d => d.category === 'query'),
+      write: definitions.filter(d => d.category === 'write'),
+      status: definitions.filter(d => d.category === 'status'),
+      sop: definitions.filter(d => d.category === 'sop'),
+      extension: definitions.filter(d => d.category === 'extension'),
+    };
+
+    const lines: string[] = [];
+    lines.push('支持的 chat action type:');
+
+    if (byCategory.query.length > 0) {
+      lines.push(`\n🔍 查询类: ${byCategory.query.map(d => `"${d.type}"`).join(', ')}`);
+    }
+    if (byCategory.write.length > 0) {
+      lines.push(`✏️ 写入类: ${byCategory.write.map(d => `"${d.type}"`).join(', ')}`);
+    }
+    if (byCategory.status.length > 0) {
+      lines.push(`📊 状态类: ${byCategory.status.map(d => `"${d.type}"`).join(', ')}`);
+    }
+    if (byCategory.sop.length > 0) {
+      lines.push(`📋 SOP类: ${byCategory.sop.map(d => `"${d.type}"`).join(', ')}`);
+    }
+    if (byCategory.extension.length > 0) {
+      lines.push(`🔧 扩展类: ${byCategory.extension.map(d => `"${d.type}"`).join(', ')}`);
+    }
+
+    lines.push('\n💡 详细使用说明请阅读 teamclaw skill 文档（skills/teamclaw/SKILL.md）');
+
+    return lines.join('\n');
   }
 
   /**
