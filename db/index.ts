@@ -1610,6 +1610,20 @@ Dashboard 预览
       sqlite.exec(`ALTER TABLE tasks ADD COLUMN source TEXT NOT NULL DEFAULT 'local'`);
     }
   }
+
+  // 确保 landing_pages 表有 rendered_html 列（v0.9.2: 预渲染 HTML 缓存）
+  if (tableNames.includes('landing_pages')) {
+    const landingCols = sqlite.prepare("PRAGMA table_info(landing_pages)").all() as { name: string }[];
+    const landingColNames = landingCols.map(c => c.name);
+    if (!landingColNames.includes('rendered_html')) {
+      console.log('[TeamClaw] Adding missing column "landing_pages.rendered_html"...');
+      try {
+        sqlite.exec(`ALTER TABLE landing_pages ADD COLUMN rendered_html TEXT`);
+      } catch (err) {
+        console.error('[TeamClaw] Failed to add landing_pages.rendered_html:', err);
+      }
+    }
+  }
 }
 
   // 确保新索引存在（V1 迁移后添加）
