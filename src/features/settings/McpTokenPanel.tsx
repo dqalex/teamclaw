@@ -136,11 +136,17 @@ export default function McpTokenPanel() {
       <div className="rounded-lg p-4 border" style={{ borderColor: 'var(--border)', background: 'var(--surface-hover)' }}>
         <div className="flex items-start gap-3">
           <Info className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--text-tertiary)' }} />
-          <div className="text-xs space-y-2 flex-1" style={{ color: 'var(--text-secondary)' }}>
+          <div className="text-xs space-y-3 flex-1" style={{ color: 'var(--text-secondary)' }}>
             <p><strong>{t('mcpToken.usageTitle')}</strong></p>
             <p>{t('mcpToken.usageDesc')}</p>
-            <div className="relative">
-              <pre className="font-mono p-3 rounded-lg bg-slate-100 dark:bg-slate-900 text-[11px] overflow-x-auto whitespace-pre-wrap break-all">
+
+            {/* REST API 配置 */}
+            <div>
+              <p className="text-[10px] mb-1" style={{ color: 'var(--text-tertiary)' }}>
+                <strong>REST API</strong> - 标准响应
+              </p>
+              <div className="relative">
+                <pre className="font-mono p-3 rounded-lg bg-slate-100 dark:bg-slate-900 text-[11px] overflow-x-auto whitespace-pre-wrap break-all">
 {`{
   "mcpServers": {
     "teamclaw": {
@@ -151,30 +157,77 @@ export default function McpTokenPanel() {
     }
   }
 }`}
-              </pre>
-              <button
-                onClick={() => {
-                  const config = JSON.stringify({
-                    mcpServers: {
-                      teamclaw: {
-                        url: `${window.location.origin}/api/mcp/external`,
-                        headers: {
-                          Authorization: "Bearer YOUR_TOKEN_HERE"
+                </pre>
+                <button
+                  onClick={() => {
+                    const config = JSON.stringify({
+                      mcpServers: {
+                        teamclaw: {
+                          url: `${window.location.origin}/api/mcp/external`,
+                          headers: {
+                            Authorization: "Bearer YOUR_TOKEN_HERE"
+                          }
                         }
                       }
-                    }
-                  }, null, 2);
-                  navigator.clipboard.writeText(config);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
-                }}
-                className="absolute top-2 right-2 px-2 py-1 rounded text-[10px] flex items-center gap-1 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
-                style={{ color: copied ? 'var(--success)' : 'var(--text-secondary)', background: 'var(--surface)' }}
-              >
-                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                {copied ? t('mcpToken.copied') : t('mcpToken.copy')}
-              </button>
+                    }, null, 2);
+                    navigator.clipboard.writeText(config);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="absolute top-2 right-2 px-2 py-1 rounded text-[10px] flex items-center gap-1 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                  style={{ color: copied ? 'var(--success)' : 'var(--text-secondary)', background: 'var(--surface)' }}
+                >
+                  {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  {copied ? t('mcpToken.copied') : t('mcpToken.copy')}
+                </button>
+              </div>
             </div>
+
+            {/* SSE Stream API 配置 */}
+            <div>
+              <p className="text-[10px] mb-1" style={{ color: 'var(--text-tertiary)' }}>
+                <strong>SSE Stream API</strong> - 支持实时进度反馈（智能体友好）
+              </p>
+              <div className="relative">
+                <pre className="font-mono p-3 rounded-lg bg-slate-100 dark:bg-slate-900 text-[11px] overflow-x-auto whitespace-pre-wrap break-all">
+{`{
+  "mcpServers": {
+    "teamclaw": {
+      "url": "${typeof window !== 'undefined' ? window.location.origin : 'https://your-teamclaw.com'}/api/mcp/external/stream",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN_HERE"
+      },
+      "transportType": "streamable-http"
+    }
+  }
+}`}
+                </pre>
+                <button
+                  onClick={() => {
+                    const config = JSON.stringify({
+                      mcpServers: {
+                        teamclaw: {
+                          url: `${window.location.origin}/api/mcp/external/stream`,
+                          headers: {
+                            Authorization: "Bearer YOUR_TOKEN_HERE"
+                          },
+                          transportType: "streamable-http"
+                        }
+                      }
+                    }, null, 2);
+                    navigator.clipboard.writeText(config);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="absolute top-2 right-2 px-2 py-1 rounded text-[10px] flex items-center gap-1 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                  style={{ color: copied ? 'var(--success)' : 'var(--text-secondary)', background: 'var(--surface)' }}
+                >
+                  {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  {copied ? t('mcpToken.copied') : t('mcpToken.copy')}
+                </button>
+              </div>
+            </div>
+
             <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
               {t('mcpToken.replaceTokenHint')}
             </p>
