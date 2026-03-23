@@ -293,9 +293,13 @@ echo "[6/8] 复制静态文件和配置到 standalone..."
 
 if [ "${DEPLOY_MODE}" = "remote" ]; then
   # 远程模式使用 scp/rsync
-  run_cmd "cd $REMOTE_PATH && cp -r .next/static .next/standalone/.next/"
+  run_cmd "cd $REMOTE_PATH && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/"
   run_cmd "cd $REMOTE_PATH && cp -r public .next/standalone/ 2>/dev/null || echo 'No public directory'"
   run_cmd "cd $REMOTE_PATH && mkdir -p .next/standalone/node_modules/chokidar && cp -r node_modules/chokidar/* .next/standalone/node_modules/chokidar/ 2>/dev/null || true"
+
+  # 验证静态文件复制成功
+  STATIC_CHUNKS_COUNT=$(run_cmd "ls $REMOTE_PATH/.next/standalone/.next/static/chunks/ 2>/dev/null | wc -l")
+  echo "  ✓ 静态 chunks 文件数: $STATIC_CHUNKS_COUNT"
 
   # 关键：standalone 读取 .env.local，不是 .env
   if run_cmd "test -f $REMOTE_PATH/.env"; then
@@ -307,10 +311,14 @@ if [ "${DEPLOY_MODE}" = "remote" ]; then
 else
   # 本地模式直接复制
   mkdir -p .next/standalone/.next/
-  cp -r .next/static .next/standalone/.next/ 2>/dev/null || true
+  cp -r .next/static .next/standalone/.next/
   cp -r public .next/standalone/ 2>/dev/null || echo 'No public directory'
   mkdir -p .next/standalone/node_modules/chokidar
   cp -r node_modules/chokidar/* .next/standalone/node_modules/chokidar/ 2>/dev/null || true
+
+  # 验证静态文件复制成功
+  STATIC_CHUNKS_COUNT=$(ls .next/standalone/.next/static/chunks/ 2>/dev/null | wc -l)
+  echo "  ✓ 静态 chunks 文件数: $STATIC_CHUNKS_COUNT"
 
   # 关键：standalone 读取 .env.local，不是 .env
   if [ -f ".env" ]; then
