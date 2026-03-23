@@ -25,7 +25,7 @@ Most AI tools today work in a "chatbox mode" — you ask, it answers. But real t
 
 ## Key Features
 
-### 🔐 Multi-User Authentication (v3.0 NEW)
+### 🔐 Multi-User Authentication (v1.0 NEW)
 
 Enterprise-ready multi-user system with role-based access control:
 - **Registration & Login**: Secure authentication with password hashing
@@ -33,7 +33,7 @@ Enterprise-ready multi-user system with role-based access control:
 - **User-Member Binding**: Each user automatically gets a linked team member profile
 - **First-Run Initialization**: Guided setup wizard for new deployments
 
-### 🔧 Skill Management System (v3.0 NEW)
+### 🔧 Skill Management System (v1.0 NEW)
 
 Complete AI Skill lifecycle management:
 - **Skill Registration & Validation**: Auto-validate SKILL.md structure compliance
@@ -42,7 +42,7 @@ Complete AI Skill lifecycle management:
 - **Snapshot Monitoring**: Periodic detection of Agent Skill changes with risk alerts
 - **Sensitive Content Detection**: Auto-flag Skills containing sensitive information
 
-### ✅ Universal Approval System (v3.0 NEW)
+### ✅ Universal Approval System (v1.0 NEW)
 
 Unified multi-scenario approval workflow:
 - **4 Approval Types**: Skill publish, Skill install, Project join, Sensitive action
@@ -89,10 +89,10 @@ Complete English and Chinese coverage, with all UI text managed through i18n.
 
 | Module | Description |
 |--------|-------------|
-| **Authentication** | User registration/login, role-based access control (v3.0) |
-| **Initialization** | First-run setup wizard, admin account creation (v3.0) |
-| **Skill Management** | Skill registration/approval/trust/snapshot monitoring (v3.0) |
-| **Approval System** | Universal approval workflow, multi-scenario support (v3.0) |
+| **Authentication** | User registration/login, role-based access control (v1.0) |
+| **Initialization** | First-run setup wizard, admin account creation (v1.0) |
+| **Skill Management** | Skill registration/approval/trust/snapshot monitoring (v1.0) |
+| **Approval System** | Universal approval workflow, multi-scenario support (v1.0) |
 | **Dashboard** | System overview, Gateway connection management, quick actions |
 | **Task Board** | Swimlane + four-column kanban, drag-and-drop, milestone management |
 | **Projects** | Project CRUD, member assignment, progress tracking |
@@ -103,7 +103,7 @@ Complete English and Chinese coverage, with all UI text managed through i18n.
 | **Skills** | Skill enable / install / configure |
 | **Scheduler** | Visual scheduling, Cron expressions, execution history |
 | **Deliveries** | Submit & review workflow, version management |
-| **Members** | Human / AI members, user-member binding (v3.0) |
+| **Members** | Human / AI members, user-member binding (v1.0) |
 | **Chat** | Floating panel, multi-mode conversation, MCP commands |
 | **OpenClaw Sync** | Bi-directional Markdown sync, version history, conflict resolution |
 
@@ -259,7 +259,7 @@ teamclaw/
 
 | Document | Description |
 |----------|-------------|
-| [v3.0 Release Notes](docs/blog/v3-0-release.md) | Version 3.0 release announcement |
+| [v1.0 Release Notes](docs/blog/v1.0-release.md) | Version 1.0 release announcement |
 
 
 ## Deployment Troubleshooting
