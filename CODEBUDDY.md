@@ -1,5 +1,37 @@
 # CODEBUDDY.md This file provides guidance to CodeBuddy when working with code in this repository.
 
+## Installed Skills (预加载记忆)
+
+开发任务启动时自动加载以下 Skill 的核心规则：
+
+### dev-workflow（标准化开发流程）
+
+所有开发任务必须遵循 7 步流程：需求确认 → 建立测试 → 需求实现 → 测试验证 → 文档维护 → Review → 发布确认。
+- Bug 修复使用专用流程：BF-1 全链路追踪 → BF-2 复现测试 → BF-3 影响分析 → BF-4 端到端验证
+- 测试前置：先写测试（功能测试必须 FAIL），再实现（PASS）
+- 必须全量影响面扫描（grep 所有使用方，P0/P1 一并修复）
+- 禁止手动部署，只用 `scripts/deploy.sh`
+
+### code-standards-check（开发规范检查）
+
+`/code-standards-check` 执行 7 模块自动检查：文件组织、API Route、Store、前端组件、i18n、安全、模块拆分。
+- 超大文件阈值：400 行警告、800 行阻塞
+- Store 规则：`createAsync`/`updateAsync` 用 API 返回值更新本地，`deleteAsync` 先 await 再移除
+- 前端规则：编辑防抖 500ms、内联编辑防 Enter/Blur 双触发、派生列表 useMemo、useEffect 依赖精确
+
+### knowledge-crystallizer（知识结晶化）
+
+`/knowledge-crystallizer` 从 Bug 日志提取经验模式，自动生成/更新 Rule。
+- Rule 生成阈值：同一模式 ≥2 次建议、同一模块 ≥3 次建议、白屏/服务不可用强制
+- 知识闭环：Bug 发生 → `bug-knowledge-accumulation` 自动记录 → 本 Skill 分析结晶 → Rule 自动加载
+
+### pre-release-review（发布前检查）
+
+`/pre-release-review` 执行 10 阶段检测：构建 → 编码规范 → 安全 → API → Store → 前端 → i18n → 技术债 → 双模式兼容 → 报告。
+- 构建失败则阻塞发布
+- 问题分级：CRITICAL（阻塞）/ HIGH（建议修复）/ MEDIUM（可延后）/ LOW（不阻塞）
+- 紧急发布快速 Review：Phase 1+3+9+4 必做，其他可延后
+
 ## Commands
 
 ### Development

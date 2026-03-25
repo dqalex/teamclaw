@@ -226,50 +226,45 @@ else
 fi
 
 # 5.2 处理 argon2 原生模块
-# argon2 需要 C 编译器（gcc）和 Python 2 进行 node-gyp 构建
-# 如果没有，先尝试安装；否则使用预编译版本
+# argon2 的 npm rebuild 即使没有编译器也不报错，需要验证实际产出
 echo "[5.2/8] 处理 argon2 原生模块..."
-REBUILD_ARGON2=$(run_cmd "cd $REMOTE_PATH && npm rebuild argon2 2>&1")
-if echo "$REBUILD_ARGON2" | grep -qi "error\|failed"; then
-  echo "  argon2 编译失败，尝试使用预编译版本..."
 
-  # 检测目标平台的预编译文件
-  echo "  查找预编译文件: ${PLATFORM}-${ARCH_MAP}"
+# 优先使用预编译文件（更可靠，不需要 gcc）
+PREBUILD_COPIED=false
+PREBUILTS=(
+  "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-${ARCH_MAP}/argon2.${ARCH_MAP}.${LIBC}.node"
+  "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-x64/argon2.x64.${LIBC}.node"
+  "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-${ARCH_MAP}/argon2.${LIBC}.node"
+  "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-x64/argon2.${LIBC}.node"
+)
 
-  # 创建 standalone 的 argon2 目录结构
-  run_cmd "mkdir -p $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release"
-
-  # 尝试多种可能的预编译文件路径
-  # argon2 预编译文件命名规则：<platform>-<arch>/argon2.<arch>.<libc>.node 或 <platform>-<arch>/argon2.<libc>.node
-  PREBUILDS=(
-    "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-${ARCH_MAP}/argon2.${ARCH_MAP}.${LIBC}.node"
-    "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-x64/argon2.x64.${LIBC}.node"
-    "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-${ARCH_MAP}/${PLATFORM}.${ARCH_MAP}.${LIBC}.node"
-    "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-${ARCH_MAP}/argon2.${LIBC}.node"
-    "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-x64/argon2.${LIBC}.node"
-  )
-
-  COPIED=false
-  for PREBUILD in "${PREBUILDS[@]}"; do
-    if run_cmd "test -f $PREBUILD"; then
-      run_cmd "cp $PREBUILD $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release/argon2.node"
-      echo "  ✓ 已复制: $PREBUILD"
-      COPIED=true
-      break
-    fi
-  done
-
-  if [ "$COPIED" = false ]; then
-    echo "  ⚠️  未找到 $PLATFORM-$ARCH_MAP ($LIBC) 的预编译文件"
-    echo "  可用的预编译平台:"
-    run_cmd "find $REMOTE_PATH/node_modules/argon2/prebuilds -type d -maxdepth 1 | xargs -I {} basename {}"
-    echo "  "
-    echo "  解决方案:"
-    echo "  1. 安装编译工具链: yum install -y gcc python2 make"
-    echo "  2. 或升级到 64 位系统（推荐）"
+for PB in "${PREBUILTS[@]}"; do
+  if run_cmd "test -f $PB"; then
+    # 复制到主目录和 standalone
+    run_cmd "mkdir -p $REMOTE_PATH/node_modules/argon2/build/Release"
+    run_cmd "cp $PB $REMOTE_PATH/node_modules/argon2/build/Release/argon2.node"
+    run_cmd "mkdir -p $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release"
+    run_cmd "cp $PB $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release/argon2.node"
+    echo "  ✓ 预编译文件已复制: $(basename $(dirname $PB))/$(basename $PB)"
+    PREBUILD_COPIED=true
+    break
   fi
-else
-  echo "  ✓ argon2 编译成功"
+done
+
+if [ "$PREBUILD_COPIED" = false ]; then
+  # 回退：尝试 npm rebuild
+  echo "  未找到预编译文件，尝试 npm rebuild..."
+  run_cmd "cd $REMOTE_PATH && npm rebuild argon2 2>&1 | tail -3"
+  # 验证是否实际生成了 .node 文件
+  if run_cmd "test -f $REMOTE_PATH/node_modules/argon2/build/Release/argon2.node"; then
+    run_cmd "mkdir -p $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release"
+    run_cmd "cp $REMOTE_PATH/node_modules/argon2/build/Release/argon2.node $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release/"
+    echo "  ✓ argon2 编译成功"
+  else
+    echo "  ❌ argon2 编译失败且无可用预编译文件"
+    echo "  请安装编译工具链: yum install -y gcc make python3"
+    exit 1
+  fi
 fi
 
 # 5.3 重建 standalone 目录的 better-sqlite3
