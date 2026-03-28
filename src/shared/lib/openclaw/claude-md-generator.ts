@@ -47,7 +47,7 @@ function getStaticTemplate(): string {
 
     if (existsSync(templatePath)) {
       cachedTemplate = readFileSync(templatePath, 'utf-8');
-      console.log(`[claude-md] 已加载模板: ${templatePath}`);
+      console.debug(`[claude-md] 已加载模板: ${templatePath}`);
       return cachedTemplate;
     }
   } catch (error) {
@@ -265,7 +265,7 @@ export async function refreshClaudeMd(workspaceId: string): Promise<boolean> {
       writeFileSync(claudePath, fullContent, 'utf-8');
     }
 
-    console.log(`[claude-md] CLAUDE.md 已更新: ${claudePath}`);
+    console.debug(`[claude-md] CLAUDE.md 已更新: ${claudePath}`);
     return true;
   } catch (error) {
     console.error('[claude-md] 更新 CLAUDE.md 失败:', error);

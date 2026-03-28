@@ -35,8 +35,14 @@ export const tagColors = [
 
 export const typeOrder = ['guide', 'reference', 'note', 'report', 'decision', 'scheduled_task', 'task_list', 'blog', 'other'];
 
+// --- 配置 ---
+export interface UseWikiPageOptions {
+  /** 限制只显示指定类型的文档，undefined 表示全部 */
+  allowedTypes?: string[];
+}
+
 // --- 主 Hook ---
-export function useWikiPage() {
+export function useWikiPage(options?: UseWikiPageOptions) {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const typeLabels: Record<string, string> = {
@@ -128,8 +134,11 @@ export function useWikiPage() {
   }, [selectedDoc?.renderTemplateId, renderTemplates]);
 
   const filteredDocs = useMemo(() => {
-    // 所有文档类型都在 wiki 中显示
     let docs = documents;
+    // 按 allowedTypes 过滤文档类型
+    if (options?.allowedTypes) {
+      docs = docs.filter(d => options.allowedTypes!.includes(d.type));
+    }
     if (currentProjectId && currentProject) {
       docs = docs.filter(d =>
         d.projectId === currentProjectId ||
@@ -144,16 +153,17 @@ export function useWikiPage() {
       docs = docs.filter(d => d.title.toLowerCase().includes(term));
     }
     return docs;
-  }, [documents, currentProjectId, currentProject, searchTerm, filterType]);
+  }, [documents, currentProjectId, currentProject, searchTerm, filterType, options?.allowedTypes]);
 
   const docsByType = useMemo(() => {
     const groups: Record<string, Document[]> = {};
-    for (const tp of typeOrder) {
+    const order = options?.allowedTypes || typeOrder;
+    for (const tp of order) {
       const typed = filteredDocs.filter(d => d.type === tp);
       if (typed.length > 0) groups[tp] = typed;
     }
     return groups;
-  }, [filteredDocs]);
+  }, [filteredDocs, options?.allowedTypes]);
 
   const docRelations = useMemo(() => {
     if (!selectedDoc) return null;
@@ -295,6 +305,11 @@ export function useWikiPage() {
   const handleCreateDoc = useCallback(async () => {
     if (!newDocTitle.trim()) return;
     let template = DOC_TEMPLATES[newDocType] || '';
+    // 博客模板：标题动态填充
+    if (newDocType === 'blog') {
+      const today = new Date().toISOString().slice(0, 10);
+      template = `# ${newDocTitle.trim()}\n\n> 发布日期：${today}  \n> 版本：  \n> 标签：\n\n---\n\n`;
+    }
     if (newDocRenderTemplateId) {
       const rt = renderTemplates.find(t => t.id === newDocRenderTemplateId);
       if (rt?.mdTemplate) template = rt.mdTemplate;
@@ -303,7 +318,7 @@ export function useWikiPage() {
       title: newDocTitle.trim(),
       content: template,
       source: newDocSource,
-      type: newDocType as any,
+      type: newDocType as 'guide' | 'reference' | 'report' | 'note' | 'decision' | 'scheduled_task' | 'task_list' | 'blog' | 'other',
       projectId: currentProjectId || undefined,
       projectTags: newDocProjectTags,
       renderTemplateId: newDocRenderTemplateId || undefined,
@@ -397,7 +412,7 @@ export function useWikiPage() {
 
   const handleTypeChange = useCallback(async (newType: string) => {
     if (!selectedDoc || selectedDoc.type === newType) return;
-    await updateDocumentAsync(selectedDoc.id, { type: newType as any });
+    await updateDocumentAsync(selectedDoc.id, { type: newType as 'guide' | 'reference' | 'report' | 'note' | 'decision' | 'scheduled_task' | 'task_list' | 'blog' | 'other' });
   }, [selectedDoc, updateDocumentAsync]);
 
   const handleRenderTemplateChange = useCallback(async (templateId: string) => {
@@ -405,7 +420,7 @@ export function useWikiPage() {
     const newTemplateId = templateId || null;
     const updates: Record<string, unknown> = { renderTemplateId: newTemplateId };
     if (!newTemplateId) { updates.htmlContent = null; updates.slotData = null; }
-    await updateDocumentAsync(selectedDoc.id, updates as any);
+    await updateDocumentAsync(selectedDoc.id, updates);
   }, [selectedDoc, updateDocumentAsync]);
 
   const handleSubmitDelivery = useCallback(async () => {

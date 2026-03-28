@@ -28,6 +28,18 @@ import {
   handleGetSopPreviousOutput, handleGetSopKnowledgeLayer,
   // Skill 工具（v3.0 SkillHub 集成）
   handleInvokeSkill, handleListSkills,
+  // Skill 进化引擎（v1.1 Phase 1B）
+  handleRecordSkillExperience, handleGetSkillExperiences, handlePromoteSkillExperience,
+  // Workflow Engine（v1.1 Phase 2）
+  start_workflow, advance_workflow, pause_workflow, resume_workflow, replay_workflow_from, create_workflow, get_workflow_status,
+  // Marketplace（v1.1 Phase 3）
+  handleListMarketplaceServices, handleSubmitServiceRating, handleSubscribeService, handleActivateService,
+  // Proactive Engine + Observability（v1.1 Phase 4）
+  handleGetProactiveEvents, handleDismissProactiveEvent, handleGetAnalyticsSummary,
+  // Payment + Credits（v1.1 Phase 5）
+  handlePurchaseCredits, handleGetConsumerBalance,
+  // OKR（v1.1 Phase 5B - 存根）
+  handleCreateObjective, handleUpdateKeyResult, handleGetObjectives,
 } from './index';
 
 // v1.0.1: 包装 deprecated 工具，添加运行时警告
@@ -108,6 +120,34 @@ export const TOOL_HANDLERS: Record<TeamClawToolName, (params: Record<string, unk
   // Skill 工具（v3.0 SkillHub 集成）
   invoke_skill: handleInvokeSkill,
   list_skills: handleListSkills,
+  // Skill 进化引擎（v1.1 Phase 1B）
+  record_skill_experience: handleRecordSkillExperience,
+  get_skill_experiences: handleGetSkillExperiences,
+  promote_skill_experience: handlePromoteSkillExperience,
+  // Workflow Engine（v1.1 Phase 2）
+  start_workflow,
+  advance_workflow,
+  pause_workflow,
+  resume_workflow,
+  replay_workflow_from,
+  create_workflow,
+  get_workflow_status,
+  // Marketplace（v1.1 Phase 3）
+  list_marketplace_services: handleListMarketplaceServices,
+  submit_service_rating: handleSubmitServiceRating,
+  subscribe_service: handleSubscribeService,
+  activate_service: handleActivateService,
+  // Proactive Engine + Observability（v1.1 Phase 4）
+  get_proactive_events: handleGetProactiveEvents,
+  dismiss_proactive_event: handleDismissProactiveEvent,
+  get_analytics_summary: handleGetAnalyticsSummary,
+  // Payment + Credits（v1.1 Phase 5）
+  purchase_credits: handlePurchaseCredits,
+  get_consumer_balance: handleGetConsumerBalance,
+  // OKR（v1.1 Phase 5B - 存根）
+  create_objective: handleCreateObjective,
+  update_key_result: handleUpdateKeyResult,
+  get_objectives: handleGetObjectives,
 };
 
 /** 需要自动注入 member_id 的工具列表 */

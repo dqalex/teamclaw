@@ -86,7 +86,7 @@ export function subscribeChatStream(
     if (process.env.NODE_ENV === 'development' && !isMatch) {
       // 只记录与预期 key 相似但不匹配的事件
       if (normalizedReceived.includes(expectedKey.split(':')[1] || '')) {
-        console.log('[useChatStream] SessionKey mismatch:', {
+        console.debug('[useChatStream] SessionKey mismatch:', {
           expected: expectedKey,
           received: payload.sessionKey,
           state: payload.state,

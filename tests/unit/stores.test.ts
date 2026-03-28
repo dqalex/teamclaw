@@ -3,6 +3,7 @@
  * 测试 task/document/member/project store 的核心逻辑
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Task, Document, MemberWithRole, Project } from '@/db/schema';
 
 // ============================================================
 // Mock API 响应
@@ -44,6 +45,112 @@ vi.mock('zustand/middleware', () => ({
 }));
 
 // ============================================================
+// 测试数据工厂 — 保证必填字段完整
+// ============================================================
+const now = new Date();
+
+const makeTask = (overrides: Record<string, unknown> = {}): Task => ({
+  id: 't1',
+  title: 'Test Task',
+  description: null,
+  source: 'local',
+  projectId: null,
+  milestoneId: null,
+  assignees: [],
+  creatorId: 'test-user',
+  status: 'todo',
+  priority: 'medium',
+  progress: null,
+  deadline: null,
+  checkItems: [],
+  attachments: [],
+  parentTaskId: null,
+  crossProjects: [],
+  sopTemplateId: null,
+  currentStageId: null,
+  stageHistory: [],
+  sopInputs: null,
+  estimatedValue: null,
+  actualValue: null,
+  tokenCost: 0,
+  costBreakdown: null,
+  workflowId: null,
+  workflowRunId: null,
+  createdAt: now,
+  updatedAt: now,
+  ...overrides,
+} as Task);
+
+const makeDoc = (overrides: Record<string, unknown> = {}): Document => ({
+  id: 'd1',
+  title: 'Test Doc',
+  content: '',
+  source: 'local',
+  type: 'note',
+  projectId: null,
+  projectTags: [],
+  externalPlatform: null,
+  externalId: null,
+  externalUrl: null,
+  mcpServer: null,
+  lastSync: null,
+  syncMode: null,
+  links: [],
+  backlinks: [],
+  renderMode: null,
+  renderTemplateId: null,
+  htmlContent: null,
+  slotData: null,
+  createdAt: now,
+  updatedAt: now,
+  ...overrides,
+} as Document);
+
+const makeMember = (overrides: Record<string, unknown> = {}): MemberWithRole => ({
+  id: 'm1',
+  name: 'Test Member',
+  type: 'human',
+  email: null,
+  avatar: null,
+  online: false,
+  userId: null,
+  teamId: null,
+  openclawName: null,
+  openclawDeployMode: null,
+  openclawEndpoint: null,
+  openclawConnectionStatus: null,
+  openclawLastHeartbeat: null,
+  openclawGatewayUrl: null,
+  openclawAgentId: null,
+  openclawApiToken: null,
+  openclawModel: null,
+  openclawEnableWebSearch: false,
+  openclawTemperature: null,
+  configSource: 'manual',
+  executionMode: 'chat_only',
+  experienceTaskCount: 0,
+  experienceTaskTypes: null,
+  experienceTools: null,
+  userRole: null,
+  createdAt: now,
+  updatedAt: now,
+  ...overrides,
+} as MemberWithRole);
+
+const makeProject = (overrides: Record<string, unknown> = {}): Project => ({
+  id: 'p1',
+  name: 'Test Project',
+  description: null,
+  source: 'local',
+  ownerId: null,
+  visibility: 'private',
+  knowledgeConfig: null,
+  createdAt: now,
+  updatedAt: now,
+  ...overrides,
+} as Project);
+
+// ============================================================
 // Task Store Tests
 // ============================================================
 describe('useTaskStore', () => {
@@ -65,34 +172,29 @@ describe('useTaskStore', () => {
   });
 
   describe('本地操作', () => {
-    const now = new Date();
-    
     it('setTasks 应该更新任务列表', () => {
       const { setTasks } = useTaskStore.getState();
-      setTasks([{ id: 't1', title: 'Task 1', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now }]);
+      setTasks([makeTask()]);
       expect(useTaskStore.getState().tasks).toHaveLength(1);
     });
 
     it('addTask 应该追加任务', () => {
       const { setTasks, addTask } = useTaskStore.getState();
       setTasks([]);
-      addTask({ id: 't1', title: 'New', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now });
+      addTask(makeTask());
       expect(useTaskStore.getState().tasks).toHaveLength(1);
     });
 
     it('updateTask 应该更新指定任务', () => {
       const { setTasks, updateTask } = useTaskStore.getState();
-      setTasks([{ id: 't1', title: 'Old', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now }]);
+      setTasks([makeTask({ title: 'Old' })]);
       updateTask('t1', { title: 'New' });
       expect(useTaskStore.getState().tasks[0].title).toBe('New');
     });
 
     it('deleteTask 应该删除指定任务', () => {
       const { setTasks, deleteTask } = useTaskStore.getState();
-      setTasks([
-        { id: 't1', title: 'Task 1', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now },
-        { id: 't2', title: 'Task 2', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now },
-      ]);
+      setTasks([makeTask({ id: 't1' }), makeTask({ id: 't2' })]);
       deleteTask('t1');
       expect(useTaskStore.getState().tasks).toHaveLength(1);
       expect(useTaskStore.getState().tasks[0].id).toBe('t2');
@@ -100,13 +202,11 @@ describe('useTaskStore', () => {
   });
 
   describe('派生查询', () => {
-    const now = new Date();
-    
     it('getTasksByProject 应该返回项目任务', () => {
       const { setTasks, getTasksByProject } = useTaskStore.getState();
       setTasks([
-        { id: 't1', projectId: 'p1', title: 'P1 Task', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now },
-        { id: 't2', projectId: 'p2', title: 'P2 Task', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now },
+        makeTask({ id: 't1', projectId: 'p1', title: 'P1 Task' }),
+        makeTask({ id: 't2', projectId: 'p2', title: 'P2 Task' }),
       ]);
       const result = getTasksByProject('p1');
       expect(result).toHaveLength(1);
@@ -116,8 +216,8 @@ describe('useTaskStore', () => {
     it('getTasksByMember 应该返回成员任务', () => {
       const { setTasks, getTasksByMember } = useTaskStore.getState();
       setTasks([
-        { id: 't1', assignees: ['m1'], title: 'M1 Task', status: 'todo', priority: 'medium', source: 'local', creatorId: 'test', createdAt: now, updatedAt: now },
-        { id: 't2', assignees: ['m2'], title: 'M2 Task', status: 'todo', priority: 'medium', source: 'local', creatorId: 'test', createdAt: now, updatedAt: now },
+        makeTask({ id: 't1', assignees: ['m1'], title: 'M1 Task' }),
+        makeTask({ id: 't2', assignees: ['m2'], title: 'M2 Task' }),
       ]);
       const result = getTasksByMember('m1');
       expect(result).toHaveLength(1);
@@ -126,8 +226,8 @@ describe('useTaskStore', () => {
     it('getGlobalTasks 应该返回无项目任务', () => {
       const { setTasks, getGlobalTasks } = useTaskStore.getState();
       setTasks([
-        { id: 't1', projectId: null, title: 'Global', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now },
-        { id: 't2', projectId: 'p1', title: 'Project', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now },
+        makeTask({ id: 't1', projectId: null, title: 'Global' }),
+        makeTask({ id: 't2', projectId: 'p1', title: 'Project' }),
       ]);
       const result = getGlobalTasks();
       expect(result).toHaveLength(1);
@@ -137,8 +237,8 @@ describe('useTaskStore', () => {
     it('getCrossProjectTasks 应该返回跨项目任务', () => {
       const { setTasks, getCrossProjectTasks } = useTaskStore.getState();
       setTasks([
-        { id: 't1', crossProjects: ['p1', 'p2'], title: 'Cross', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now },
-        { id: 't2', crossProjects: ['p3'], title: 'Other', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now },
+        makeTask({ id: 't1', crossProjects: ['p1', 'p2'], title: 'Cross' }),
+        makeTask({ id: 't2', crossProjects: ['p3'], title: 'Other' }),
       ]);
       const result = getCrossProjectTasks('p1');
       expect(result).toHaveLength(1);
@@ -146,10 +246,8 @@ describe('useTaskStore', () => {
   });
 
   describe('异步操作', () => {
-    const now = new Date();
-    
     it('fetchTasks 成功应该更新 tasks', async () => {
-      const mockTasks = [{ id: 't1', title: 'Task', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now }];
+      const mockTasks = [makeTask()];
       (tasksApi.getAll as ReturnType<typeof vi.fn>).mockResolvedValue({ data: mockTasks, error: undefined });
 
       const { fetchTasks } = useTaskStore.getState();
@@ -169,32 +267,32 @@ describe('useTaskStore', () => {
     });
 
     it('createTask 成功应该添加任务', async () => {
-      const newTask = { id: 't1', title: 'New', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now };
+      const newTask = makeTask();
       (tasksApi.create as ReturnType<typeof vi.fn>).mockResolvedValue({ data: newTask, error: undefined });
 
       const { createTask } = useTaskStore.getState();
-      const result = await createTask({ title: 'New', status: 'todo', priority: 'medium' });
+      const result = await createTask({ title: 'New', creatorId: 'test-user', status: 'todo', priority: 'medium' });
 
       expect(result).toEqual(newTask);
       expect(useTaskStore.getState().tasks).toContainEqual(newTask);
     });
 
     it('updateTaskAsync 成功应该更新任务', async () => {
-      const updated = { id: 't1', title: 'Updated', status: 'done', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now };
+      const updated = makeTask({ title: 'Updated', status: 'completed' });
       (tasksApi.update as ReturnType<typeof vi.fn>).mockResolvedValue({ data: updated, error: undefined });
       
-      useTaskStore.setState({ tasks: [{ id: 't1', title: 'Old', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now }] });
+      useTaskStore.setState({ tasks: [makeTask()] });
 
       const { updateTaskAsync } = useTaskStore.getState();
-      const result = await updateTaskAsync('t1', { status: 'done' });
+      const result = await updateTaskAsync('t1', { status: 'completed' });
 
       expect(result).toBe(true);
-      expect(useTaskStore.getState().tasks[0].status).toBe('done');
+      expect(useTaskStore.getState().tasks[0].status).toBe('completed');
     });
 
     it('deleteTaskAsync 成功应该删除任务', async () => {
       (tasksApi.delete as ReturnType<typeof vi.fn>).mockResolvedValue({ data: { success: true }, error: undefined });
-      useTaskStore.setState({ tasks: [{ id: 't1', title: 'Task', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now }] });
+      useTaskStore.setState({ tasks: [makeTask()] });
 
       const { deleteTaskAsync } = useTaskStore.getState();
       const result = await deleteTaskAsync('t1');
@@ -229,8 +327,8 @@ describe('useDocumentStore', () => {
     it('getDocumentsByProject 应该返回项目文档', () => {
       const { setDocuments, getDocumentsByProject } = useDocumentStore.getState();
       setDocuments([
-        { id: 'd1', projectId: 'p1', title: 'Doc 1', content: '', createdAt: 0, updatedAt: 0 },
-        { id: 'd2', projectId: 'p2', title: 'Doc 2', content: '', createdAt: 0, updatedAt: 0 },
+        makeDoc({ id: 'd1', projectId: 'p1', title: 'Doc 1' }),
+        makeDoc({ id: 'd2', projectId: 'p2', title: 'Doc 2' }),
       ]);
       const result = getDocumentsByProject('p1');
       expect(result).toHaveLength(1);
@@ -239,8 +337,8 @@ describe('useDocumentStore', () => {
     it('getDocumentsByProjectTag 应该返回标签文档', () => {
       const { setDocuments, getDocumentsByProjectTag } = useDocumentStore.getState();
       setDocuments([
-        { id: 'd1', projectTags: ['project-alpha'], title: 'Doc 1', content: '', createdAt: 0, updatedAt: 0 },
-        { id: 'd2', projectTags: ['project-beta'], title: 'Doc 2', content: '', createdAt: 0, updatedAt: 0 },
+        makeDoc({ id: 'd1', projectTags: ['project-alpha'], title: 'Doc 1' }),
+        makeDoc({ id: 'd2', projectTags: ['project-beta'], title: 'Doc 2' }),
       ]);
       const result = getDocumentsByProjectTag('project-alpha');
       expect(result).toHaveLength(1);
@@ -249,8 +347,8 @@ describe('useDocumentStore', () => {
     it('getUntaggedDocuments 应该返回无标签文档', () => {
       const { setDocuments, getUntaggedDocuments } = useDocumentStore.getState();
       setDocuments([
-        { id: 'd1', projectId: null, projectTags: [], title: 'Untagged', content: '', createdAt: 0, updatedAt: 0 },
-        { id: 'd2', projectId: 'p1', title: 'Tagged', content: '', createdAt: 0, updatedAt: 0 },
+        makeDoc({ id: 'd1', projectId: null, projectTags: [], title: 'Untagged' }),
+        makeDoc({ id: 'd2', projectId: 'p1', title: 'Tagged' }),
       ]);
       const result = getUntaggedDocuments();
       expect(result).toHaveLength(1);
@@ -259,7 +357,7 @@ describe('useDocumentStore', () => {
 
   describe('异步操作', () => {
     it('fetchDocuments 成功应该更新 documents', async () => {
-      const mockDocs = [{ id: 'd1', title: 'Doc', content: '', createdAt: 0, updatedAt: 0 }];
+      const mockDocs = [makeDoc()];
       (documentsApi.getAll as ReturnType<typeof vi.fn>).mockResolvedValue({ data: mockDocs, error: undefined });
 
       const { fetchDocuments } = useDocumentStore.getState();
@@ -294,8 +392,8 @@ describe('useMemberStore', () => {
     it('getHumanMembers 应该返回人类成员', () => {
       const { setMembers, getHumanMembers } = useMemberStore.getState();
       setMembers([
-        { id: 'm1', name: 'Human', type: 'human', createdAt: 0, updatedAt: 0 },
-        { id: 'm2', name: 'AI', type: 'ai', createdAt: 0, updatedAt: 0 },
+        makeMember({ id: 'm1', name: 'Human', type: 'human' }),
+        makeMember({ id: 'm2', name: 'AI', type: 'ai' }),
       ]);
       const result = getHumanMembers();
       expect(result).toHaveLength(1);
@@ -305,8 +403,8 @@ describe('useMemberStore', () => {
     it('getAIMembers 应该返回 AI 成员', () => {
       const { setMembers, getAIMembers } = useMemberStore.getState();
       setMembers([
-        { id: 'm1', name: 'Human', type: 'human', createdAt: 0, updatedAt: 0 },
-        { id: 'm2', name: 'AI', type: 'ai', createdAt: 0, updatedAt: 0 },
+        makeMember({ id: 'm1', name: 'Human', type: 'human' }),
+        makeMember({ id: 'm2', name: 'AI', type: 'ai' }),
       ]);
       const result = getAIMembers();
       expect(result).toHaveLength(1);
@@ -346,7 +444,7 @@ describe('useProjectStore', () => {
   describe('本地操作', () => {
     it('setProjects 应该设置 initialized', () => {
       const { setProjects } = useProjectStore.getState();
-      setProjects([{ id: 'p1', name: 'Project', createdAt: 0, updatedAt: 0 }]);
+      setProjects([makeProject()]);
       expect(useProjectStore.getState().initialized).toBe(true);
     });
 
@@ -359,7 +457,7 @@ describe('useProjectStore', () => {
 
   describe('异步操作', () => {
     it('fetchProjects 成功应该更新 projects', async () => {
-      const mockProjects = [{ id: 'p1', name: 'Project', createdAt: 0, updatedAt: 0 }];
+      const mockProjects = [makeProject()];
       (projectsApi.getAll as ReturnType<typeof vi.fn>).mockResolvedValue({ data: mockProjects, error: undefined });
 
       const { fetchProjects } = useProjectStore.getState();
@@ -370,7 +468,7 @@ describe('useProjectStore', () => {
     });
 
     it('createProject 成功应该添加项目', async () => {
-      const newProject = { id: 'p1', name: 'New Project', createdAt: 0, updatedAt: 0 };
+      const newProject = makeProject({ name: 'New Project' });
       (projectsApi.create as ReturnType<typeof vi.fn>).mockResolvedValue({ data: newProject, error: undefined });
 
       const { createProject } = useProjectStore.getState();
@@ -382,7 +480,7 @@ describe('useProjectStore', () => {
 
     it('deleteProjectAsync 成功应该删除项目', async () => {
       (projectsApi.delete as ReturnType<typeof vi.fn>).mockResolvedValue({ data: { success: true }, error: undefined });
-      useProjectStore.setState({ projects: [{ id: 'p1', name: 'Project', createdAt: 0, updatedAt: 0 }] });
+      useProjectStore.setState({ projects: [makeProject()] });
 
       const { deleteProjectAsync } = useProjectStore.getState();
       const result = await deleteProjectAsync('p1');

@@ -317,7 +317,7 @@ export abstract class McpHandlerBase<TResource = unknown> {
     const resource = resourceId ? ` (${resourceId})` : '';
     const suffix = details ? `: ${JSON.stringify(details)}` : '';
     
-    console.log(`${prefix} ${action}${resource}${suffix}`);
+    console.debug(`${prefix} ${action}${resource}${suffix}`);
   }
 
   /**

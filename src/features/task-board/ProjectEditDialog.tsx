@@ -170,7 +170,7 @@ export function ProjectEditDialog({
           title: `${name || '项目'} 知识库`,
           content,
           projectId,
-          source: 'internal',
+          source: 'local',
           type: 'guide',
         }),
       });

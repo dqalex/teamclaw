@@ -23,7 +23,7 @@ const getAllowedOrigins = (): string[] => {
 const MAX_BODY_SIZE = 1024 * 1024;
 
 // 不需要 CSRF 检查的 API 路径（如外部 MCP 调用使用 Bearer token 认证、内部初始化接口）
-const CSRF_EXEMPT_PATHS = ['/api/mcp/external', '/api/heartbeat/start'];
+const CSRF_EXEMPT_PATHS = ['/api/mcp/external', '/api/heartbeat/start', '/api/consumer/auth'];
 
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();

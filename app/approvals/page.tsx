@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Button, Badge, Card, CardContent } from '@/shared/ui';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
+
 import { useApprovalStore } from '@/domains/approval';
 import { useAuthStore } from '@/domains';
 import clsx from 'clsx';
@@ -153,35 +153,6 @@ export default function ApprovalsPage() {
 
   return (
     <AppShell>
-      <Header
-        title={t('approvals.title', '审批管理')}
-        actions={
-          <div className="flex items-center gap-2">
-            {/* 状态过滤 */}
-            <div className="flex items-center rounded-lg border" style={{ borderColor: 'var(--border)' }}>
-              {(['all', 'pending', 'approved', 'rejected'] as const).map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setStatusFilter(status)}
-                  className={clsx(
-                    'px-3 py-1.5 text-xs font-medium transition-colors',
-                    status === 'all' && 'rounded-l-lg',
-                    status === 'rejected' && 'rounded-r-lg',
-                    statusFilter === status && 'bg-primary-50 text-primary-600 dark:bg-primary-950'
-                  )}
-                  style={statusFilter !== status ? { color: 'var(--text-tertiary)' } : undefined}
-                >
-                  {t(`approvals.status.${status}`, status === 'all' ? t('approvals.status.all') : t(`approvals.status.${status}`))}
-                  <span className="ml-1 text-[10px] opacity-60">
-                    {status === 'all' ? stats.total : stats[status]}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        }
-      />
-
       <div className="flex-1 overflow-auto p-4">
         {error && (
           <div className="mb-4 p-3 bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm rounded-lg">

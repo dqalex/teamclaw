@@ -240,7 +240,7 @@ function SOPProgressBar({
                     </span>
                     {/* 阶段类型标签 */}
                     <span className="text-[9px] px-1 py-0.5 rounded flex-shrink-0" style={{ background: 'var(--surface-hover)', color: 'var(--text-tertiary)' }}>
-                      {t(`sop.stageType${stage.type.charAt(0).toUpperCase() + stage.type.slice(1).replace(/_([a-z])/g, (_, c) => c.toUpperCase())}` as any)}
+                      {t(`sop.stageType${stage.type.charAt(0).toUpperCase() + stage.type.slice(1).replace(/_([a-z])/g, (_, c) => c.toUpperCase())}` as Parameters<typeof t>[0])}
                     </span>
                     {/* render 阶段标记 */}
                     {stage.type === 'render' && (

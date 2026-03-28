@@ -108,17 +108,17 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       gateway_agent_update: () => refreshAgents(),
       gateway_session_update: () => refreshSessions(),
       gateway_chat_event: (data?: unknown) => {
-        console.log('[DataProvider] gateway_chat_event received:', data);
+        console.debug('[DataProvider] gateway_chat_event received:', data);
         if (data) {
           const eventData = data as { gatewayEvent?: string; payload?: ChatEventPayload };
           if (eventData.payload) {
-            console.log('[DataProvider] Dispatching chat event:', eventData.payload.state, eventData.payload.sessionKey);
+            console.debug('[DataProvider] Dispatching chat event:', eventData.payload.state, eventData.payload.sessionKey);
             dispatchChatEvent(eventData.payload);
             if (eventData.payload.state === 'final') {
               refreshSessions();
             }
           } else {
-            console.log('[DataProvider] No payload in chat event');
+            console.debug('[DataProvider] No payload in chat event');
           }
         }
       },
@@ -258,7 +258,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       });
       
       // 启动 .teamclaw-index 心跳（服务端幂等，仅首次生效）
-      fetch('/api/heartbeat/start', { method: 'POST' }).catch(() => {});
+      fetch('/api/heartbeat/start', { method: 'POST' }).catch(() => {
+        // 心跳启动失败非关键，静默忽略
+      });
     }
   }, [hydrated, initialize, connectSSE, syncGateway]);
 

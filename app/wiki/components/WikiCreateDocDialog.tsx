@@ -37,6 +37,10 @@ interface WikiCreateDocDialogProps {
   typeLabels: Record<string, string>;
   onSubmit: () => void;
   onClose: () => void;
+  /** 简化模式：仅显示标题输入（用于博客等固定类型页面） */
+  simpleMode?: boolean;
+  /** 排除的文档类型 */
+  excludedTypes?: string[];
 }
 
 export default function WikiCreateDocDialog({
@@ -48,8 +52,12 @@ export default function WikiCreateDocDialog({
   templatePreviewMode, setTemplatePreviewMode,
   projects, renderTemplates, typeLabels,
   onSubmit, onClose,
+  simpleMode = false,
+  excludedTypes,
 }: WikiCreateDocDialogProps) {
   const { t } = useTranslation();
+
+  const displayTypes = (excludedTypes ? typeOrder.filter(t => !excludedTypes.includes(t)) : typeOrder);
 
   // 使用 useInlineEdit Hook 处理标题输入的 Enter/Blur 双重提交问题
   const { handleKeyDown, handleBlur, isSaving } = useInlineEdit({
@@ -79,9 +87,9 @@ export default function WikiCreateDocDialog({
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-labelledby="create-doc-title">
-      <div className={clsx('rounded-2xl shadow-float flex', hasTemplate ? 'w-[840px] max-h-[85vh]' : 'w-96')} style={{ background: 'var(--surface)' }}>
+      <div className={clsx('rounded-2xl shadow-float flex', hasTemplate && !simpleMode ? 'w-[840px] max-h-[85vh]' : 'w-96')} style={{ background: 'var(--surface)' }}>
         {/* 左侧：表单 */}
-        <div className={clsx('p-6 flex flex-col', hasTemplate ? 'w-[380px] flex-shrink-0 border-r overflow-y-auto' : 'w-full')} style={hasTemplate ? { borderColor: 'var(--border)' } : undefined}>
+        <div className={clsx('p-6 flex flex-col', hasTemplate && !simpleMode ? 'w-[380px] flex-shrink-0 border-r overflow-y-auto' : 'w-full')} style={hasTemplate && !simpleMode ? { borderColor: 'var(--border)' } : undefined}>
           <h3 id="create-doc-title" className="font-display font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>{t('wiki.createDocTitle')}</h3>
           <div className="space-y-3 flex-1">
             <div>
@@ -90,6 +98,8 @@ export default function WikiCreateDocDialog({
                 onKeyDown={e => handleKeyDown(e, newDocTitle)} onBlur={() => handleBlur(newDocTitle)}
                 placeholder={t('wiki.docTitlePlaceholder')} autoFocus disabled={isSaving.current} />
             </div>
+            {!simpleMode && (
+              <>
             <div>
               <label className="text-xs mb-1 block" style={{ color: 'var(--text-tertiary)' }}>{t('wiki.source')}</label>
               <div className="flex gap-2">
@@ -104,7 +114,7 @@ export default function WikiCreateDocDialog({
             <div>
               <label className="text-xs mb-1 block" style={{ color: 'var(--text-tertiary)' }}>{t('wiki.docType')}</label>
               <div className="flex flex-wrap gap-1.5">
-                {typeOrder.map(tp => {
+                {displayTypes.map(tp => {
                   const Icon = typeIcons[tp];
                   return (
                     <button key={tp} onClick={() => setNewDocType(tp)}
@@ -162,6 +172,8 @@ export default function WikiCreateDocDialog({
                 </p>
               </div>
             )}
+              </>
+            )}
           </div>
           <div className="flex justify-end gap-2 mt-4">
             <Button size="sm" variant="secondary" onClick={() => { onClose(); setNewDocProjectTags([]); setNewDocType('note'); setNewDocRenderTemplateId(''); }}>{t('common.cancel')}</Button>
@@ -169,7 +181,7 @@ export default function WikiCreateDocDialog({
           </div>
         </div>
         {/* 右侧：模板预览 */}
-        {hasTemplate && selectedRt && (
+        {!simpleMode && hasTemplate && selectedRt && (
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             <div className="flex items-center gap-1 px-3 py-2 border-b" style={{ borderColor: 'var(--border)', background: 'var(--surface-hover)' }}>
               <Eye className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />

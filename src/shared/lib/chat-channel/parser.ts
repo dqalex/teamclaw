@@ -234,7 +234,7 @@ function validateAndConvertAction(rawAction: unknown): { action: Action | null; 
   if (fuzzyResult.autoFix && fuzzyResult.matched) {
     // 自动修正：相似度够高，直接使用修正后的 type
     type = fuzzyResult.matched;
-    console.log(`[chat-channel/parser] 自动修正 action type: "${rawType}" → "${type}" (距离: ${fuzzyResult.distance})`);
+    console.debug(`[chat-channel/parser] 自动修正 action type: "${rawType}" → "${type}" (距离: ${fuzzyResult.distance})`);
     
     if (!isChatSupported(type)) {
       console.warn(`[chat-channel/parser] Action ${type} not supported in chat channel`);

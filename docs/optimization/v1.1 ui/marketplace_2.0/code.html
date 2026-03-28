@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Command Center - Marketplace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary": "#003640",
+              "surface-dim": "#10131c",
+              "surface-container-lowest": "#0a0e16",
+              "surface": "#10131c",
+              "outline-variant": "#464554",
+              "inverse-primary": "#494bd6",
+              "surface-container-highest": "#31353e",
+              "secondary-container": "#03b5d3",
+              "on-surface-variant": "#c7c4d7",
+              "surface-variant": "#31353e",
+              "primary-container": "#8083ff",
+              "background": "#10131c",
+              "tertiary-fixed-dim": "#d0bcff",
+              "on-primary-fixed": "#07006c",
+              "tertiary-container": "#a078ff",
+              "surface-tint": "#c0c1ff",
+              "on-secondary-container": "#00424e",
+              "tertiary": "#d0bcff",
+              "secondary-fixed-dim": "#4cd7f6",
+              "secondary-fixed": "#acedff",
+              "primary-fixed-dim": "#c0c1ff",
+              "surface-container-low": "#181c24",
+              "on-error": "#690005",
+              "on-tertiary-fixed-variant": "#5516be",
+              "on-tertiary-container": "#340080",
+              "tertiary-fixed": "#e9ddff",
+              "on-secondary-fixed-variant": "#004e5c",
+              "primary": "#c0c1ff",
+              "secondary": "#4cd7f6",
+              "surface-bright": "#353943",
+              "outline": "#908fa0",
+              "on-primary-container": "#0d0096",
+              "on-tertiary-fixed": "#23005c",
+              "primary-fixed": "#e1e0ff",
+              "on-background": "#e0e2ee",
+              "error-container": "#93000a",
+              "surface-container-high": "#262a33",
+              "on-primary-fixed-variant": "#2f2ebe",
+              "error": "#ffb4ab",
+              "on-error-container": "#ffdad6",
+              "on-primary": "#1000a9",
+              "surface-container": "#1c2028",
+              "inverse-on-surface": "#2d303a",
+              "on-tertiary": "#3c0091",
+              "on-surface": "#e0e2ee",
+              "on-secondary-fixed": "#001f26",
+              "inverse-surface": "#e0e2ee"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Plus Jakarta Sans"],
+              "label": ["Plus Jakarta Sans"],
+              "jetbrains": ["JetBrains Mono"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-header {
+        backdrop-filter: blur(12px);
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+</head>
+<body class="bg-surface-dim text-on-surface font-body selection:bg-secondary/30">
+<!-- TopNavBar Shell -->
+<nav class="fixed top-0 w-full z-50 bg-slate-950/60 backdrop-blur-xl border-b border-white/10 shadow-[0_8px_32_rgba(0,0,0,0.36)] flex items-center justify-between px-6 h-16 w-full font-plus-jakarta text-sm tracking-tight duration-200 ease-in-out">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Command Center</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-slate-400 hover:text-slate-200 transition-colors" href="#">Workflow</a>
+<a class="text-cyan-400 border-b-2 border-cyan-400 pb-1 transition-colors" href="#">Marketplace</a>
+<a class="text-slate-400 hover:text-slate-200 transition-colors" href="#">Dashboard</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:bg-white/5 transition-colors rounded-lg">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-400 hover:bg-white/5 transition-colors rounded-lg">
+<span class="material-symbols-outlined">bolt</span>
+</button>
+<button class="p-2 text-slate-400 hover:bg-white/5 transition-colors rounded-lg">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-white/10 ml-2">
+<img alt="User Profile" data-alt="professional headshot of a person with neutral lighting and minimalist gray studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAAUIR95_-0BJzCn652YKjrpUqSXGAYkqttEYNKaMgA1tZa7Re-kC5HY7uOHLCxec6GkY7y-wJOGmtmsWKI4eEv8aJnXUcbyqKFSmEch0NSU-uEPJAbf-0uYW111fKu0-HcEwX5tsLjgMh6qd5-vJSQTaM2Z1oeaBnUaNGHr_L25iG5hAKZrsoF-MRygmLhOtkns1do8_oE3HDueA_u3SyEqYjqLNQ6I4JJIfsKII60vSQ8gTjTOSyNRzW18dV6Ny7T9CI9kEo3jjX"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar Shell (Web) -->
+<aside class="hidden md:flex fixed left-0 top-0 h-full w-[240px] z-40 bg-[#10131c] flex flex-col h-full py-8 transition-all duration-300">
+<div class="px-6 mb-10 mt-16">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">terminal</span>
+</div>
+<div>
+<div class="font-plus-jakarta font-black text-white text-sm">Deep Command</div>
+<div class="font-jetbrains text-[10px] uppercase tracking-widest text-secondary">AI Node: Active</div>
+</div>
+</div>
+</div>
+<div class="flex-1 px-4 space-y-1">
+<div class="px-4 py-2 font-jetbrains text-xs uppercase tracking-widest text-slate-500 mb-2">Primary Core</div>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white/5 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">account_tree</span>
+<span class="font-jetbrains text-xs uppercase tracking-widest">Editor</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-indigo-500/10 text-indigo-400 border-r-2 border-indigo-500 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">hub</span>
+<span class="font-jetbrains text-xs uppercase tracking-widest">Services</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white/5 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="font-jetbrains text-xs uppercase tracking-widest">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white/5 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">lan</span>
+<span class="font-jetbrains text-xs uppercase tracking-widest">Network</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white/5 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">lock</span>
+<span class="font-jetbrains text-xs uppercase tracking-widest">Vault</span>
+</a>
+</div>
+<div class="px-4 mt-auto space-y-1">
+<button class="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary-container rounded-xl font-bold text-sm mb-6 shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">
+                Deploy Unit
+            </button>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-300 transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">help</span>
+<span class="font-jetbrains text-[10px] uppercase tracking-widest">Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-300 transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">terminal</span>
+<span class="font-jetbrains text-[10px] uppercase tracking-widest">Logs</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-[240px] pt-16 pb-24 md:pb-8 min-h-screen transition-all">
+<!-- Marketplace Header Section -->
+<header class="px-6 py-10 md:px-12 bg-gradient-to-b from-surface-container-low to-transparent">
+<div class="max-w-6xl mx-auto">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+<div class="space-y-2">
+<h1 class="text-4xl md:text-5xl font-extrabold tracking-tighter text-on-surface">AI Marketplace</h1>
+<p class="text-outline text-lg max-w-lg">Advanced neural modules for enterprise-grade automation and creative intelligence.</p>
+</div>
+<div class="relative group w-full md:w-96">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-secondary transition-colors">search</span>
+<input class="w-full bg-surface-container-lowest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-outline/50 focus:ring-2 focus:ring-secondary/50 transition-all" placeholder="Search services..." type="text"/>
+</div>
+</div>
+<!-- Filters -->
+<div class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2">
+<button class="px-6 py-2 bg-secondary text-on-secondary rounded-full font-bold text-sm whitespace-nowrap shadow-lg shadow-secondary/20">All</button>
+<button class="px-6 py-2 bg-surface-container-high text-on-surface hover:bg-surface-variant rounded-full font-bold text-sm whitespace-nowrap transition-colors">Content Gen</button>
+<button class="px-6 py-2 bg-surface-container-high text-on-surface hover:bg-surface-variant rounded-full font-bold text-sm whitespace-nowrap transition-colors">Analysis</button>
+<button class="px-6 py-2 bg-surface-container-high text-on-surface hover:bg-surface-variant rounded-full font-bold text-sm whitespace-nowrap transition-colors">Assistants</button>
+</div>
+</div>
+</header>
+<!-- Service Grid -->
+<section class="px-6 md:px-12 pb-12">
+<div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Card 1 -->
+<div class="group relative w-full h-[320px] rounded-3xl bg-surface-container p-6 flex flex-col justify-between overflow-hidden transition-all duration-300 hover:-translate-y-2">
+<div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<span class="px-3 py-1 bg-error-container text-error text-[10px] font-black uppercase tracking-widest rounded-full">Hot</span>
+</div>
+<div class="space-y-2">
+<div class="flex items-center gap-1 text-secondary">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-xs font-jetbrains ml-1">5.0</span>
+</div>
+<h3 class="text-xl font-bold tracking-tight text-white leading-tight">Brand Copy Assistant</h3>
+<p class="text-outline text-xs line-clamp-2">Autonomous copywriter trained on high-converting brand guidelines and marketing data.</p>
+</div>
+<div class="flex items-center justify-between mt-4">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-widest text-outline">Pricing</span>
+<span class="font-jetbrains text-lg font-bold text-primary">100 Credits</span>
+</div>
+<button class="p-3 rounded-2xl bg-surface-container-highest text-white hover:bg-secondary hover:text-on-secondary transition-all">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group relative w-full h-[320px] rounded-3xl bg-surface-container p-6 flex flex-col justify-between overflow-hidden transition-all duration-300 hover:-translate-y-2">
+<div class="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<span class="px-3 py-1 bg-secondary-container/20 text-secondary text-[10px] font-black uppercase tracking-widest rounded-full border border-secondary/30">New</span>
+</div>
+<div class="space-y-2">
+<div class="flex items-center gap-1 text-secondary">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm">star_half</span>
+<span class="text-xs font-jetbrains ml-1">4.7</span>
+</div>
+<h3 class="text-xl font-bold tracking-tight text-white leading-tight">Competitive Analyzer</h3>
+<p class="text-outline text-xs line-clamp-2">Deep-market scraping and sentiment analysis for cross-industry competitive mapping.</p>
+</div>
+<div class="flex items-center justify-between mt-4">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-widest text-outline">Pricing</span>
+<span class="font-jetbrains text-lg font-bold text-secondary">50 Credits</span>
+</div>
+<button class="p-3 rounded-2xl bg-surface-container-highest text-white hover:bg-secondary hover:text-on-secondary transition-all">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="group relative w-full h-[320px] rounded-3xl bg-surface-container p-6 flex flex-col justify-between overflow-hidden transition-all duration-300 hover:-translate-y-2">
+<div class="absolute inset-0 bg-gradient-to-br from-tertiary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 rounded-2xl bg-tertiary/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">terminal</span>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex items-center gap-1 text-secondary">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-xs font-jetbrains ml-1">4.8</span>
+</div>
+<h3 class="text-xl font-bold tracking-tight text-white leading-tight">Social Media Writer</h3>
+<p class="text-outline text-xs line-clamp-2">Multi-platform viral loop generator specializing in technical thread composition.</p>
+</div>
+<div class="flex items-center justify-between mt-4">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-widest text-outline">Pricing</span>
+<span class="font-jetbrains text-lg font-bold text-tertiary">200 Credits</span>
+</div>
+<button class="p-3 rounded-2xl bg-surface-container-highest text-white hover:bg-secondary hover:text-on-secondary transition-all">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Asymmetric Detail Section -->
+<section class="px-6 md:px-12 mt-12 pb-24">
+<div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+<div class="lg:col-span-2 rounded-[2.5rem] bg-gradient-to-r from-surface-container to-surface-container-low p-10 flex flex-col md:flex-row items-center gap-10 border border-white/5">
+<div class="flex-1 space-y-4">
+<h2 class="text-3xl font-bold tracking-tight">Unlock Private Nodes</h2>
+<p class="text-outline">Get exclusive access to experimental large language models and specialized vision units before they hit the general marketplace.</p>
+<div class="pt-4">
+<button class="bg-white text-surface-dim px-8 py-3 rounded-full font-extrabold hover:bg-secondary transition-all">Request Beta</button>
+</div>
+</div>
+<div class="w-full md:w-64 aspect-square rounded-3xl overflow-hidden shadow-2xl rotate-3">
+<img alt="Experimental AI visual" class="w-full h-full object-cover" data-alt="abstract 3d render of glowing fluid geometric shapes in neon cyan and deep violet with procedural noise texture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCI6wK9hMlFabWRZcvO5boTRFhn5ir12NIGc0PLkA_JG15icLsKLDH9w1FkCRo_2FN6AfPuBUVq68wUIGIA4sKxkZ8rSTHlMUR6Grek2BMKaMncs0VWJmoyQR5BDMcGzPfv53QtAy7lMt2hRxQpWQcukkdOjCkJXQq7FKFkrTE1xdG97UCjsjQCyVmrgcj9wTDDEXSU8hYJZZjGseQ5UNVDYS6fAnpwnK3e9fBUeRDc3Z8FI99PMu2LGZTIib2WEOX3RztR5wITeegh"/>
+</div>
+</div>
+<div class="bg-surface-container-highest rounded-[2.5rem] p-8 flex flex-col justify-center border border-white/5 relative overflow-hidden group">
+<div class="absolute -right-10 -top-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl transition-all group-hover:bg-primary/20"></div>
+<span class="material-symbols-outlined text-4xl text-primary mb-4">auto_awesome</span>
+<h3 class="text-xl font-bold mb-2">Auto-Scaling Pack</h3>
+<p class="text-sm text-outline mb-6">Dynamically adjust your credit usage based on real-time request volume.</p>
+<a class="text-primary font-jetbrains text-xs uppercase tracking-widest flex items-center gap-2 group-hover:gap-4 transition-all" href="#">View Plans <span class="material-symbols-outlined">arrow_forward</span></a>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar Shell (Mobile) -->
+<div class="fixed bottom-0 left-0 w-full flex justify-around items-center h-16 px-4 bg-[#10131c]/80 backdrop-blur-lg border-t border-white/5 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] rounded-t-2xl z-50 md:hidden font-plus-jakarta text-[10px] font-bold duration-150">
+<a class="flex flex-col items-center justify-center text-slate-500 active:scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 active:scale-95" href="#">
+<span class="material-symbols-outlined">edit_note</span>
+<span>Edit</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-cyan-500/20 text-cyan-300 rounded-xl px-4 py-1 active:scale-95" href="#">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span>Shop</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 active:scale-95" href="#">
+<span class="material-symbols-outlined">person</span>
+<span>Me</span>
+</a>
+</div>
+</body></html>

@@ -41,4 +41,6 @@ export interface AgentListEntry {
     avatarUrl?: string;
   };
   isDefault?: boolean;
+  /** Agent 工作区路径（从 agents.files.list 获取） */
+  workspace?: string;
 }

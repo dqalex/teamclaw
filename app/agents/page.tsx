@@ -6,7 +6,7 @@ import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
 import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
 import ConfirmDialog from '@/shared/layout/ConfirmDialog';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
+
 import GatewayRequired from '@/shared/layout/GatewayRequired';
 import { Button, Badge } from '@/shared/ui';
 import { useGatewayStore } from '@/core/gateway/store';
@@ -121,27 +121,6 @@ export default function AgentsPage() {
   return (
     <AppShell>
       <GatewayRequired feature={t('agents.title')}>
-      <Header title={t('agents.title')} actions={
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            className="flex items-center gap-1.5 text-xs"
-            onClick={() => setShowCreateDialog(true)}
-          >
-            <Plus className="w-3.5 h-3.5" />
-            {t('agents.newAgent')}
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            className="flex items-center gap-1.5 text-xs"
-            onClick={() => { refreshAgents(); refreshHealth(); }}
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            {t('agents.refresh')}
-          </Button>
-        </div>
-      } />
       <div className="flex h-[calc(100vh-49px)]">
         {/* 左侧 Agent 列表 */}
         <div className="w-56 border-r flex-shrink-0 flex flex-col overflow-y-auto" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
@@ -184,7 +163,9 @@ export default function AgentsPage() {
                       </div>
                       <div className="text-[11px] flex items-center gap-1.5" style={{ color: 'var(--text-tertiary)' }}>
                         <span className="truncate">
-                          {agentHealth ? `${agentHealth.sessions.count} ${t('agents.sessions')}` : agent.id}
+                          {agentHealth
+                            ? `${agentHealth.sessions.count} ${t('agents.sessions')}`
+                            : agent.workspace || agent.id}
                         </span>
                       </div>
                     </div>
@@ -221,6 +202,9 @@ export default function AgentsPage() {
                     </div>
                     <div className="flex items-center gap-3 text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
                       <span className="flex items-center gap-1"><Hash className="w-3 h-3" />{selectedAgent.id}</span>
+                      {selectedAgent.workspace && (
+                        <span className="flex items-center gap-1"><FolderOpen className="w-3 h-3" />{selectedAgent.workspace}</span>
+                      )}
                       {selectedAgentHealth && (
                         <>
                           <span>{selectedAgentHealth.sessions.count} {t('agents.sessions')}</span>

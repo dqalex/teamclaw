@@ -29,7 +29,7 @@ async function syncWithGatewayStatus(
   
   // 如果 Gateway 未连接，直接返回（不检查 Gateway 状态）
   if (!gatewayClient?.isConnected) {
-    console.log('[Skill Discover] Gateway not connected, skipping Gateway status sync');
+    console.debug('[Skill Discover] Gateway not connected, skipping Gateway status sync');
     return discoveredSkills.map(skill => ({
       ...skill,
       gatewayStatus: 'unknown' as const,
@@ -48,7 +48,7 @@ async function syncWithGatewayStatus(
       (gatewaySkills?.skills || []).map(s => s.skillKey)
     );
     
-    console.log('[Skill Discover] Gateway skills:', Array.from(gatewaySkillKeys));
+    console.debug('[Skill Discover] Gateway skills:', Array.from(gatewaySkillKeys));
     
     // 对比并标记状态
     return discoveredSkills.map(skill => {

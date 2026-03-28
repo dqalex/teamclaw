@@ -291,11 +291,6 @@ export default function TaskBoardView(props: TaskBoardViewProps) {
   if (!hasMilestones) {
     return (
       <div className="space-y-4 h-full">
-        <div className="flex justify-end">
-          <Button size="sm" variant="secondary" onClick={() => onShowMilestoneManager(currentProjectId)}>
-            <MilestoneIcon className="w-3.5 h-3.5" /> {milestoneTitle}
-          </Button>
-        </div>
         <div className="grid grid-cols-4 gap-4 h-full">
           {STATUS_COLUMNS.map(col => (
             <StatusColumnView

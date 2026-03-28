@@ -107,7 +107,7 @@ export function getRecommendedExtension(mimeType: string): string | undefined {
  */
 export function isValidMimeType(mimeType: string, allowedTypes?: readonly string[]): boolean {
   const types = allowedTypes || ALLOWED_FILE_TYPES;
-  return types.includes(mimeType as any);
+  return (types as readonly string[]).includes(mimeType);
 }
 
 /**

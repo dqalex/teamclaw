@@ -6,7 +6,7 @@ import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
 import ConfirmDialog from '@/shared/layout/ConfirmDialog';
 import { useGatewayStore } from '@/core/gateway/store';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
+
 import GatewayRequired from '@/shared/layout/GatewayRequired';
 import { Button, Input, Select, Badge } from '@/shared/ui';
 import { useFilteredList } from '@/shared/hooks/useFilteredList';
@@ -110,7 +110,6 @@ export default function SessionsPage() {
 
   return (
     <AppShell>
-      <Header title={t('sessions.title')} />
 
       <main className="flex-1 p-6 overflow-auto max-w-5xl mx-auto">
         <GatewayRequired feature={t('sessions.title')}>

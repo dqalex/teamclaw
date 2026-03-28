@@ -193,7 +193,7 @@ export const POST = withAuth(async (request: NextRequest, auth: AuthResult) => {
       try {
         const syncResult = await syncMarkdownToDatabase(newDocument.id, newDocument.content);
         if (syncResult.synced) {
-          console.log(`[POST /api/documents] 同步完成: ${newDocument.id}, type=${syncResult.type}, counts=${JSON.stringify(syncResult.counts)}`);
+          console.debug(`[POST /api/documents] 同步完成: ${newDocument.id}, type=${syncResult.type}, counts=${JSON.stringify(syncResult.counts)}`);
         }
       } catch (syncError) {
         // 同步失败不影响文档保存，只记录日志

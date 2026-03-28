@@ -125,9 +125,12 @@ export const POST = withAdminAuth(async (req: NextRequest) => {
       mode,
     });
 
-    // 如果是服务端代理模式，立即尝试连接
+    // 如果是服务端代理模式，断开旧连接并立即尝试重连
     if (mode === 'server_proxy') {
       try {
+        const client = getServerGatewayClient();
+        // 无论是否已连接，都断开以重置状态（包括 reconnectAttempts）
+        client.disconnect();
         await initServerGatewayClient();
       } catch (e) {
         console.error('[API] Failed to connect to gateway:', e);

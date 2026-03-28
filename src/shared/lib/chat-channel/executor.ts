@@ -392,7 +392,7 @@ function injectContext(action: Action, context: { lastDocumentId?: string; lastD
   // deliver_document 缺少 document_id 时，使用最近创建的文档
   if (action.type === 'deliver_document') {
     if (!action.document_id && context.lastDocumentId) {
-      console.log('[chat-channel] 自动注入 document_id:', context.lastDocumentId);
+      console.debug('[chat-channel] 自动注入 document_id:', context.lastDocumentId);
       return { ...action, document_id: context.lastDocumentId };
     }
     // 如果 title 匹配，也注入

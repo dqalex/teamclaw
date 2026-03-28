@@ -19,7 +19,7 @@ import * as schema from './schema';
 import { join, dirname } from 'path';
 import { existsSync, mkdirSync, copyFileSync, readFileSync } from 'fs';
 import { BUILTIN_SOP_TEMPLATES, BUILTIN_RENDER_TEMPLATES } from './templates';
-import { migrateUuidToBase58 } from './migrations';
+import { migrateUuidToBase58, migrateV1Phase1A, migrateV1Phase1B, migrateV1Phase2A, migrateV1Phase3, migrateV1Phase4, migrateV1Phase5 } from './migrations';
 import { validateTableName, validateColumnName } from '@/lib/sql-validator';
 import { logger } from '@/lib/logger';
 import { encryptToken } from '@/lib/security';
@@ -2749,6 +2749,24 @@ Dashboard 预览
 
   // ===== UUID → Base58 ID 迁移 =====
   migrateUuidToBase58(sqlite);
+
+  // ===== v1.1 Phase 1A: 核心实体迁移 =====
+  migrateV1Phase1A(sqlite);
+
+  // ===== v1.1 Phase 1B: Skill 进化引擎迁移 =====
+  migrateV1Phase1B(sqlite);
+
+  // ===== v1.1 Phase 2A: Workflow Engine 迁移 =====
+  migrateV1Phase2A(sqlite);
+
+  // ===== v1.1 Phase 3: Marketplace + Consumer System 迁移 =====
+  migrateV1Phase3(sqlite);
+
+  // ===== v1.1 Phase 4: Proactive Engine + Observability 迁移 =====
+  migrateV1Phase4(sqlite);
+
+  // ===== v1.1 Phase 5: OKR (Objectives and Key Results) 迁移 =====
+  migrateV1Phase5(sqlite);
 
 } // end of initialization guard
 

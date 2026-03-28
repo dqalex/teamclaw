@@ -17,7 +17,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             'btn-secondary': variant === 'secondary',
             'btn-ghost': variant === 'ghost',
             'btn-ai': variant === 'ai',
-            'bg-red-500 text-white hover:bg-red-600 active:scale-[0.97] shadow-sm hover:shadow-md': variant === 'danger',
+            'btn-danger': variant === 'danger',
           },
           {
             'btn-sm': size === 'sm',

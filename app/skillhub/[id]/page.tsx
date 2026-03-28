@@ -17,7 +17,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter, useParams } from 'next/navigation';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
 import { Button, Badge, Card, CardContent, CardHeader, CardTitle } from '@/shared/ui';
 import { useSkillStore, useAuthStore, useSOPTemplateStore } from '@/domains';
 import { skillsApi } from '@/lib/data-service';
@@ -275,7 +274,6 @@ export default function SkillDetailPage() {
   if (loading) {
     return (
       <AppShell>
-        <Header title={t('skillhub.detail.title')} />
         <main className="flex-1 p-6 flex items-center justify-center">
           <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full" />
         </main>
@@ -286,7 +284,6 @@ export default function SkillDetailPage() {
   if (!skill) {
     return (
       <AppShell>
-        <Header title={t('skillhub.detail.title')} />
         <main className="flex-1 p-6">
           <Card>
             <CardContent className="p-12 text-center">
@@ -303,23 +300,6 @@ export default function SkillDetailPage() {
   
   return (
     <AppShell>
-      <Header 
-        title={skill.name}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => router.push('/skillhub')}
-              className="flex items-center gap-1.5"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              {t('common.back')}
-            </Button>
-          </div>
-        }
-      />
-      
       <main className="flex-1 p-6 overflow-auto max-w-4xl mx-auto">
         {/* 状态卡片 */}
         <Card className="mb-6">

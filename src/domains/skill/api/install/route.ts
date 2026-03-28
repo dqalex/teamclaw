@@ -80,26 +80,26 @@ async function copySkillToGateway(
           // 名称不同，说明是不同的 skill，使用 teamclaw- 前缀
           actualSkillKey = `teamclaw-${skillKey}`;
           targetDir = path.join(GATEWAY_WORKSPACE_SKILLS_DIR, actualSkillKey);
-          console.log(`[Skill Install] Conflict detected: "${skillKey}" contains different skill "${targetName}". Using "${actualSkillKey}" instead.`);
+          console.debug(`[Skill Install] Conflict detected: "${skillKey}" contains different skill "${targetName}". Using "${actualSkillKey}" instead.`);
           
           // 检查新目录是否也存在
           try {
             await access(targetDir, constants.F_OK);
             // 新目录也存在，先删除
             await rm(targetDir, { recursive: true, force: true });
-            console.log(`[Skill Install] Removed existing directory: ${targetDir}`);
+            console.debug(`[Skill Install] Removed existing directory: ${targetDir}`);
           } catch {
             // 新目录不存在，直接使用
           }
         } else {
           // 名称相同，是同一个 skill 的更新版本，允许覆盖
-          console.log(`[Skill Install] Updating existing skill: ${skillName}`);
+          console.debug(`[Skill Install] Updating existing skill: ${skillName}`);
           await rm(targetDir, { recursive: true, force: true });
-          console.log(`[Skill Install] Removed existing skill directory: ${targetDir}`);
+          console.debug(`[Skill Install] Removed existing skill directory: ${targetDir}`);
         }
       } catch {
         // 目标目录没有 SKILL.md，可能是损坏的目录，允许覆盖
-        console.log(`[Skill Install] Target directory has no SKILL.md, will overwrite`);
+        console.debug(`[Skill Install] Target directory has no SKILL.md, will overwrite`);
         await rm(targetDir, { recursive: true, force: true });
       }
     } catch {
@@ -108,7 +108,7 @@ async function copySkillToGateway(
     
     // 复制整个 skill 目录到 Gateway 扫描目录
     await cp(skillPath, targetDir, { recursive: true });
-    console.log(`[Skill Install] Copied skill to Gateway: ${skillPath} -> ${targetDir}`);
+    console.debug(`[Skill Install] Copied skill to Gateway: ${skillPath} -> ${targetDir}`);
     return { success: true, actualSkillKey };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
@@ -270,7 +270,7 @@ export const POST = withAuth(async (request: NextRequest, auth: AuthResult) => {
             name: installSkillKey, 
             installId: `install-${skillId}` 
           });
-          console.log(`[Skill Install] Successfully installed to Gateway: ${installSkillKey}`);
+          console.debug(`[Skill Install] Successfully installed to Gateway: ${installSkillKey}`);
         }
       } catch (gatewayError) {
         console.warn('[Skill Install] Gateway install failed:', gatewayError);
@@ -362,7 +362,7 @@ export const POST = withAuth(async (request: NextRequest, auth: AuthResult) => {
           name: installSkillKey, 
           installId: `install-${existingSkill.id}` 
         });
-        console.log(`[Skill Install] Successfully updated in Gateway: ${installSkillKey}`);
+        console.debug(`[Skill Install] Successfully updated in Gateway: ${installSkillKey}`);
       }
     } catch (gatewayError) {
       console.warn('[Skill Install] Gateway install failed:', gatewayError);

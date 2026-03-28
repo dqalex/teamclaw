@@ -41,7 +41,9 @@ export default function GatewayRequired({
       gwStore.refreshSessions(),
       gwStore.refreshSkills(),
       gwStore.loadConfig(),
-    ]).catch(() => {});
+    ]).catch(() => {
+      // Gateway 初始加载失败，后续可通过重试恢复
+    });
   }, [serverProxyConnected, agentsList.length]);
 
   if (serverProxyConnected) return <>{children}</>;

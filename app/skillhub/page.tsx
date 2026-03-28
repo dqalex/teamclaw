@@ -17,7 +17,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
+
 import GatewayRequired from '@/shared/layout/GatewayRequired';
 import { Button, Input, Badge } from '@/shared/ui';
 import { useGatewayStore, useAuthStore } from '@/domains';
@@ -183,11 +183,10 @@ export default function SkillHubPage() {
     return (
       <div 
         key={skill.skillKey} 
-        className="flex items-center gap-3 px-3 py-2.5 rounded-lg border mb-1.5"
-        style={{ borderColor: 'var(--border)' }}
+        className="flex items-center gap-3 px-3 py-2.5 rounded-xl border mb-1.5 bg-white dark:bg-[#181c24] border-[#e8ebf2] dark:border-white/5"
       >
         {/* 图标 */}
-        <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-sm flex-shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[#262a33] flex items-center justify-center text-sm flex-shrink-0">
           {skill.emoji || <Zap className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />}
         </div>
         
@@ -306,66 +305,38 @@ export default function SkillHubPage() {
   return (
     <AppShell>
       <GatewayRequired>
-        <Header 
-          title={t('skillhub.title')} 
-          actions={
-            <div className="flex items-center gap-2">
-              {isAdmin && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => router.push('/skillhub/settings')}
-                  className="flex items-center gap-1.5"
-                >
-                  <Settings2 className="w-4 h-4" />
-                  {t('common.settings')}
-                </Button>
-              )}
-
-              <Button
-                size="sm"
-                onClick={() => router.push('/skillhub/create')}
-                className="flex items-center gap-1.5"
-              >
-                <Plus className="w-4 h-4" />
-                {t('skillhub.install.discover', '发现并安装')}
-              </Button>
-            </div>
-          }
-        />
-        
         <main className="flex-1 p-6 overflow-auto max-w-4xl mx-auto">
           {/* 统计卡片 */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-            <div className="p-4 rounded-lg border text-center" style={{ borderColor: 'var(--border)' }}>
-              <div className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            <div className="p-4 rounded-xl border text-center bg-white dark:bg-[#1c2028] border-[#e8ebf2] dark:border-white/5">
+              <div className="text-2xl font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
                 {stats.total}
               </div>
-              <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+              <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>
                 {t('skillhub.stats.total')}
               </div>
             </div>
-            <div className="p-4 rounded-lg border text-center" style={{ borderColor: 'var(--border)' }}>
-              <div className="text-2xl font-bold text-green-600">{stats.enabled}</div>
-              <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            <div className="p-4 rounded-xl border text-center bg-white dark:bg-[#1c2028] border-green-200 dark:border-green-500/20">
+              <div className="text-2xl font-bold tabular-nums text-green-600">{stats.enabled}</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>
                 {t('skillhub.stats.active')}
               </div>
             </div>
-            <div className="p-4 rounded-lg border text-center" style={{ borderColor: 'var(--border)' }}>
-              <div className="text-2xl font-bold text-slate-600">{stats.builtIn}</div>
-              <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            <div className="p-4 rounded-xl border text-center bg-white dark:bg-[#1c2028] border-[#e8ebf2] dark:border-white/5">
+              <div className="text-2xl font-bold tabular-nums text-slate-600">{stats.builtIn}</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>
                 {t('agents.builtIn')}
               </div>
             </div>
-            <div className="p-4 rounded-lg border text-center" style={{ borderColor: 'var(--border)' }}>
-              <div className="text-2xl font-bold text-blue-600">{stats.extensions}</div>
-              <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            <div className="p-4 rounded-xl border text-center bg-white dark:bg-[#1c2028] border-blue-200 dark:border-blue-500/20">
+              <div className="text-2xl font-bold tabular-nums text-blue-600">{stats.extensions}</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>
                 {t('agents.extension')}
               </div>
             </div>
-            <div className="p-4 rounded-lg border text-center" style={{ borderColor: 'var(--border)' }}>
-              <div className="text-2xl font-bold text-amber-600">{stats.pending}</div>
-              <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            <div className="p-4 rounded-xl border text-center bg-white dark:bg-[#1c2028] border-amber-200 dark:border-amber-500/20">
+              <div className="text-2xl font-bold tabular-nums text-amber-600">{stats.pending}</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>
                 {t('skillhub.trust.pending')}
               </div>
             </div>
@@ -395,7 +366,7 @@ export default function SkillHubPage() {
           
           {/* 技能列表 */}
           {filteredSkills.length === 0 ? (
-            <div className="text-center py-12 rounded-lg border" style={{ borderColor: 'var(--border)' }}>
+            <div className="text-center py-12 rounded-xl border bg-white dark:bg-[#1c2028] border-[#e8ebf2] dark:border-white/5">
               <Zap className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--text-tertiary)' }} />
               <p style={{ color: 'var(--text-secondary)' }}>{t('skillhub.noSkills')}</p>
               <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>

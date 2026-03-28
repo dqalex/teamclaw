@@ -133,6 +133,13 @@ export const PUT = withAuth(async (
     await notifyAICreatorOnTaskUpdate(existing, updated, auth.userId!);
 
     eventBus.emit({ type: 'task_update', resourceId: resolvedId });
+    // v1.1 Phase 4: 触发 Proactive Engine 规则评估（异步，不阻塞）
+    try {
+      const { proactiveListener } = await import('@/src/core/proactive');
+      proactiveListener.onEventChange('task_update', { id: resolvedId, projectId: existing.projectId, status: updated.status, dueDate: updated.deadline, title: updated.title });
+    } catch {
+      // Proactive Engine 不可用时静默降级
+    }
     triggerMarkdownSync('teamclaw:tasks');
     return apiSuccess(updated);
   } catch (error) {
@@ -229,21 +236,21 @@ const STATUS_LABELS: Record<string, string> = {
  * 3. Gateway 已连接
  */
 async function notifyAICreatorOnTaskUpdate(
-  oldTask: { id: string; title: string; creatorId: string; status: string; progress: number | null },
-  newTask: { id: string; title: string; status: string; progress: number | null },
+  oldTask: Record<string, unknown>,
+  newTask: Record<string, unknown>,
   operatorUserId: string
 ): Promise<void> {
   try {
     // 检查是否有实质性变化
     const statusChanged = oldTask.status !== newTask.status;
-    const progressChanged = Math.abs((oldTask.progress || 0) - (newTask.progress || 0)) >= 20; // 进度变化 >= 20%
+    const progressChanged = Math.abs(((oldTask.progress as number) || 0) - ((newTask.progress as number) || 0)) >= 20; // 进度变化 >= 20%
 
     if (!statusChanged && !progressChanged) {
       return; // 无实质性变化，不通知
     }
 
     // 查找创建者成员
-    const [creator] = await db.select().from(members).where(eq(members.id, oldTask.creatorId));
+    const [creator] = await db.select().from(members).where(eq(members.id, oldTask.creatorId as string));
     if (!creator || creator.type !== 'ai') {
       return; // 创建者不是 AI，不通知
     }
@@ -260,8 +267,8 @@ async function notifyAICreatorOnTaskUpdate(
 
     // 构建通知消息
     const sessionKey = `agent:${creator.openclawAgentId}:dm:${operatorUserId}`;
-    const oldStatusLabel = STATUS_LABELS[oldTask.status] || oldTask.status;
-    const newStatusLabel = STATUS_LABELS[newTask.status] || newTask.status;
+    const oldStatusLabel = STATUS_LABELS[oldTask.status as string] || oldTask.status;
+    const newStatusLabel = STATUS_LABELS[newTask.status as string] || newTask.status;
 
     const lines: string[] = [];
     lines.push(`[TeamClaw 任务状态更新]`);
@@ -289,7 +296,7 @@ async function notifyAICreatorOnTaskUpdate(
       idempotencyKey: `task-notify-${oldTask.id}-${Date.now()}`,
     });
 
-    console.log('[TaskNotify] Notification sent to AI creator:', {
+    console.debug('[TaskNotify] Notification sent to AI creator:', {
       taskId: oldTask.id,
       creatorId: oldTask.creatorId,
       sessionKey,

@@ -170,7 +170,7 @@ async function writeIndexFile(workspaceId: string): Promise<boolean> {
     const content = serializeIndex(index);
     writeFileSync(indexPath, content, 'utf-8');
 
-    console.log(`[teamclaw-index] 索引文件已更新: ${indexPath}`);
+    console.debug(`[teamclaw-index] 索引文件已更新: ${indexPath}`);
     return true;
   } catch (error) {
     console.error('[teamclaw-index] 写入索引文件失败:', error);
@@ -270,7 +270,7 @@ export function startHeartbeat(workspaceId: string): void {
   }, intervalMs);
 
   timers.set(workspaceId, timer);
-  console.log(`[teamclaw-index] 心跳已启动 (${workspaceId})，间隔 ${OPENCLAW_CONFIG.heartbeat.interval}s`);
+  console.debug(`[teamclaw-index] 心跳已启动 (${workspaceId})，间隔 ${OPENCLAW_CONFIG.heartbeat.interval}s`);
 }
 
 /**
@@ -282,7 +282,7 @@ export function stopHeartbeat(workspaceId: string): void {
   if (timer) {
     clearInterval(timer);
     timers.delete(workspaceId);
-    console.log(`[teamclaw-index] 心跳已停止 (${workspaceId})`);
+    console.debug(`[teamclaw-index] 心跳已停止 (${workspaceId})`);
   }
 }
 
@@ -293,7 +293,7 @@ export function stopAllHeartbeats(): void {
   const timers = getHeartbeatTimers();
   for (const [id, timer] of timers) {
     clearInterval(timer);
-    console.log(`[teamclaw-index] 心跳已停止 (${id})`);
+    console.debug(`[teamclaw-index] 心跳已停止 (${id})`);
   }
   timers.clear();
 }

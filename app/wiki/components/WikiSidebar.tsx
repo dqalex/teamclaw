@@ -1,14 +1,14 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { Button, Input } from '@/shared/ui';
+import { Button, Input, Select } from '@/shared/ui';
 import {
   FileText, Plus, Search, ExternalLink, Globe,
   ChevronDown, ChevronRight,
   BookOpen, FileQuestion, Calendar, CheckSquare, ClipboardList,
 } from 'lucide-react';
 import clsx from 'clsx';
-import type { Document } from '@/db/schema';
+import type { Document, Project } from '@/db/schema';
 import { typeColors, typeOrder } from '../hooks/useWikiPage';
 
 const typeIcons: Record<string, typeof FileText> = {
@@ -30,6 +30,11 @@ interface WikiSidebarProps {
   onToggleCollapse: (type: string) => void;
   onNewDoc: () => void;
   typeLabels: Record<string, string>;
+  projects: Project[];
+  currentProjectId: string | null;
+  onProjectChange: (projectId: string | null) => void;
+  /** 侧边栏可见的文档类型列表 */
+  visibleTypes?: string[];
 }
 
 export default function WikiSidebar({
@@ -39,8 +44,11 @@ export default function WikiSidebar({
   selectedDocId, onSelectDoc,
   collapsedTypes, onToggleCollapse,
   onNewDoc, typeLabels,
+  projects, currentProjectId, onProjectChange,
+  visibleTypes,
 }: WikiSidebarProps) {
   const { t } = useTranslation();
+  const displayTypes = visibleTypes || typeOrder;
 
   const renderDocItem = (doc: Document) => {
     const Icon = typeIcons[doc.type] || FileQuestion;
@@ -79,6 +87,16 @@ export default function WikiSidebar({
   return (
     <div className="w-60 min-w-[240px] max-w-[240px] border-r flex flex-col flex-shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
       <div className="p-3 border-b space-y-2" style={{ borderColor: 'var(--border)' }}>
+        {/* 项目筛选器 */}
+        <Select
+          value={currentProjectId || ''}
+          onChange={e => onProjectChange(e.target.value || null)}
+          options={[
+            { value: '', label: t('tasks.allProjects') },
+            ...projects.map(p => ({ value: p.id, label: p.name })),
+          ]}
+          className="py-1.5 text-[13px]"
+        />
         <Input
           icon={<Search className="w-3.5 h-3.5" />}
           value={searchInput}
@@ -93,7 +111,7 @@ export default function WikiSidebar({
             )} style={filterType !== 'all' ? { color: 'var(--text-tertiary)' } : undefined}>
             {t('wiki.all')} ({filteredDocs.length})
           </button>
-          {typeOrder.map(tp => {
+          {displayTypes.map(tp => {
             const count = documents.filter(d => d.type === tp).length;
             if (count === 0 && tp !== 'scheduled_task') return null;
             return (

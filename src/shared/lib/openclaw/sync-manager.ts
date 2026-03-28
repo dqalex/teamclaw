@@ -194,7 +194,7 @@ export class SyncManager {
 
         const syncResult = await syncMarkdownToDatabase(fileRecord.documentId, content);
         if (syncResult.synced) {
-          console.log(`[SyncManager] teamclaw:* 文件解析完成: ${relativePath}`, syncResult.counts);
+          console.debug(`[SyncManager] teamclaw:* 文件解析完成: ${relativePath}`, syncResult.counts);
           eventBus.emit({ type: 'task_update' });
         }
       } else {
@@ -220,7 +220,7 @@ export class SyncManager {
 
         const syncResult = await syncMarkdownToDatabase(docId, content);
         if (syncResult.synced) {
-          console.log(`[SyncManager] teamclaw:* 新文件解析完成: ${relativePath}`, syncResult.counts);
+          console.debug(`[SyncManager] teamclaw:* 新文件解析完成: ${relativePath}`, syncResult.counts);
           eventBus.emit({ type: 'task_update' });
         }
       }
@@ -283,7 +283,7 @@ export class SyncManager {
             updatedAt: new Date(),
           })
           .where(eq(documents.id, fileRecord.documentId));
-        console.log(`[SyncManager] 非 teamclaw 文件 document 更新: ${relativePath}`);
+        console.debug(`[SyncManager] 非 teamclaw 文件 document 更新: ${relativePath}`);
       } else {
         // 无 document → 创建并关联
         const docId = generateId();
@@ -302,7 +302,7 @@ export class SyncManager {
         await db.update(openclawFiles)
           .set({ documentId: docId, updatedAt: new Date() })
           .where(eq(openclawFiles.id, fileRecord.id));
-        console.log(`[SyncManager] 非 teamclaw 文件 document 创建: ${relativePath} → ${docId}`);
+        console.debug(`[SyncManager] 非 teamclaw 文件 document 创建: ${relativePath} → ${docId}`);
       }
 
       // 调用 syncMarkdownToDatabase 处理 delivery_status 等 frontmatter 字段
@@ -310,7 +310,7 @@ export class SyncManager {
       if (documentId) {
         const syncResult = await syncMarkdownToDatabase(documentId, content);
         if (syncResult.synced) {
-          console.log(`[SyncManager] 非 teamclaw 文件交付同步: ${relativePath}`, syncResult.type || 'delivery_status');
+          console.debug(`[SyncManager] 非 teamclaw 文件交付同步: ${relativePath}`, syncResult.type || 'delivery_status');
           eventBus.emit({ type: 'delivery_update' });
         }
       }
@@ -356,7 +356,7 @@ export class SyncManager {
     // 只有 projects/ 目录下的文件才允许自动创建项目
     // front matter 中的 project 字段只做关联，不自动创建（防止已删除项目被同步"复活"）
     if (!autoCreate) {
-      console.log(`[SyncManager] 项目不存在，跳过关联: ${projectName}`);
+      console.debug(`[SyncManager] 项目不存在，跳过关联: ${projectName}`);
       return undefined;
     }
 
@@ -369,7 +369,7 @@ export class SyncManager {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    console.log(`[SyncManager] 自动创建项目: ${projectName} (${projectId})`);
+    console.debug(`[SyncManager] 自动创建项目: ${projectName} (${projectId})`);
     return projectId;
   }
 

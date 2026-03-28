@@ -46,7 +46,7 @@ export function startSkillSnapshotScheduler(intervalHours: number = 6): void {
   
   // 如果已存在且间隔相同，跳过
   if (state.timer && state.intervalHours === intervalHours) {
-    console.log(`[SkillSnapshot] Scheduler already running with interval ${intervalHours}h`);
+    console.debug(`[SkillSnapshot] Scheduler already running with interval ${intervalHours}h`);
     return;
   }
   
@@ -74,7 +74,7 @@ export function startSkillSnapshotScheduler(intervalHours: number = 6): void {
   
   state.intervalHours = safeInterval;
   
-  console.log(`[SkillSnapshot] Scheduler started: interval=${safeInterval}h`);
+  console.debug(`[SkillSnapshot] Scheduler started: interval=${safeInterval}h`);
 }
 
 /**
@@ -86,7 +86,7 @@ export function stopSkillSnapshotScheduler(): void {
   if (state.timer) {
     clearInterval(state.timer);
     state.timer = null;
-    console.log('[SkillSnapshot] Scheduler stopped');
+    console.debug('[SkillSnapshot] Scheduler stopped');
   }
 }
 
@@ -119,7 +119,7 @@ export async function executeSkillSnapshot(): Promise<{
   const state = getSchedulerState();
   
   if (state.isRunning) {
-    console.log('[SkillSnapshot] Already capturing, skipping...');
+    console.debug('[SkillSnapshot] Already capturing, skipping...');
     return {
       success: false,
       captured: 0,
@@ -135,7 +135,7 @@ export async function executeSkillSnapshot(): Promise<{
     const gateway = getServerGatewayClient();
     
     if (!gateway || !gateway.isConnected) {
-      console.log('[SkillSnapshot] Server Gateway not connected, skipping');
+      console.debug('[SkillSnapshot] Server Gateway not connected, skipping');
       return {
         success: false,
         captured: 0,
@@ -152,7 +152,7 @@ export async function executeSkillSnapshot(): Promise<{
       .where(eq(members.type, 'ai'));
     
     if (aiMembers.length === 0) {
-      console.log('[SkillSnapshot] No AI agents found');
+      console.debug('[SkillSnapshot] No AI agents found');
       return {
         success: true,
         captured: 0,
@@ -168,7 +168,7 @@ export async function executeSkillSnapshot(): Promise<{
     const agents = agentsResult.agents || [];
     
     if (agents.length === 0) {
-      console.log('[SkillSnapshot] No agents found in Gateway');
+      console.debug('[SkillSnapshot] No agents found in Gateway');
       return {
         success: true,
         captured: 0,
@@ -308,7 +308,7 @@ export async function executeSkillSnapshot(): Promise<{
       }
     }
     
-    console.log(`[SkillSnapshot] Captured ${capturedCount}/${agents.length} agents, ${totalRiskAlerts} risk alerts`);
+    console.debug(`[SkillSnapshot] Captured ${capturedCount}/${agents.length} agents, ${totalRiskAlerts} risk alerts`);
     
     return {
       success: true,

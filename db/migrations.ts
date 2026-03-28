@@ -190,3 +190,602 @@ export function migrateUuidToBase58(sqlite: Database.Database) {
     console.error('[TeamClaw] Migration failed, rolled back:', err);
   }
 }
+
+/**
+ * v1.1 Phase 1A: 增量迁移
+ * 创建新表（teams, ai_apps, services, consumers）
+ * 为已有表添加新字段（tasks, skills, members）
+ *
+ * 幂等设计：重复执行安全（IF NOT EXISTS / 检查列是否已存在）
+ */
+export function migrateV1Phase1A(sqlite: Database.Database) {
+  // 检查迁移是否已完成
+  const metaTable = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='migration_meta'").get();
+  if (metaTable) {
+    const migrated = sqlite.prepare("SELECT value FROM migration_meta WHERE key = 'v1.1_phase1a'").get() as { value: string } | undefined;
+    if (migrated?.value === 'done') {
+      return; // 已完成迁移
+    }
+  }
+
+  console.log('[TeamClaw] Migrating: v1.1 Phase 1A (Adapter System + Core Entities)...');
+
+  try {
+    sqlite.exec('BEGIN TRANSACTION');
+
+    // 确保 migration_meta 表存在
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS migration_meta (key TEXT PRIMARY KEY, value TEXT)
+    `);
+
+    // ============================================================
+    // 1. 创建新表
+    // ============================================================
+
+    // 1a. teams 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS teams (
+        id TEXT PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        owner_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        plan TEXT DEFAULT 'free',
+        settings TEXT DEFAULT '{}',
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_teams_owner ON teams(owner_id)');
+
+    // 1b. ai_apps 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS ai_apps (
+        id TEXT PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        owner_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+        team_id TEXT REFERENCES teams(id) ON DELETE CASCADE,
+        status TEXT NOT NULL DEFAULT 'draft',
+        version TEXT DEFAULT '1.0.0',
+        category TEXT,
+        config TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_ai_apps_owner ON ai_apps(owner_id)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_ai_apps_status ON ai_apps(owner_id, status)');
+
+    // 1c. services 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS services (
+        id TEXT PRIMARY KEY NOT NULL,
+        ai_app_id TEXT NOT NULL REFERENCES ai_apps(id) ON DELETE CASCADE,
+        team_id TEXT REFERENCES teams(id),
+        name TEXT NOT NULL,
+        description TEXT,
+        pricing_model TEXT NOT NULL DEFAULT 'free',
+        price_credits INTEGER DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'draft',
+        popularity_score REAL DEFAULT 0,
+        effectiveness_score REAL DEFAULT 0,
+        average_rating REAL DEFAULT 0,
+        rating_count INTEGER DEFAULT 0,
+        rank_weight REAL DEFAULT 0,
+        total_usage_tokens INTEGER DEFAULT 0,
+        total_usage_requests INTEGER DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_services_ai_app ON services(ai_app_id)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_services_team ON services(team_id)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_services_rank ON services(rank_weight)');
+
+    // 1d. consumers 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS consumers (
+        id TEXT PRIMARY KEY NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        display_name TEXT NOT NULL,
+        avatar_url TEXT,
+        password_hash TEXT NOT NULL,
+        tier TEXT DEFAULT 'free',
+        credits INTEGER DEFAULT 0,
+        metadata TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_consumers_email ON consumers(email)');
+
+    // ============================================================
+    // 2. 为已有表添加新字段
+    // ============================================================
+
+    // 辅助函数：安全添加列（列已存在则跳过）
+    const addColumnSafe = (table: string, column: string, definition: string) => {
+      const cols = sqlite.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+      const exists = cols.some(c => c.name === column);
+      if (!exists) {
+        sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+      }
+    };
+
+    // 2a. tasks 表：价值追踪字段
+    addColumnSafe('tasks', 'estimated_value', 'INTEGER');
+    addColumnSafe('tasks', 'actual_value', 'INTEGER');
+    addColumnSafe('tasks', 'token_cost', 'INTEGER DEFAULT 0');
+    addColumnSafe('tasks', 'cost_breakdown', 'TEXT');
+
+    // 2b. skills 表：进化引擎字段
+    addColumnSafe('skills', 'evolution_level', 'INTEGER DEFAULT 0');
+    addColumnSafe('skills', 'experience_count', 'INTEGER DEFAULT 0');
+    addColumnSafe('skills', 'promoted_rule_count', 'INTEGER DEFAULT 0');
+    addColumnSafe('skills', 'last_promoted_at', 'INTEGER');
+    addColumnSafe('skills', 'health_score', 'INTEGER DEFAULT 100');
+
+    // 2c. members 表：团队关联
+    addColumnSafe('members', 'team_id', 'TEXT REFERENCES teams(id) ON DELETE SET NULL');
+
+    // 标记迁移完成
+    sqlite.prepare("INSERT OR REPLACE INTO migration_meta (key, value) VALUES ('v1.1_phase1a', 'done')").run();
+
+    sqlite.exec('COMMIT');
+    console.log('[TeamClaw] v1.1 Phase 1A migration complete.');
+  } catch (err) {
+    sqlite.exec('ROLLBACK');
+    console.error('[TeamClaw] v1.1 Phase 1A migration failed, rolled back:', err);
+  }
+}
+
+/**
+ * v1.1 Phase 1B: Skill 进化引擎迁移
+ * 创建新表（skill_experiences, skill_evolution_logs）
+ */
+export function migrateV1Phase1B(sqlite: Database.Database) {
+  // 检查迁移是否已完成
+  const metaTable = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='migration_meta'").get();
+  if (metaTable) {
+    const migrated = sqlite.prepare("SELECT value FROM migration_meta WHERE key = 'v1.1_phase1b'").get() as { value: string } | undefined;
+    if (migrated?.value === 'done') {
+      return;
+    }
+  }
+
+  console.log('[TeamClaw] Migrating: v1.1 Phase 1B (Skill Evolution Engine)...');
+
+  try {
+    sqlite.exec('BEGIN TRANSACTION');
+
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS migration_meta (key TEXT PRIMARY KEY, value TEXT)
+    `);
+
+    // 1. 创建 skill_experiences 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS skill_experiences (
+        id TEXT PRIMARY KEY NOT NULL,
+        skill_id TEXT NOT NULL REFERENCES skills(id) ON DELETE CASCADE,
+        scenario TEXT NOT NULL,
+        original_judgment TEXT,
+        correction TEXT NOT NULL,
+        reasoning TEXT,
+        occurrence_count INTEGER NOT NULL DEFAULT 1,
+        last_occurred_at INTEGER NOT NULL,
+        source TEXT NOT NULL,
+        task_id TEXT,
+        member_id TEXT,
+        promoted_to_l1 INTEGER DEFAULT 0,
+        promoted_at INTEGER,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_skill_experiences_skill_scenario ON skill_experiences(skill_id, scenario)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_skill_experiences_count ON skill_experiences(skill_id, occurrence_count)');
+
+    // 2. 创建 skill_evolution_logs 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS skill_evolution_logs (
+        id TEXT PRIMARY KEY NOT NULL,
+        skill_id TEXT NOT NULL REFERENCES skills(id) ON DELETE CASCADE,
+        action TEXT NOT NULL,
+        detail TEXT,
+        triggered_by TEXT,
+        created_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_skill_evolution_logs_skill ON skill_evolution_logs(skill_id, created_at)');
+
+    sqlite.prepare("INSERT OR REPLACE INTO migration_meta (key, value) VALUES ('v1.1_phase1b', 'done')").run();
+
+    sqlite.exec('COMMIT');
+    console.log('[TeamClaw] v1.1 Phase 1B migration complete.');
+  } catch (err) {
+    sqlite.exec('ROLLBACK');
+    console.error('[TeamClaw] v1.1 Phase 1B migration failed, rolled back:', err);
+  }
+}
+
+/**
+ * v1.1 Phase 2A: Workflow Engine 迁移
+ * 创建新表（workflows, workflow_runs）
+ * 为 tasks 表添加 workflow_id 和 workflow_run_id 字段
+ */
+export function migrateV1Phase2A(sqlite: Database.Database) {
+  // 检查迁移是否已完成
+  const metaTable = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='migration_meta'").get();
+  if (metaTable) {
+    const migrated = sqlite.prepare("SELECT value FROM migration_meta WHERE key = 'v1.1_phase2a'").get() as { value: string } | undefined;
+    if (migrated?.value === 'done') {
+      return;
+    }
+  }
+
+  console.log('[TeamClaw] Migrating: v1.1 Phase 2A (Workflow Engine)...');
+
+  try {
+    sqlite.exec('BEGIN TRANSACTION');
+
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS migration_meta (key TEXT PRIMARY KEY, value TEXT)
+    `);
+
+    // 辅助函数：安全添加列（列已存在则跳过）
+    const addColumnSafe = (table: string, column: string, definition: string) => {
+      const cols = sqlite.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+      const exists = cols.some(c => c.name === column);
+      if (!exists) {
+        sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+      }
+    };
+
+    // 1. 创建 workflows 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS workflows (
+        id TEXT PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        nodes TEXT,
+        entry_node_id TEXT,
+        project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+        created_by TEXT,
+        version INTEGER DEFAULT 1,
+        status TEXT DEFAULT 'draft',
+        sop_template_id TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_workflows_project ON workflows(project_id)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_workflows_status ON workflows(status)');
+
+    // 2. 创建 workflow_runs 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS workflow_runs (
+        id TEXT PRIMARY KEY NOT NULL,
+        workflow_id TEXT NOT NULL REFERENCES workflows(id),
+        task_id TEXT REFERENCES tasks(id),
+        status TEXT NOT NULL DEFAULT 'running',
+        current_node_id TEXT,
+        node_history TEXT DEFAULT '[]',
+        context TEXT DEFAULT '{}',
+        started_at INTEGER,
+        completed_at INTEGER,
+        created_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_workflow_runs_workflow ON workflow_runs(workflow_id)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_workflow_runs_task ON workflow_runs(task_id)');
+
+    // 3. 为 tasks 表添加 workflow 关联字段
+    addColumnSafe('tasks', 'workflow_id', 'TEXT REFERENCES workflows(id)');
+    addColumnSafe('tasks', 'workflow_run_id', 'TEXT REFERENCES workflow_runs(id)');
+
+    sqlite.prepare("INSERT OR REPLACE INTO migration_meta (key, value) VALUES ('v1.1_phase2a', 'done')").run();
+
+    sqlite.exec('COMMIT');
+    console.log('[TeamClaw] v1.1 Phase 2A migration complete.');
+  } catch (err) {
+    sqlite.exec('ROLLBACK');
+    console.error('[TeamClaw] v1.1 Phase 2A migration failed, rolled back:', err);
+  }
+}
+
+/**
+ * v1.1 Phase 3: Marketplace + Consumer System 迁移
+ * 创建新表（service_ratings, activation_keys, subscriptions, service_usage, service_orders）
+ */
+export function migrateV1Phase3(sqlite: Database.Database) {
+  // 检查迁移是否已完成
+  const metaTable = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='migration_meta'").get();
+  if (metaTable) {
+    const migrated = sqlite.prepare("SELECT value FROM migration_meta WHERE key = 'v1.1_phase3'").get() as { value: string } | undefined;
+    if (migrated?.value === 'done') {
+      return;
+    }
+  }
+
+  console.log('[TeamClaw] Migrating: v1.1 Phase 3 (Marketplace + Consumer System)...');
+
+  try {
+    sqlite.exec('BEGIN TRANSACTION');
+
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS migration_meta (key TEXT PRIMARY KEY, value TEXT)
+    `);
+
+    // 1. 创建 service_ratings 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS service_ratings (
+        id TEXT PRIMARY KEY NOT NULL,
+        service_id TEXT NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+        consumer_id TEXT NOT NULL REFERENCES consumers(id),
+        rating INTEGER NOT NULL,
+        feedback TEXT,
+        created_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_service_ratings_service ON service_ratings(service_id)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_service_ratings_consumer ON service_ratings(consumer_id)');
+
+    // 2. 创建 activation_keys 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS activation_keys (
+        id TEXT PRIMARY KEY NOT NULL,
+        service_id TEXT NOT NULL REFERENCES services(id),
+        key TEXT NOT NULL,
+        status TEXT DEFAULT 'unused',
+        activated_by TEXT REFERENCES consumers(id),
+        activated_at INTEGER,
+        expires_at INTEGER,
+        created_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_activation_keys_key ON activation_keys(key)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_activation_keys_service ON activation_keys(service_id)');
+
+    // 3. 创建 subscriptions 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id TEXT PRIMARY KEY NOT NULL,
+        consumer_id TEXT NOT NULL REFERENCES consumers(id),
+        service_id TEXT NOT NULL REFERENCES services(id),
+        plan TEXT NOT NULL,
+        status TEXT DEFAULT 'active',
+        started_at INTEGER NOT NULL,
+        expires_at INTEGER,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_subscriptions_consumer_service ON subscriptions(consumer_id, service_id)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status)');
+
+    // 4. 创建 service_usage 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS service_usage (
+        id TEXT PRIMARY KEY NOT NULL,
+        consumer_id TEXT NOT NULL REFERENCES consumers(id),
+        service_id TEXT NOT NULL REFERENCES services(id),
+        subscription_id TEXT REFERENCES subscriptions(id),
+        token_count INTEGER DEFAULT 0,
+        request_count INTEGER DEFAULT 0,
+        quota_tokens INTEGER,
+        quota_requests INTEGER,
+        period_start INTEGER NOT NULL,
+        period_end INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_service_usage_consumer_service ON service_usage(consumer_id, service_id)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_service_usage_period ON service_usage(period_start, period_end)');
+
+    // 5. 创建 service_orders 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS service_orders (
+        id TEXT PRIMARY KEY NOT NULL,
+        consumer_id TEXT NOT NULL REFERENCES consumers(id),
+        service_id TEXT NOT NULL REFERENCES services(id),
+        amount INTEGER NOT NULL,
+        currency TEXT DEFAULT 'CNY',
+        status TEXT DEFAULT 'pending',
+        payment_method TEXT,
+        payment_id TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_service_orders_consumer ON service_orders(consumer_id)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_service_orders_status ON service_orders(status)');
+
+    sqlite.prepare("INSERT OR REPLACE INTO migration_meta (key, value) VALUES ('v1.1_phase3', 'done')").run();
+
+    sqlite.exec('COMMIT');
+    console.log('[TeamClaw] v1.1 Phase 3 migration complete.');
+  } catch (err) {
+    sqlite.exec('ROLLBACK');
+    console.error('[TeamClaw] v1.1 Phase 3 migration failed, rolled back:', err);
+  }
+}
+
+/**
+ * v1.1 Phase 4: Proactive Engine + Observability
+ */
+export function migrateV1Phase4(sqlite: Database.Database) {
+  const row = sqlite.prepare("SELECT value FROM migration_meta WHERE key = 'v1.1_phase4'").get() as { value: string } | undefined;
+  if (row?.value === 'done') return;
+
+  try {
+    sqlite.exec('BEGIN TRANSACTION');
+
+    // 1. 创建 proactive_rules 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS proactive_rules (
+        id TEXT PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL,
+        trigger_type TEXT NOT NULL,
+        config TEXT,
+        enabled INTEGER DEFAULT 1,
+        cooldown_minutes INTEGER DEFAULT 60,
+        project_id TEXT REFERENCES projects(id),
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_proactive_rules_project_enabled ON proactive_rules(project_id, enabled)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_proactive_rules_trigger ON proactive_rules(trigger_type)');
+
+    // 2. 创建 proactive_events 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS proactive_events (
+        id TEXT PRIMARY KEY NOT NULL,
+        rule_id TEXT NOT NULL REFERENCES proactive_rules(id) ON DELETE CASCADE,
+        rule_name TEXT NOT NULL,
+        trigger_type TEXT NOT NULL,
+        severity TEXT DEFAULT 'warning',
+        title TEXT NOT NULL,
+        description TEXT,
+        trigger_data TEXT,
+        action_taken TEXT,
+        status TEXT DEFAULT 'triggered',
+        acted_by TEXT,
+        project_id TEXT,
+        created_at INTEGER NOT NULL,
+        acted_at INTEGER
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_proactive_events_rule ON proactive_events(rule_id, status)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_proactive_events_status ON proactive_events(status)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_proactive_events_created ON proactive_events(created_at)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_proactive_events_project ON proactive_events(project_id)');
+
+    // 3. 创建 event_logs 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS event_logs (
+        id TEXT PRIMARY KEY NOT NULL,
+        event_type TEXT NOT NULL,
+        entity_type TEXT NOT NULL,
+        entity_id TEXT NOT NULL,
+        payload TEXT,
+        actor_type TEXT NOT NULL,
+        actor_id TEXT,
+        token_count INTEGER,
+        token_cost REAL,
+        project_id TEXT,
+        created_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_event_logs_entity ON event_logs(entity_type, entity_id)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_event_logs_created ON event_logs(created_at)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_event_logs_actor ON event_logs(actor_type)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_event_logs_project ON event_logs(project_id)');
+
+    // 4. 创建 dead_letters 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS dead_letters (
+        id TEXT PRIMARY KEY NOT NULL,
+        original_event_id TEXT,
+        error TEXT NOT NULL,
+        error_stack TEXT,
+        payload TEXT,
+        retry_count INTEGER DEFAULT 0,
+        max_retries INTEGER DEFAULT 3,
+        status TEXT DEFAULT 'pending',
+        next_retry_at INTEGER,
+        created_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_dead_letters_status ON dead_letters(status)');
+
+    // 5. 创建 circuit_states 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS circuit_states (
+        id TEXT PRIMARY KEY NOT NULL,
+        service_name TEXT NOT NULL UNIQUE,
+        state TEXT DEFAULT 'closed',
+        failure_count INTEGER DEFAULT 0,
+        success_threshold INTEGER DEFAULT 3,
+        failure_threshold INTEGER DEFAULT 5,
+        timeout_ms INTEGER DEFAULT 60000,
+        last_failure_at INTEGER,
+        opened_at INTEGER,
+        updated_at INTEGER NOT NULL
+      )
+    `);
+
+    sqlite.prepare("INSERT OR REPLACE INTO migration_meta (key, value) VALUES ('v1.1_phase4', 'done')").run();
+
+    sqlite.exec('COMMIT');
+    console.log('[TeamClaw] v1.1 Phase 4 migration complete.');
+  } catch (err) {
+    sqlite.exec('ROLLBACK');
+    console.error('[TeamClaw] v1.1 Phase 4 migration failed, rolled back:', err);
+  }
+}
+
+/**
+ * v1.1 Phase 5: OKR (Objectives and Key Results)
+ * 创建新表（project_objectives, key_results, key_result_tasks）
+ */
+export function migrateV1Phase5(sqlite: Database.Database) {
+  const row = sqlite.prepare("SELECT value FROM migration_meta WHERE key = 'v1.1_phase5'").get() as { value: string } | undefined;
+  if (row?.value === 'done') return;
+
+  try {
+    sqlite.exec('BEGIN TRANSACTION');
+
+    // 1. 创建 project_objectives 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS project_objectives (
+        id TEXT PRIMARY KEY NOT NULL,
+        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        description TEXT,
+        progress INTEGER DEFAULT 0,
+        due_date INTEGER,
+        status TEXT DEFAULT 'draft',
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_objectives_project ON project_objectives(project_id, status)');
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_objectives_due ON project_objectives(due_date)');
+
+    // 2. 创建 key_results 表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS key_results (
+        id TEXT PRIMARY KEY NOT NULL,
+        objective_id TEXT NOT NULL REFERENCES project_objectives(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        description TEXT,
+        target_value REAL NOT NULL,
+        current_value REAL DEFAULT 0,
+        unit TEXT,
+        status TEXT DEFAULT 'not_started',
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    `);
+    sqlite.exec('CREATE INDEX IF NOT EXISTS idx_key_results_objective ON key_results(objective_id)');
+
+    // 3. 创建 key_result_tasks 关联表
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS key_result_tasks (
+        key_result_id TEXT NOT NULL REFERENCES key_results(id) ON DELETE CASCADE,
+        task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+        PRIMARY KEY (key_result_id, task_id)
+      )
+    `);
+
+    sqlite.prepare("INSERT OR REPLACE INTO migration_meta (key, value) VALUES ('v1.1_phase5', 'done')").run();
+
+    sqlite.exec('COMMIT');
+    console.log('[TeamClaw] v1.1 Phase 5 (OKR) migration complete.');
+  } catch (err) {
+    sqlite.exec('ROLLBACK');
+    console.error('[TeamClaw] v1.1 Phase 5 migration failed, rolled back:', err);
+  }
+}

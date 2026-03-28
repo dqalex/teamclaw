@@ -48,6 +48,9 @@ export const members = sqliteTable('members', {
   experienceTaskTypes: text('experience_task_types', { mode: 'json' }).$type<string[]>(),
   experienceTools: text('experience_tools', { mode: 'json' }).$type<string[]>(),
   
+  // v1.1: 团队关联
+  teamId: text('team_id').references(() => teams.id, { onDelete: 'set null' }),
+  
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 });
@@ -231,6 +234,16 @@ export const tasks = sqliteTable('tasks', {
   currentStageId: text('current_stage_id'),      // 当前阶段 ID
   stageHistory: text('stage_history', { mode: 'json' }).$type<StageRecord[]>().default([]),
   sopInputs: text('sop_inputs', { mode: 'json' }).$type<Record<string, unknown>>(), // 用户在 input 阶段提供的数据
+  // v1.1: 任务价值追踪（DeskClaw 借鉴）
+  estimatedValue: integer('estimated_value'),          // 预估价值（分）
+  actualValue: integer('actual_value'),                // 实际价值（分）
+  tokenCost: integer('token_cost').default(0),         // Token 消耗
+  costBreakdown: text('cost_breakdown', { mode: 'json' }).$type<Record<string, number>>(), // 成本明细
+
+  // v1.1 Phase 2A: Workflow Engine 关联
+  workflowId: text('workflow_id'),
+  workflowRunId: text('workflow_run_id'),
+
   // 时间戳
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
@@ -1161,6 +1174,14 @@ export const skills = sqliteTable('skills', {
   skillPath: text('skill_path'),  // Skill 目录路径
   skillMd: text('skill_md'),  // SKILL.md 原始内容
 
+  // v1.1: Skill 进化引擎扩展
+  knowledgeDocId: text('knowledge_doc_id'),                    // 关联知识库文档 ID
+  evolutionLevel: integer('evolution_level').default(0),       // 0=基础, 1=有经验, 2=成熟, 3=专家
+  experienceCount: integer('experience_count').default(0),     // 总经验条目数
+  promotedRuleCount: integer('promoted_rule_count').default(0),// 已晋升规则数
+  lastPromotedAt: integer('last_promoted_at', { mode: 'timestamp' }),
+  healthScore: integer('health_score').default(100),           // 0-100 健康分
+
   // 安装到的 Agent 列表
   installedAgents: text('installed_agents', { mode: 'json' }).$type<string[]>().default([]),
   
@@ -1419,3 +1440,749 @@ export const systemConfig = sqliteTable('system_config', {
 
 export type SystemConfig = typeof systemConfig.$inferSelect;
 export type NewSystemConfig = typeof systemConfig.$inferInsert;
+
+// ============================================================
+// v1.1 Phase 1A: 核心实体表（Marketplace + Workflow 基础）
+// ============================================================
+
+/**
+ * 团队/组织表
+ * v1.1 新增：支持多团队协作和 Marketplace 权限隔离
+ */
+export const teams = sqliteTable('teams', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  ownerId: text('owner_id').references(() => users.id, { onDelete: 'set null' }),
+  plan: text('plan', { enum: ['free', 'pro', 'enterprise'] }).default('free'),
+  settings: text('settings', { mode: 'json' }).$type<Record<string, unknown>>().default({}),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  ownerIdx: index('idx_teams_owner').on(table.ownerId),
+}));
+
+/**
+ * AI 应用/Service 定义表
+ * v1.1 新增：定义可发布到 Marketplace 的 AI 应用
+ */
+export const aiApps = sqliteTable('ai_apps', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  ownerId: text('owner_id').references(() => users.id, { onDelete: 'cascade' }),
+  teamId: text('team_id').references(() => teams.id, { onDelete: 'cascade' }),
+  status: text('status', { enum: ['draft', 'published', 'archived'] }).notNull().default('draft'),
+  version: text('version').default('1.0.0'),
+  category: text('category'),
+  config: text('config', { mode: 'json' }).$type<Record<string, unknown>>(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  ownerIdx: index('idx_ai_apps_owner').on(table.ownerId),
+  statusIdx: index('idx_ai_apps_status').on(table.ownerId, table.status),
+}));
+
+/**
+ * Marketplace 服务实例表
+ * v1.1 新增：AI App 的可发布服务实例，包含动态评分字段
+ */
+export const services = sqliteTable('services', {
+  id: text('id').primaryKey(),
+  aiAppId: text('ai_app_id').notNull().references(() => aiApps.id, { onDelete: 'cascade' }),
+  teamId: text('team_id').references(() => teams.id),
+  name: text('name').notNull(),
+  description: text('description'),
+  pricingModel: text('pricing_model', { enum: ['free', 'credits', 'subscription', 'one_time'] }).notNull().default('free'),
+  priceCredits: integer('price_credits').default(0),
+  status: text('status', { enum: ['draft', 'published', 'suspended', 'archived'] }).notNull().default('draft'),
+  // 动态评分字段
+  popularityScore: real('popularity_score').default(0),
+  effectivenessScore: real('effectiveness_score').default(0),
+  averageRating: real('average_rating').default(0),
+  ratingCount: integer('rating_count').default(0),
+  rankWeight: real('rank_weight').default(0),
+  totalUsageTokens: integer('total_usage_tokens').default(0),
+  totalUsageRequests: integer('total_usage_requests').default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  aiAppIdx: index('idx_services_ai_app').on(table.aiAppId),
+  teamIdx: index('idx_services_team').on(table.teamId),
+  rankIdx: index('idx_services_rank').on(table.rankWeight),
+}));
+
+/**
+ * 外部消费者表（区别于内部 members）
+ * v1.1 新增：Marketplace 外部用户，用于 Consumer Auth
+ */
+export const consumers = sqliteTable('consumers', {
+  id: text('id').primaryKey(),
+  email: text('email').notNull().unique(),
+  displayName: text('display_name').notNull(),
+  avatarUrl: text('avatar_url'),
+  passwordHash: text('password_hash').notNull(),
+  tier: text('tier', { enum: ['free', 'pro', 'enterprise'] }).default('free'),
+  credits: integer('credits').default(0),
+  metadata: text('metadata', { mode: 'json' }).$type<Record<string, unknown>>(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  emailIdx: uniqueIndex('idx_consumers_email').on(table.email),
+}));
+
+// v1.1 新表类型导出
+export type Team = typeof teams.$inferSelect;
+export type NewTeam = typeof teams.$inferInsert;
+export type AiApp = typeof aiApps.$inferSelect;
+export type NewAiApp = typeof aiApps.$inferInsert;
+export type Service = typeof services.$inferSelect;
+export type NewService = typeof services.$inferInsert;
+export type Consumer = typeof consumers.$inferSelect;
+export type NewConsumer = typeof consumers.$inferInsert;
+
+// v1.1 关系定义
+export const teamsRelations = relations(teams, ({ one, many }) => ({
+  owner: one(users, { fields: [teams.ownerId], references: [users.id] }),
+  aiApps: many(aiApps),
+}));
+
+export const aiAppsRelations = relations(aiApps, ({ one, many }) => ({
+  owner: one(users, { fields: [aiApps.ownerId], references: [users.id] }),
+  team: one(teams, { fields: [aiApps.teamId], references: [teams.id] }),
+  services: many(services),
+}));
+
+export const servicesRelations = relations(services, ({ one }) => ({
+  aiApp: one(aiApps, { fields: [services.aiAppId], references: [aiApps.id] }),
+  team: one(teams, { fields: [services.teamId], references: [teams.id] }),
+}));
+
+// ============================================================
+// v1.1 Phase 1B: Skill 进化引擎
+// ============================================================
+
+/**
+ * v1.1 新增：Skill 经验记录表
+ * 存储 Agent 执行 Skill 过程中被用户修正或自主发现的改进经验
+ */
+export const skillExperiences = sqliteTable('skill_experiences', {
+  id: text('id').primaryKey(),
+  skillId: text('skill_id').notNull().references(() => skills.id, { onDelete: 'cascade' }),
+
+  // 经验内容
+  scenario: text('scenario').notNull(),           // 场景描述（用于归并）
+  originalJudgment: text('original_judgment'),     // 原始判断
+  correction: text('correction').notNull(),        // 修正后
+  reasoning: text('reasoning'),                    // 修正理由
+
+  // 归并统计
+  occurrenceCount: integer('occurrence_count').notNull().default(1),
+  lastOccurredAt: integer('last_occurred_at', { mode: 'timestamp' }).notNull(),
+
+  // 元数据
+  source: text('source', { enum: ['user_correction', 'auto_detect', 'manual'] }).notNull(),
+  taskId: text('task_id'),                         // 关联任务（可选）
+  memberId: text('member_id'),                     // 记录者
+
+  // 晋升状态
+  promotedToL1: integer('promoted_to_l1', { mode: 'boolean' }).default(false),
+  promotedAt: integer('promoted_at', { mode: 'timestamp' }),
+
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  skillScenarioIdx: index('idx_skill_experiences_skill_scenario').on(table.skillId, table.scenario),
+  skillCountIdx: index('idx_skill_experiences_count').on(table.skillId, table.occurrenceCount),
+}));
+
+/**
+ * v1.1 新增：Skill 进化日志表
+ * 记录所有进化事件（记录、归并、晋升、健康检查等）
+ */
+export const skillEvolutionLogs = sqliteTable('skill_evolution_logs', {
+  id: text('id').primaryKey(),
+  skillId: text('skill_id').notNull().references(() => skills.id, { onDelete: 'cascade' }),
+
+  action: text('action', {
+    enum: ['experience_recorded', 'experience_merged', 'promoted_to_l1', 'health_check', 'experience_filtered'],
+  }).notNull(),
+
+  detail: text('detail', { mode: 'json' }).$type<Record<string, unknown>>(),
+  triggeredBy: text('triggered_by'),
+
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  skillIdx: index('idx_skill_evolution_logs_skill').on(table.skillId, table.createdAt),
+}));
+
+// Phase 1B 类型导出
+export type SkillExperience = typeof skillExperiences.$inferSelect;
+export type NewSkillExperience = typeof skillExperiences.$inferInsert;
+export type SkillEvolutionLog = typeof skillEvolutionLogs.$inferSelect;
+export type NewSkillEvolutionLog = typeof skillEvolutionLogs.$inferInsert;
+
+// Phase 1B 关系定义
+export const skillExperiencesRelations = relations(skillExperiences, ({ one }) => ({
+  skill: one(skills, { fields: [skillExperiences.skillId], references: [skills.id] }),
+}));
+
+export const skillEvolutionLogsRelations = relations(skillEvolutionLogs, ({ one }) => ({
+  skill: one(skills, { fields: [skillEvolutionLogs.skillId], references: [skills.id] }),
+}));
+
+// ============================================================
+// v1.1 Phase 2: Workflow Engine
+// ============================================================
+
+/** Workflow 节点类型 */
+export type WorkflowNode =
+  | { type: 'sop'; sopId: string; inputMapping?: Record<string, string> }
+  | { type: 'condition'; expression: string; branches: { true: WorkflowNode[]; false: WorkflowNode[] } }
+  | { type: 'loop'; count: number; nodes: WorkflowNode[] }
+  | { type: 'parallel'; nodes: WorkflowNode[] }
+  | { type: 'workflow_call'; workflowId: string; inputs: Record<string, string> }
+  | { type: 'ai_auto'; prompt: string }
+  | { type: 'input'; fields: InputDef[] }
+  | { type: 'render'; templateId: string }
+  | { type: 'review'; reviewers: string[] };
+
+/**
+ * v1.1 新增：Workflow 定义表
+ * 存储工作流定义（节点图 + 元信息），兼容现有 SOP
+ */
+export const workflows = sqliteTable('workflows', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  projectId: text('project_id').references(() => projects.id),
+  // Workflow 节点图定义
+  nodes: text('nodes', { mode: 'json' }).$type<WorkflowNode[]>(),
+  // 入口节点 ID（DAG 起始点）
+  entryNodeId: text('entry_node_id'),
+  status: text('status', { enum: ['draft', 'published', 'archived'] }).notNull().default('draft'),
+  version: integer('version').notNull().default(1),
+  // SOP 兼容层：关联已有 SOP 模板
+  sopTemplateId: text('sop_template_id').references(() => sopTemplates.id),
+  createdBy: text('created_by'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  projectIdx: index('idx_workflows_project').on(table.projectId),
+  statusIdx: index('idx_workflows_status').on(table.status),
+}));
+
+/**
+ * v1.1 新增：Workflow 执行记录表
+ * 记录每次 Workflow 执行的完整生命周期
+ */
+export const workflowRuns = sqliteTable('workflow_runs', {
+  id: text('id').primaryKey(),
+  workflowId: text('workflow_id').notNull().references(() => workflows.id),
+  taskId: text('task_id').references(() => tasks.id),
+  status: text('status', {
+    enum: ['running', 'paused', 'completed', 'failed', 'cancelled'],
+  }).notNull().default('running'),
+  currentNodeId: text('current_node_id'),
+  nodeHistory: text('node_history', { mode: 'json' }).$type<Record<string, unknown>[]>().default([]),
+  context: text('context', { mode: 'json' }).$type<Record<string, unknown>>().default({}),
+  startedAt: integer('started_at', { mode: 'timestamp' }),
+  completedAt: integer('completed_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  workflowIdx: index('idx_workflow_runs_workflow').on(table.workflowId),
+  taskIdx: index('idx_workflow_runs_task').on(table.taskId),
+}));
+
+/**
+ * v1.1 新增：App Workflow 定义表
+ * AI App 内嵌的 Workflow 定义（独立版本管理）
+ */
+export const appWorkflows = sqliteTable('app_workflows', {
+  id: text('id').primaryKey(),
+  appId: text('app_id').notNull().references(() => aiApps.id, { onDelete: 'cascade' }),
+  nodes: text('nodes', { mode: 'json' }).$type<Record<string, unknown>>().notNull(),
+  version: integer('version').notNull().default(1),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  appIdx: index('idx_app_workflows_app').on(table.appId),
+}));
+
+/**
+ * v1.1 新增：App Artifact 表
+ * AI App 产出的预览组件（表单、表格、图表等）
+ */
+export const appArtifacts = sqliteTable('app_artifacts', {
+  id: text('id').primaryKey(),
+  appId: text('app_id').notNull().references(() => aiApps.id, { onDelete: 'cascade' }),
+  type: text('type', {
+    enum: ['web_preview', 'form', 'table', 'code', 'chat'],
+  }).notNull(),
+  content: text('content'),
+  previewUrl: text('preview_url'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  appIdx: index('idx_app_artifacts_app').on(table.appId),
+}));
+
+// Phase 2 类型导出
+export type Workflow = typeof workflows.$inferSelect;
+export type NewWorkflow = typeof workflows.$inferInsert;
+export type WorkflowRun = typeof workflowRuns.$inferSelect;
+export type NewWorkflowRun = typeof workflowRuns.$inferInsert;
+export type AppWorkflow = typeof appWorkflows.$inferSelect;
+export type NewAppWorkflow = typeof appWorkflows.$inferInsert;
+export type AppArtifact = typeof appArtifacts.$inferSelect;
+export type NewAppArtifact = typeof appArtifacts.$inferInsert;
+
+// Phase 2 关系定义
+export const workflowsRelations = relations(workflows, ({ one, many }) => ({
+  project: one(projects, { fields: [workflows.projectId], references: [projects.id] }),
+  sopTemplate: one(sopTemplates, { fields: [workflows.sopTemplateId], references: [sopTemplates.id] }),
+  runs: many(workflowRuns),
+}));
+
+export const workflowRunsRelations = relations(workflowRuns, ({ one }) => ({
+  workflow: one(workflows, { fields: [workflowRuns.workflowId], references: [workflows.id] }),
+  task: one(tasks, { fields: [workflowRuns.taskId], references: [tasks.id] }),
+}));
+
+export const appWorkflowsRelations = relations(appWorkflows, ({ one }) => ({
+  app: one(aiApps, { fields: [appWorkflows.appId], references: [aiApps.id] }),
+}));
+
+export const appArtifactsRelations = relations(appArtifacts, ({ one }) => ({
+  app: one(aiApps, { fields: [appArtifacts.appId], references: [aiApps.id] }),
+}));
+
+// ============================================================
+// v1.1 Phase 3: Marketplace + Consumer 扩展
+// ============================================================
+
+/**
+ * v1.1 新增：激活码表
+ * 用于 Service 的激活码兑换机制
+ */
+export const activationKeys = sqliteTable('activation_keys', {
+  id: text('id').primaryKey(),
+  serviceId: text('service_id').notNull().references(() => services.id),
+  key: text('key').notNull().unique(),
+  status: text('status', { enum: ['unused', 'activated', 'expired', 'revoked'] }).default('unused'),
+  activatedBy: text('activated_by').references(() => consumers.id),
+  activatedAt: integer('activated_at', { mode: 'timestamp' }),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  keyIdx: uniqueIndex('idx_activation_keys_key').on(table.key),
+  serviceIdx: index('idx_activation_keys_service').on(table.serviceId),
+}));
+
+/**
+ * v1.1 新增：订阅表
+ * Consumer 对 Service 的订阅关系
+ */
+export const subscriptions = sqliteTable('subscriptions', {
+  id: text('id').primaryKey(),
+  consumerId: text('consumer_id').notNull().references(() => consumers.id),
+  serviceId: text('service_id').notNull().references(() => services.id),
+  plan: text('plan', { enum: ['trial', 'monthly', 'yearly', 'lifetime'] }).notNull(),
+  status: text('status', { enum: ['active', 'paused', 'cancelled', 'expired'] }).notNull().default('active'),
+  startedAt: integer('started_at', { mode: 'timestamp' }).notNull(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  consumerServiceIdx: index('idx_subscriptions_consumer_service').on(table.consumerId, table.serviceId),
+  statusIdx: index('idx_subscriptions_status').on(table.status),
+}));
+
+/**
+ * v1.1 新增：服务使用记录表
+ * 记录 Consumer 对 Service 的每次使用
+ */
+export const serviceUsages = sqliteTable('service_usages', {
+  id: text('id').primaryKey(),
+  subscriptionId: text('subscription_id').references(() => subscriptions.id),
+  consumerId: text('consumer_id').notNull().references(() => consumers.id),
+  serviceId: text('service_id').notNull().references(() => services.id),
+  tokenCount: integer('token_count').default(0),
+  requestCount: integer('request_count').default(0),
+  periodStart: integer('period_start', { mode: 'timestamp' }).notNull(),
+  periodEnd: integer('period_end', { mode: 'timestamp' }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  consumerIdx: index('idx_service_usages_consumer').on(table.consumerId),
+  serviceIdx: index('idx_service_usages_service').on(table.serviceId),
+  createdIdx: index('idx_service_usages_created').on(table.createdAt),
+}));
+
+/**
+ * v1.1 新增：服务评分表
+ * 记录人类和 Agent 对 Service 的评价（用于动态评分计算）
+ */
+export const serviceRatings = sqliteTable('service_ratings', {
+  id: text('id').primaryKey(),
+  serviceId: text('service_id').notNull().references(() => services.id, { onDelete: 'cascade' }),
+  consumerId: text('consumer_id').notNull().references(() => consumers.id),
+  rating: integer('rating').notNull(),
+  feedback: text('feedback'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  serviceIdx: index('idx_service_ratings_service').on(table.serviceId),
+  consumerIdx: index('idx_service_ratings_consumer').on(table.consumerId),
+}));
+
+/**
+ * v1.1 新增：服务订单表
+ * Consumer 购买 Service 的支付订单
+ */
+export const serviceOrders = sqliteTable('service_orders', {
+  id: text('id').primaryKey(),
+  consumerId: text('consumer_id').notNull().references(() => consumers.id),
+  serviceId: text('service_id').notNull().references(() => services.id),
+  status: text('status', { enum: ['pending', 'paid', 'refunded', 'cancelled'] }).notNull().default('pending'),
+  amount: integer('amount').notNull(),
+  paymentMethod: text('payment_method', { enum: ['credits', 'wechat', 'stripe', 'alipay'] }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  consumerIdx: index('idx_service_orders_consumer').on(table.consumerId),
+  serviceIdx: index('idx_service_orders_service').on(table.serviceId),
+  statusIdx: index('idx_service_orders_status').on(table.status),
+}));
+
+// Phase 3 类型导出
+export type ActivationKey = typeof activationKeys.$inferSelect;
+export type NewActivationKey = typeof activationKeys.$inferInsert;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type NewSubscription = typeof subscriptions.$inferInsert;
+export type ServiceUsage = typeof serviceUsages.$inferSelect;
+export type NewServiceUsage = typeof serviceUsages.$inferInsert;
+export type ServiceRating = typeof serviceRatings.$inferSelect;
+export type NewServiceRating = typeof serviceRatings.$inferInsert;
+export type ServiceOrder = typeof serviceOrders.$inferSelect;
+export type NewServiceOrder = typeof serviceOrders.$inferInsert;
+
+// Phase 3 关系定义
+export const activationKeysRelations = relations(activationKeys, ({ one }) => ({
+  service: one(services, { fields: [activationKeys.serviceId], references: [services.id] }),
+  activatedByConsumer: one(consumers, { fields: [activationKeys.activatedBy], references: [consumers.id] }),
+}));
+
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+  consumer: one(consumers, { fields: [subscriptions.consumerId], references: [consumers.id] }),
+  service: one(services, { fields: [subscriptions.serviceId], references: [services.id] }),
+}));
+
+export const serviceUsagesRelations = relations(serviceUsages, ({ one }) => ({
+  consumer: one(consumers, { fields: [serviceUsages.consumerId], references: [consumers.id] }),
+  service: one(services, { fields: [serviceUsages.serviceId], references: [services.id] }),
+  subscription: one(subscriptions, { fields: [serviceUsages.subscriptionId], references: [subscriptions.id] }),
+}));
+
+export const serviceRatingsRelations = relations(serviceRatings, ({ one }) => ({
+  service: one(services, { fields: [serviceRatings.serviceId], references: [services.id] }),
+  consumer: one(consumers, { fields: [serviceRatings.consumerId], references: [consumers.id] }),
+}));
+
+export const serviceOrdersRelations = relations(serviceOrders, ({ one }) => ({
+  consumer: one(consumers, { fields: [serviceOrders.consumerId], references: [consumers.id] }),
+  service: one(services, { fields: [serviceOrders.serviceId], references: [services.id] }),
+}));
+
+// ============================================================
+// v1.1 Phase 4: Proactive Engine + Observability
+// ============================================================
+
+/** Proactive 触发条件类型 */
+export type TriggerCondition =
+  | { type: 'task_overdue'; hoursBefore: number }
+  | { type: 'delivery_queue_size'; minSize: number }
+  | { type: 'project_progress'; threshold: number }
+  | { type: 'sop_knowledge_missing'; layers: string[] }
+  | { type: 'member_joined'; projectId: string }
+  | { type: 'skill_health_check'; skillId: string }
+  | { type: 'skill_promotion_ready'; threshold: number }
+  | { type: 'custom'; expression: string };
+
+/**
+ * v1.1 新增：主动规则表
+ * 定义触发条件 + 执行动作的自动化规则
+ */
+export const proactiveRules = sqliteTable('proactive_rules', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  trigger: text('trigger', { mode: 'json' }).$type<TriggerCondition>().notNull(),
+  condition: text('condition'),
+  action: text('action', { mode: 'json' }).$type<Record<string, unknown>>().notNull(),
+  priority: text('priority', { enum: ['low', 'medium', 'high'] }).notNull().default('medium'),
+  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
+  projectId: text('project_id'),
+  createdBy: text('created_by'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  projectIdx: index('idx_proactive_rules_project').on(table.projectId),
+  enabledIdx: index('idx_proactive_rules_enabled').on(table.enabled),
+}));
+
+/**
+ * v1.1 新增：主动事件表
+ * 记录每次规则触发的执行记录
+ */
+export const proactiveEvents = sqliteTable('proactive_events', {
+  id: text('id').primaryKey(),
+  ruleId: text('rule_id').notNull().references(() => proactiveRules.id),
+  triggeredAt: integer('triggered_at', { mode: 'timestamp' }).notNull(),
+  context: text('context', { mode: 'json' }).$type<Record<string, unknown>>(),
+  action: text('action').notNull(),
+  result: text('result', { enum: ['sent', 'dismissed', 'failed'] }).notNull(),
+  targetMemberId: text('target_member_id'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  ruleIdx: index('idx_proactive_events_rule').on(table.ruleId),
+  triggeredIdx: index('idx_proactive_events_triggered').on(table.triggeredAt),
+}));
+
+/**
+ * v1.1 新增：主动反馈历史表
+ * 记录用户对主动推送的反馈（用于优化规则）
+ */
+export const proactiveHistory = sqliteTable('proactive_history', {
+  id: text('id').primaryKey(),
+  memberId: text('member_id').notNull(),
+  ruleId: text('rule_id').notNull().references(() => proactiveRules.id),
+  eventId: text('event_id').notNull().references(() => proactiveEvents.id),
+  respondedAt: integer('responded_at', { mode: 'timestamp' }),
+  feedback: text('feedback', { enum: ['helpful', 'irrelevant', 'annoying'] }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  memberIdx: index('idx_proactive_history_member').on(table.memberId),
+  ruleIdx: index('idx_proactive_history_rule').on(table.ruleId),
+}));
+
+/**
+ * v1.1 新增：事件溯源表
+ * 通用事件日志，支持追踪所有业务事件
+ */
+export const eventLogs = sqliteTable('event_logs', {
+  id: text('id').primaryKey(),
+  traceId: text('trace_id').notNull(),
+  eventType: text('event_type').notNull(),
+  projectId: text('project_id'),
+  sourceId: text('source_id'),
+  targetId: text('target_id'),
+  data: text('data', { mode: 'json' }).$type<Record<string, unknown>>(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  traceIdx: index('idx_event_logs_trace').on(table.traceId),
+  eventTypeIdx: index('idx_event_logs_type').on(table.eventType),
+  projectIdx: index('idx_event_logs_project').on(table.projectId),
+  createdIdx: index('idx_event_logs_created').on(table.createdAt),
+}));
+
+/**
+ * v1.1 新增：死信队列表
+ * 处理失败的事件/消息，支持重试和恢复
+ */
+export const deadLetters = sqliteTable('dead_letters', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  originalPayload: text('original_payload', { mode: 'json' }).$type<Record<string, unknown>>().notNull(),
+  errorMessage: text('error_message').notNull(),
+  retryCount: integer('retry_count').notNull().default(0),
+  recoveredAt: integer('recovered_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  projectIdx: index('idx_dead_letters_project').on(table.projectId),
+  createdIdx: index('idx_dead_letters_created').on(table.createdAt),
+}));
+
+/**
+ * v1.1 新增：熔断器状态表
+ * 记录各 Agent/Service 的熔断状态（用于过载保护）
+ */
+export const circuitStates = sqliteTable('circuit_states', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  nodeId: text('node_id').notNull(),
+  state: text('state', { enum: ['open', 'half_open', 'closed'] }).notNull().default('closed'),
+  failureCount: integer('failure_count').notNull().default(0),
+  lastFailAt: integer('last_fail_at', { mode: 'timestamp' }),
+  resetAt: integer('reset_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  projectNodeIdx: uniqueIndex('idx_circuit_states_project_node').on(table.projectId, table.nodeId),
+}));
+
+// Phase 4 类型导出
+export type ProactiveRule = typeof proactiveRules.$inferSelect;
+export type NewProactiveRule = typeof proactiveRules.$inferInsert;
+export type ProactiveEvent = typeof proactiveEvents.$inferSelect;
+export type NewProactiveEvent = typeof proactiveEvents.$inferInsert;
+export type ProactiveHistory = typeof proactiveHistory.$inferSelect;
+export type NewProactiveHistory = typeof proactiveHistory.$inferInsert;
+export type EventLog = typeof eventLogs.$inferSelect;
+export type NewEventLog = typeof eventLogs.$inferInsert;
+export type DeadLetter = typeof deadLetters.$inferSelect;
+export type NewDeadLetter = typeof deadLetters.$inferInsert;
+export type CircuitState = typeof circuitStates.$inferSelect;
+export type NewCircuitState = typeof circuitStates.$inferInsert;
+
+// Phase 4 关系定义
+export const proactiveRulesRelations = relations(proactiveRules, ({ many }) => ({
+  events: many(proactiveEvents),
+  history: many(proactiveHistory),
+}));
+
+export const proactiveEventsRelations = relations(proactiveEvents, ({ one, many }) => ({
+  rule: one(proactiveRules, { fields: [proactiveEvents.ruleId], references: [proactiveRules.id] }),
+  history: many(proactiveHistory),
+}));
+
+export const proactiveHistoryRelations = relations(proactiveHistory, ({ one }) => ({
+  rule: one(proactiveRules, { fields: [proactiveHistory.ruleId], references: [proactiveRules.id] }),
+  event: one(proactiveEvents, { fields: [proactiveHistory.eventId], references: [proactiveEvents.id] }),
+}));
+
+// ============================================================
+// v1.1 Phase 5: Payment + OKR
+// ============================================================
+
+/**
+ * v1.1 新增：支付交易表
+ * 记录所有支付相关的交易
+ */
+export const paymentTransactions = sqliteTable('payment_transactions', {
+  id: text('id').primaryKey(),
+  consumerId: text('consumer_id').notNull().references(() => consumers.id),
+  orderId: text('order_id'),
+  amount: integer('amount').notNull(),
+  currency: text('currency').notNull().default('CNY'),
+  method: text('method', { enum: ['credits', 'wechat', 'stripe', 'alipay'] }).notNull(),
+  status: text('status', { enum: ['pending', 'completed', 'failed', 'refunded'] }).notNull().default('pending'),
+  externalId: text('external_id'),
+  metadata: text('metadata', { mode: 'json' }).$type<Record<string, unknown>>(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  consumerIdx: index('idx_payment_transactions_consumer').on(table.consumerId),
+  statusIdx: index('idx_payment_transactions_status').on(table.status),
+}));
+
+/**
+ * v1.1 新增：积分交易表
+ * 记录 Credits 的购买/消费/退款/赠送明细
+ */
+export const creditsTransactions = sqliteTable('credits_transactions', {
+  id: text('id').primaryKey(),
+  consumerId: text('consumer_id').notNull().references(() => consumers.id),
+  amount: integer('amount').notNull(),
+  balance: integer('balance').notNull(),
+  type: text('type', { enum: ['purchase', 'consume', 'refund', 'bonus'] }).notNull(),
+  description: text('description'),
+  relatedId: text('related_id'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  consumerIdx: index('idx_credits_transactions_consumer').on(table.consumerId),
+  createdIdx: index('idx_credits_transactions_created').on(table.createdAt),
+}));
+
+/**
+ * v1.1 新增：OKR 目标表
+ * 项目级别的目标设定
+ */
+export const objectives = sqliteTable('objectives', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull().references(() => projects.id),
+  title: text('title').notNull(),
+  description: text('description'),
+  progress: real('progress').default(0),
+  status: text('status', { enum: ['active', 'completed', 'cancelled'] }).notNull().default('active'),
+  startDate: integer('start_date', { mode: 'timestamp' }),
+  dueDate: integer('due_date', { mode: 'timestamp' }),
+  createdBy: text('created_by'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  projectIdx: index('idx_objectives_project').on(table.projectId),
+  statusIdx: index('idx_objectives_status').on(table.status),
+}));
+
+/**
+ * v1.1 新增：关键结果表
+ * OKR 的关键结果（自动计算 progress = currentValue / targetValue * 100）
+ */
+export const keyResults = sqliteTable('key_results', {
+  id: text('id').primaryKey(),
+  objectiveId: text('objective_id').notNull().references(() => objectives.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  description: text('description'),
+  currentValue: real('current_value').default(0),
+  targetValue: real('target_value').default(100),
+  progress: real('progress').default(0),
+  status: text('status', { enum: ['active', 'completed', 'cancelled'] }).notNull().default('active'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  objectiveIdx: index('idx_key_results_objective').on(table.objectiveId),
+}));
+
+// Phase 5 类型导出
+export type PaymentTransaction = typeof paymentTransactions.$inferSelect;
+export type NewPaymentTransaction = typeof paymentTransactions.$inferInsert;
+export type CreditsTransaction = typeof creditsTransactions.$inferSelect;
+export type NewCreditsTransaction = typeof creditsTransactions.$inferInsert;
+export type Objective = typeof objectives.$inferSelect;
+export type NewObjective = typeof objectives.$inferInsert;
+export type KeyResult = typeof keyResults.$inferSelect;
+export type NewKeyResult = typeof keyResults.$inferInsert;
+
+// Phase 5 关系定义
+export const paymentTransactionsRelations = relations(paymentTransactions, ({ one }) => ({
+  consumer: one(consumers, { fields: [paymentTransactions.consumerId], references: [consumers.id] }),
+}));
+
+export const creditsTransactionsRelations = relations(creditsTransactions, ({ one }) => ({
+  consumer: one(consumers, { fields: [creditsTransactions.consumerId], references: [consumers.id] }),
+}));
+
+export const objectivesRelations = relations(objectives, ({ one, many }) => ({
+  project: one(projects, { fields: [objectives.projectId], references: [projects.id] }),
+  keyResults: many(keyResults),
+}));
+
+export const keyResultsRelations = relations(keyResults, ({ one }) => ({
+  objective: one(objectives, { fields: [keyResults.objectiveId], references: [objectives.id] }),
+}));
+
+// ============================================================
+// v1.1: Trust Policy（AI 行为分级授权）
+// ============================================================
+
+/**
+ * v1.1 新增：信任策略表
+ * AI Agent 操作权限的分级授权（allow_once / allow_always / deny / require_approval）
+ */
+export const trustPolicies = sqliteTable('trust_policies', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  agentMemberId: text('agent_member_id').notNull(),
+  actionType: text('action_type').notNull(),
+  grantType: text('grant_type', {
+    enum: ['allow_once', 'allow_always', 'deny', 'require_approval'],
+  }).notNull(),
+  grantedBy: text('granted_by').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  projectAgentActionIdx: uniqueIndex('idx_trust_policies_unique').on(table.projectId, table.agentMemberId, table.actionType),
+  agentIdx: index('idx_trust_policies_agent').on(table.agentMemberId),
+}));
+
+// Trust Policy 类型导出
+export type TrustPolicy = typeof trustPolicies.$inferSelect;
+export type NewTrustPolicy = typeof trustPolicies.$inferInsert;

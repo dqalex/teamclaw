@@ -17,7 +17,10 @@ export default function OverviewPanel({ agent, agentHealth }: OverviewPanelProps
     { label: 'Name', value: agent.name || '--' },
     { label: 'Identity', value: agent.identity?.name || '--' },
     { label: 'Emoji', value: agent.identity?.emoji || '--' },
-    { label: 'Theme', value: agent.identity?.theme || '--' },
+    { label: 'Avatar', value: agent.identity?.avatar || '--' },
+    { label: 'Avatar URL', value: agent.identity?.avatarUrl || '--' },
+    { label: 'Theme', value: agent.identity?.theme || '--', isTheme: true },
+    { label: 'Workspace', value: agent.workspace || '--' },
     { label: 'Default', value: agent.isDefault ? t('agents.enabled') : t('agents.disabled') },
   ];
 
@@ -29,7 +32,18 @@ export default function OverviewPanel({ agent, agentHealth }: OverviewPanelProps
           {fields.map(f => (
             <div key={f.label} className="rounded-lg p-3 border" style={{ borderColor: 'var(--border)', background: 'var(--surface-hover)' }}>
               <div className="text-[11px] mb-0.5" style={{ color: 'var(--text-tertiary)' }}>{f.label}</div>
-              <div className="text-sm font-medium font-mono" style={{ color: 'var(--text-primary)' }}>{f.value}</div>
+              {f.isTheme && f.value !== '--' ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-md border" style={{ borderColor: 'var(--border)', backgroundColor: f.value }} />
+                  <span className="text-sm font-medium font-mono" style={{ color: 'var(--text-primary)' }}>{f.value}</span>
+                </div>
+              ) : f.label === 'Avatar URL' && f.value !== '--' ? (
+                <div className="text-sm font-medium font-mono truncate" style={{ color: 'var(--text-primary)' }} title={f.value}>
+                  <span className="truncate block max-w-full">{f.value}</span>
+                </div>
+              ) : (
+                <div className="text-sm font-medium font-mono" style={{ color: 'var(--text-primary)' }}>{f.value}</div>
+              )}
             </div>
           ))}
         </div>

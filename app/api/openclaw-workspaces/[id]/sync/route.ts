@@ -188,7 +188,7 @@ async function performSync(
                 ));
               if (relatedTasks.length === 0 && relatedTasksLike.length === 0) {
                 needReparse = true;
-                console.log(`[sync] teamclaw:* 文件 hash 未变但无关联任务，强制重新解析: ${relativePath}`);
+                console.debug(`[sync] teamclaw:* 文件 hash 未变但无关联任务，强制重新解析: ${relativePath}`);
               }
             }
             
@@ -514,7 +514,7 @@ async function getOrCreateProject(projectName: string, cache: Map<string, string
   // 只有 projects/ 目录下的文件才允许自动创建项目
   // front matter 中的 project 字段只做关联，不自动创建（防止已删除项目被同步"复活"）
   if (!autoCreate) {
-    console.log(`[sync] 项目不存在，跳过关联: ${projectName}`);
+    console.debug(`[sync] 项目不存在，跳过关联: ${projectName}`);
     return undefined;
   }
 

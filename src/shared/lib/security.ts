@@ -244,7 +244,7 @@ function getOrCreateEncryptionKey(): string {
     
     // 生产环境只记录警告级别日志（不泄露密钥信息）
     if (process.env.NODE_ENV !== 'production') {
-      console.log('[Security] Generated TOKEN_ENCRYPTION_KEY for development (saved to .env.local)');
+      console.debug('[Security] Generated TOKEN_ENCRYPTION_KEY for development (saved to .env.local)');
     } else {
       console.warn('[Security] Auto-generated TOKEN_ENCRYPTION_KEY (ensure it persists across restarts)');
     }

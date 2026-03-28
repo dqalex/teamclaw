@@ -39,7 +39,7 @@ export interface AgentFile {
 
 /** Debug logger — only prints in development */
 const DEBUG = typeof process !== 'undefined' && process.env.NODE_ENV === 'development';
-function gwDebug(...args: unknown[]) { if (DEBUG) console.log('[GW]', ...args); }
+function gwDebug(...args: unknown[]) { if (DEBUG) console.debug('[GW]', ...args); }
 
 /**
  * @deprecated 已弃用浏览器直连模式，请使用 ServerGatewayClient (服务端) 或 GatewayProxyClient (前端)

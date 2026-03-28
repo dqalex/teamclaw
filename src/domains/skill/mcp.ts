@@ -5,8 +5,8 @@
  * list_skills - 获取 Skill 列表
  */
 
-import { db, skills, tasks, projects, documents } from '@/db';
-import { eq, and, or, like, desc } from 'drizzle-orm';
+import { db, skills, tasks, projects, documents, skillExperiences } from '@/db';
+import { eq, and, or, like, desc, ne } from 'drizzle-orm';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import type { HandlerResult } from '@/core/mcp/handler-base';
@@ -74,10 +74,29 @@ export async function handleInvokeSkill(params: Record<string, unknown>): Promis
       });
     }
     
+    // 4.5 加载 Top 10 历史经验（v1.1 Phase 1B），排除已晋升到 L1 的
+    const historicalExperiences = await db
+      .select({
+        scenario: skillExperiences.scenario,
+        correction: skillExperiences.correction,
+        occurrenceCount: skillExperiences.occurrenceCount,
+      })
+      .from(skillExperiences)
+      .where(and(
+        eq(skillExperiences.skillId, skill.id),
+        ne(skillExperiences.promotedToL1, true),
+      ))
+      .orderBy(desc(skillExperiences.occurrenceCount))
+      .limit(10);
+    
     // 5. 返回执行指令
+    const experienceMessage = historicalExperiences.length > 0
+      ? ` Loaded ${historicalExperiences.length} historical experiences for reference.`
+      : '';
+
     return {
       success: true,
-      message: `Skill "${skill.name}" loaded successfully`,
+      message: `Skill "${skill.name}" loaded successfully.${experienceMessage}`,
       data: {
         skill: {
           key: skill.skillKey,
@@ -89,14 +108,27 @@ export async function handleInvokeSkill(params: Record<string, unknown>): Promis
         content: skillContent,
         parameters: parameters || {},
         context: contextData,
+        // v1.1 Phase 1B: 注入历史经验
+        ...(historicalExperiences.length > 0 && {
+          historicalExperiences: historicalExperiences.map((exp) => ({
+            scenario: exp.scenario,
+            correction: exp.correction,
+            occurrenceCount: exp.occurrenceCount,
+            summary: `${exp.scenario} → ${exp.correction}`,
+          })),
+        }),
         metadata: {
           invokedAt: new Date().toISOString(),
           taskId: task_id,
           projectId: context?.project_id,
+          experienceCount: historicalExperiences.length,
         },
         instructions: [
           'Load and understand the Skill workflow from SKILL.md',
           'Gather required context based on the skill requirements',
+          ...(historicalExperiences.length > 0
+            ? [`Reference historical experiences (${historicalExperiences.length} items) to avoid repeating past mistakes`]
+            : []),
           'Execute the workflow step by step',
           'Validate outputs according to skill validation criteria',
           'Report progress and results',

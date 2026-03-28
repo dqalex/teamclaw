@@ -47,20 +47,20 @@ export class WorkspaceWatcher {
         interval: 100,
       });
 
-      console.log(`[Watcher] 创建 watcher: ${workspace.path}`);
+      console.debug(`[Watcher] 创建 watcher: ${workspace.path}`);
 
       watcher.on('add', (filePath: string) => {
-        console.log(`[Watcher] 检测到新增文件: ${filePath}`);
+        console.debug(`[Watcher] 检测到新增文件: ${filePath}`);
         this.scheduleSync(workspace.id, filePath, 'add');
       });
 
       watcher.on('change', (filePath: string) => {
-        console.log(`[Watcher] 检测到文件变更: ${filePath}`);
+        console.debug(`[Watcher] 检测到文件变更: ${filePath}`);
         this.scheduleSync(workspace.id, filePath, 'change');
       });
 
       watcher.on('unlink', (filePath: string) => {
-        console.log(`[Watcher] 检测到文件删除: ${filePath}`);
+        console.debug(`[Watcher] 检测到文件删除: ${filePath}`);
         this.scheduleSync(workspace.id, filePath, 'unlink');
       });
 
@@ -69,7 +69,7 @@ export class WorkspaceWatcher {
       });
 
       watcher.on('ready', () => {
-        console.log(`[Watcher] 已就绪，开始监听: ${workspace.path}`);
+        console.debug(`[Watcher] 已就绪，开始监听: ${workspace.path}`);
       });
 
       this.watchers.set(workspace.id, watcher);

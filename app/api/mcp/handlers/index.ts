@@ -108,3 +108,49 @@ export {
   handleInvokeSkill,
   handleListSkills,
 } from '@/domains/skill/mcp';
+
+// Skill 进化引擎（v1.1 Phase 1B）
+export {
+  handleRecordSkillExperience,
+  handleGetSkillExperiences,
+  handlePromoteSkillExperience,
+} from '@/domains/skill/evolution-mcp';
+
+// Workflow Engine（v1.1 Phase 2）
+export {
+  start_workflow,
+  advance_workflow,
+  pause_workflow,
+  resume_workflow,
+  replay_workflow_from,
+  create_workflow,
+  get_workflow_status,
+} from '@/domains/workflow/mcp';
+
+// Marketplace（v1.1 Phase 3）
+export {
+  handleListMarketplaceServices,
+  handleSubmitServiceRating,
+  handleSubscribeService,
+  handleActivateService,
+} from '@/domains/marketplace/mcp';
+
+// Proactive Engine + Observability（v1.1 Phase 4）
+export {
+  handleGetProactiveEvents,
+  handleDismissProactiveEvent,
+  handleGetAnalyticsSummary,
+} from '@/domains/proactive/mcp';
+
+// Payment + Credits（v1.1 Phase 5）
+export {
+  handlePurchaseCredits,
+  handleGetConsumerBalance,
+} from '@/domains/consumer/mcp';
+
+// OKR（v1.1 Phase 5B - 存根）
+export {
+  handleCreateObjective,
+  handleUpdateKeyResult,
+  handleGetObjectives,
+} from '@/domains/okr/mcp';

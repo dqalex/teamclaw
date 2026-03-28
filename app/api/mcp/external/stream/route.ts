@@ -172,7 +172,7 @@ async function handlePost(request: NextRequest) {
 
   if (!rateLimitResult.allowed) {
     return NextResponse.json(
-      { success: false, error: '请求频率过高，请稍后重试', retryAfter: rateLimitResult.retryAfter },
+      { success: false, error: 'Rate limit exceeded, please try again later', retryAfter: rateLimitResult.retryAfter },
       { status: 429 }
     );
   }

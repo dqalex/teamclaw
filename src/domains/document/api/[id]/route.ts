@@ -172,7 +172,7 @@ export async function PUT(
       try {
         const syncResult = await syncMarkdownToDatabase(resolvedId, updated.content);
         if (syncResult.synced) {
-          console.log(`[PUT /api/documents] 同步完成: ${resolvedId}, type=${syncResult.type}, counts=${JSON.stringify(syncResult.counts)}`);
+          console.debug(`[PUT /api/documents] 同步完成: ${resolvedId}, type=${syncResult.type}, counts=${JSON.stringify(syncResult.counts)}`);
         }
       } catch (syncError) {
         // 同步失败不影响文档保存，只记录日志

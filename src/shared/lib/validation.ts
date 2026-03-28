@@ -70,7 +70,7 @@ export const taskPrioritySchema = z.enum(['high', 'medium', 'low']);
 // 文档类型
 export const documentTypeSchema = z.enum([
   'guide', 'reference', 'report', 'note', 'decision', 
-  'scheduled_task', 'task_list', 'other'
+  'scheduled_task', 'task_list', 'blog', 'other'
 ]);
 
 // 成员类型

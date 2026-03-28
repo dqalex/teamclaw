@@ -183,13 +183,20 @@ export class ServerGatewayClient {
         settle(false, new Error('No config set'));
         return;
       }
+      // 从 Gateway URL 提取 origin 作为 Origin header
+      // server_proxy 是服务端到服务端连接，origin 应与 Gateway host 一致
+      let wsOrigin = 'http://localhost:3000';
+      try {
+        const parsed = new URL(this.config.url);
+        wsOrigin = `${parsed.protocol === 'wss:' ? 'https' : 'http'}://${parsed.host}`;
+      } catch { /* 保持默认值 */ }
+
       // 指定 WebSocket 选项，禁用压缩扩展避免兼容性问题
-      // 添加 Origin header 以通过 Gateway 的 origin 验证
       this.ws = new WebSocket(this.config.url, {
         handshakeTimeout: ServerGatewayClient.HANDSHAKE_TIMEOUT,
         perMessageDeflate: false,  // 禁用压缩，避免 mask 函数问题
         headers: {
-          Origin: 'http://localhost:3000',  // Gateway 需要验证 origin
+          Origin: wsOrigin,
         },
       });
 
@@ -817,6 +824,7 @@ export class ServerGatewayClient {
     }
     
     this.connected = false;
+    this.reconnectAttempts = 0;
     this.updateConfigStatus('disconnected');
   }
 

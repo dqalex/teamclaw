@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // 标记为动态路由，避免静态生成错误
 export const dynamic = 'force-dynamic';
 
-import { desc, eq, like, or, sql } from 'drizzle-orm';
+import { desc, eq, like, or, sql, and } from 'drizzle-orm';
 import { hashPassword } from '@/lib/auth';
 import { generateId } from '@/lib/id';
 import { withAdminAuth } from '@/lib/with-auth';
@@ -55,21 +55,21 @@ export const GET = withAdminAuth(async (request: NextRequest) => {
       conditions.push(eq(users.role, role as 'admin' | 'member' | 'viewer'));
     }
 
-    // 查询总数
-    const countQuery = db
+    // 构建组合查询条件
+    const whereCondition = conditions.length > 0
+      ? (conditions.length === 1 ? conditions[0] : and(...conditions))
+      : undefined;
+
+    // 查询总数（条件链式调用，避免 Drizzle 类型重新赋值问题）
+    const countResult = await db
       .select({ count: sql<number>`count(*)` })
-      .from(users);
-    
-    if (conditions.length > 0) {
-      void countQuery.where(conditions.length === 1 ? conditions[0] : sql`${conditions.join(' AND ')}`);
-    }
-    
-    const countResult = await countQuery;
+      .from(users)
+      .where(whereCondition);
     const total = countResult[0]?.count || 0;
 
     // 查询用户列表
     const offset = (page - 1) * limit;
-    let query = db
+    const userList = await db
       .select({
         id: users.id,
         email: users.email,
@@ -84,16 +84,10 @@ export const GET = withAdminAuth(async (request: NextRequest) => {
         updatedAt: users.updatedAt,
       })
       .from(users)
+      .where(whereCondition)
       .orderBy(desc(users.createdAt))
       .limit(limit)
       .offset(offset);
-
-    if (conditions.length > 0) {
-      // @ts-expect-error Drizzle ORM 类型问题
-      query = query.where(conditions.length === 1 ? conditions[0] : sql`${conditions.join(' AND ')}`);
-    }
-
-    const userList = await query;
 
     return successResponse({
       data: userList,

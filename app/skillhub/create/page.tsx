@@ -16,7 +16,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
+
 import { Button, Input, Card, CardContent, CardHeader, CardTitle, Label, Badge } from '@/shared/ui';
 import { useSkillStore, useAuthStore } from '@/domains';
 import { skillsApi } from '@/lib/data-service';
@@ -394,33 +394,6 @@ export default function CreateSkillPage() {
   
   return (
     <AppShell>
-      <Header 
-        title={t('skillhub.create.title')}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={handleDiscover}
-              disabled={discovering}
-              className="flex items-center gap-1.5"
-            >
-              <RefreshCw className={`w-4 h-4 ${discovering ? 'animate-spin' : ''}`} />
-              {t('skillhub.install.refresh')}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => router.push('/skillhub')}
-              className="flex items-center gap-1.5"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              {t('common.back')}
-            </Button>
-          </div>
-        }
-      />
-      
       <main className="flex-1 p-6 overflow-auto max-w-4xl mx-auto">
         {/* Skill 文件夹路径 */}
         {skillsFolderPath && (

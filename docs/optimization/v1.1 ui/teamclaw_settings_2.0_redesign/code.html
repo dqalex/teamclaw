@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TeamClaw Settings 2.0 - Deep Command Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-primary-container": "#0d0096",
+                        "tertiary-fixed-dim": "#d0bcff",
+                        "primary-fixed": "#e1e0ff",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-secondary-container": "#00424e",
+                        "on-tertiary": "#3c0091",
+                        "background": "#10131c",
+                        "surface": "#10131c",
+                        "tertiary-fixed": "#e9ddff",
+                        "surface-container": "#1c2028",
+                        "on-background": "#e0e2ee",
+                        "surface-dim": "#10131c",
+                        "secondary": "#06b6d4",
+                        "inverse-primary": "#494bd6",
+                        "surface-container-low": "#181c24",
+                        "tertiary": "#d0bcff",
+                        "primary": "#c0c1ff",
+                        "on-error": "#690005",
+                        "on-primary-fixed": "#07006c",
+                        "error": "#ffb4ab",
+                        "outline-variant": "#464554",
+                        "error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#5516be",
+                        "secondary-fixed-dim": "#4cd7f6",
+                        "secondary-fixed": "#acedff",
+                        "surface-bright": "#353943",
+                        "surface-container-lowest": "#0a0e16",
+                        "outline": "#908fa0",
+                        "on-primary": "#1000a9",
+                        "surface-container-high": "#262a33",
+                        "on-tertiary-container": "#340080",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#004e5c",
+                        "on-surface": "#e0e2ee",
+                        "primary-container": "#8083ff",
+                        "tertiary-container": "#a078ff",
+                        "on-tertiary-fixed": "#23005c",
+                        "secondary-container": "#03b5d3",
+                        "on-secondary": "#003640",
+                        "surface-variant": "#31353e",
+                        "surface-container-highest": "#31353e",
+                        "inverse-on-surface": "#2d303a",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "surface-tint": "#c0c1ff",
+                        "on-surface-variant": "#c7c4d7",
+                        "on-secondary-fixed": "#001f26",
+                        "inverse-surface": "#e0e2ee"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Plus Jakarta Sans"],
+                        "label": ["Plus Jakarta Sans"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #10131c;
+            color: #e0e2ee;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-header {
+            background: rgba(16, 19, 28, 0.6);
+            backdrop-filter: blur(12px);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #10131c;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #262a33;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="flex min-h-screen overflow-hidden">
+<!-- SideNavBar (rail_drawer) -->
+<aside class="fixed left-0 top-0 h-full w-[200px] z-40 bg-[#10131c] flex flex-col py-6 shadow-[40px_0_40px_rgba(224,226,238,0.06)] border-r border-outline-variant/10">
+<div class="px-6 mb-8">
+<div class="text-xl font-bold bg-gradient-to-br from-[#c0c1ff] to-[#8083ff] bg-clip-text text-transparent">TeamClaw</div>
+<div class="text-[10px] uppercase tracking-widest text-on-surface-variant/50 font-semibold mt-1">Settings 2.0</div>
+</div>
+<nav class="flex-1 overflow-y-auto custom-scrollbar px-2 space-y-1">
+<!-- Active: General -->
+<a class="text-[#c0c1ff] font-semibold border-r-2 border-[#06b6d4] bg-[#1c2028] px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="settings">settings</span>
+<span class="text-sm">General</span>
+</a>
+<a class="text-[#e0e2ee]/60 hover:text-[#e0e2ee] hover:bg-[#1c2028] px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="psychology">psychology</span>
+<span class="text-sm">OpenClaw</span>
+</a>
+<a class="text-[#e0e2ee]/60 hover:text-[#e0e2ee] hover:bg-[#1c2028] px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="extension">extension</span>
+<span class="text-sm">Plugins</span>
+</a>
+<a class="text-[#e0e2ee]/60 hover:text-[#e0e2ee] hover:bg-[#1c2028] px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="hub">hub</span>
+<span class="text-sm">Channels</span>
+</a>
+<a class="text-[#e0e2ee]/60 hover:text-[#e0e2ee] hover:bg-[#1c2028] px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="shield">shield</span>
+<span class="text-sm">Security</span>
+</a>
+<a class="text-[#e0e2ee]/60 hover:text-[#e0e2ee] hover:bg-[#1c2028] px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="article">article</span>
+<span class="text-sm">Content</span>
+</a>
+<a class="text-[#e0e2ee]/60 hover:text-[#e0e2ee] hover:bg-[#1c2028] px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="construction">construction</span>
+<span class="text-sm">Tools</span>
+</a>
+<a class="text-[#e0e2ee]/60 hover:text-[#e0e2ee] hover:bg-[#1c2028] px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="info">info</span>
+<span class="text-sm">About</span>
+</a>
+</nav>
+<div class="px-4 mt-auto">
+<div class="flex items-center gap-3 p-2 bg-surface-container-low rounded-xl">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-primary-container/20">
+<img alt="User profile" data-alt="minimalist 3d avatar of a tech professional with short dark hair and glasses on a soft purple background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTEdSXpIWFer1c_sW6Crq0uyWqyhneb1KYAJ_gTnZTLgbPSfPWK07Y1iZCBVO53oQOMqgc8CnbTFBeXfY9LtRTs6qj7yS_6Tc-Xe_LifQ7orGYM0y3DTIcA1yRr2aPtrb2hS8e5iprfeJ5tzMoC3NQ5Hjh-nKwQalAGilkkYO9O2blWMiS-MGgqRJDWy8DehHJtFSe-D7TtTjIUostlIW_p6i56iXv4H7GmQWictMlcmUJRO-Oc8xgzelkVqmxJDQEf3FWsWilV2Fe"/>
+</div>
+<div class="flex-1 overflow-hidden">
+<div class="text-xs font-bold truncate">Admin User</div>
+<div class="text-[10px] text-on-surface-variant/60 truncate">Enterprise Tier</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Shell -->
+<main class="flex-1 ml-[200px] h-screen overflow-y-auto custom-scrollbar flex flex-col items-center">
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-[200px] h-16 z-30 glass-header flex items-center justify-between px-8 w-full">
+<div class="flex items-center gap-4">
+<h1 class="text-lg font-bold tracking-tight text-on-surface">General Settings</h1>
+<div class="h-4 w-px bg-outline-variant/30"></div>
+<div class="flex gap-4 text-xs font-medium">
+<span class="text-[#06b6d4] font-bold">Appearance</span>
+<span class="text-[#e0e2ee]/80 hover:text-[#4cd7f6] transition-opacity cursor-pointer">Language</span>
+<span class="text-[#e0e2ee]/80 hover:text-[#4cd7f6] transition-opacity cursor-pointer">Data</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-sm text-on-surface-variant/50" data-icon="search">search</span>
+</div>
+<input class="bg-surface-container-lowest text-sm px-10 py-1.5 rounded-full w-48 border-none focus:ring-1 focus:ring-secondary/50 placeholder:text-on-surface-variant/30" placeholder="Search settings..." type="text"/>
+</div>
+<div class="flex gap-3">
+<button class="text-on-surface-variant hover:text-secondary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-secondary transition-colors">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="mt-24 w-full max-w-[720px] px-6 pb-20 space-y-6">
+<!-- Bento Header Intro -->
+<div class="grid grid-cols-3 gap-4 mb-8">
+<div class="col-span-2 p-6 rounded-2xl bg-surface-container-low flex flex-col justify-between">
+<div>
+<h2 class="text-2xl font-bold tracking-tight">System Configuration</h2>
+<p class="text-on-surface-variant/60 text-sm mt-2">Personalize your Obsidian workspace and core data protocols.</p>
+</div>
+<div class="mt-6 flex gap-2">
+<span class="bg-secondary/10 text-secondary text-[10px] font-bold px-2 py-1 rounded border border-secondary/20 uppercase tracking-tighter">AI Optimized</span>
+<span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded border border-primary/20 uppercase tracking-tighter">Encrypted</span>
+</div>
+</div>
+<div class="p-6 rounded-2xl bg-gradient-to-br from-primary-container/20 to-secondary-container/20 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-3xl text-secondary mb-2" data-icon="auto_awesome">auto_awesome</span>
+<span class="text-[10px] font-bold text-on-surface-variant/80 uppercase">Uptime</span>
+<span class="text-xl font-mono font-bold text-on-surface">99.9%</span>
+</div>
+</div>
+<!-- Appearance Section -->
+<section class="space-y-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="palette">palette</span>
+<h3 class="text-sm font-bold uppercase tracking-wider text-on-surface-variant/50">Appearance</h3>
+</div>
+<div class="bg-surface-container rounded-2xl p-6 shadow-sm">
+<div class="flex justify-between items-center mb-6">
+<div>
+<p class="font-semibold">Interface Theme</p>
+<p class="text-xs text-on-surface-variant/60">Customize the visual mode of the command center.</p>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-3">
+<button class="flex flex-col items-center gap-3 p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/10 hover:border-secondary transition-all">
+<div class="w-full h-12 bg-white rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-surface" data-icon="light_mode">light_mode</span>
+</div>
+<span class="text-xs font-medium">Light</span>
+</button>
+<button class="flex flex-col items-center gap-3 p-4 rounded-xl bg-surface-container-high border-2 border-secondary shadow-[0_0_15px_rgba(6,182,212,0.15)] transition-all">
+<div class="w-full h-12 bg-[#050810] rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary" data-icon="dark_mode">dark_mode</span>
+</div>
+<span class="text-xs font-bold text-secondary">Dark</span>
+</button>
+<button class="flex flex-col items-center gap-3 p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/10 hover:border-secondary transition-all">
+<div class="w-full h-12 bg-gradient-to-r from-white to-[#050810] rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-surface-variant" data-icon="settings_brightness">settings_brightness</span>
+</div>
+<span class="text-xs font-medium">System</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Language Section -->
+<section class="space-y-4 pt-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="language">language</span>
+<h3 class="text-sm font-bold uppercase tracking-wider text-on-surface-variant/50">Language &amp; Region</h3>
+</div>
+<div class="bg-surface-container rounded-2xl p-6">
+<div class="flex items-center justify-between">
+<div>
+<p class="font-semibold">Display Language</p>
+<p class="text-xs text-on-surface-variant/60">Choose the primary UI language.</p>
+</div>
+<div class="flex bg-surface-container-lowest p-1 rounded-full border border-outline-variant/10">
+<button class="px-4 py-1.5 rounded-full text-xs font-bold bg-secondary text-on-secondary shadow-lg">English (EN)</button>
+<button class="px-4 py-1.5 rounded-full text-xs font-medium text-on-surface-variant/80 hover:text-on-surface transition-colors">简体中文 (CN)</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Data Management Section -->
+<section class="space-y-4 pt-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="database">database</span>
+<h3 class="text-sm font-bold uppercase tracking-wider text-on-surface-variant/50">Data Management</h3>
+</div>
+<div class="bg-surface-container rounded-2xl p-6 space-y-6">
+<div>
+<label class="block text-xs font-bold text-on-surface-variant/80 uppercase mb-2">Storage Path (SQLite)</label>
+<div class="flex items-center gap-3">
+<div class="flex-1 bg-surface-container-lowest p-3 rounded-xl font-mono text-xs text-on-surface-variant flex items-center justify-between">
+<span>/var/lib/teamclaw/data/v2/core.sqlite</span>
+<span class="material-symbols-outlined text-sm cursor-pointer hover:text-secondary" data-icon="content_copy">content_copy</span>
+</div>
+<button class="bg-surface-container-high hover:bg-surface-container-highest p-3 rounded-xl text-on-surface transition-colors">
+<span class="material-symbols-outlined text-lg" data-icon="folder_open">folder_open</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<button class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-surface-container-low hover:bg-surface-container-high border border-outline-variant/10 transition-all active:scale-95 group">
+<span class="material-symbols-outlined text-lg text-secondary group-hover:scale-110 transition-transform" data-icon="export_notes">export_notes</span>
+<span class="text-xs font-semibold">Export</span>
+</button>
+<button class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-surface-container-low hover:bg-surface-container-high border border-outline-variant/10 transition-all active:scale-95 group">
+<span class="material-symbols-outlined text-lg text-secondary group-hover:rotate-180 transition-transform duration-500" data-icon="refresh">refresh</span>
+<span class="text-xs font-semibold">Refresh</span>
+</button>
+<button class="flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold shadow-[0_4px_20px_rgba(128,131,255,0.3)] hover:brightness-110 transition-all active:scale-95">
+<span class="material-symbols-outlined text-lg" data-icon="backup" data-style="fill" style="font-variation-settings: 'FILL' 1;">backup</span>
+<span class="text-xs">Backup</span>
+</button>
+</div>
+<div class="p-4 rounded-xl bg-secondary/5 border border-secondary/10 flex items-start gap-4">
+<span class="material-symbols-outlined text-secondary mt-0.5" data-icon="info">info</span>
+<div>
+<p class="text-[11px] font-bold text-secondary uppercase">Database Health</p>
+<p class="text-xs text-on-surface-variant/80 mt-1">Automatic vacuum scheduled in 4 hours. No corruption detected in the last integrity check (2023-11-24 04:00 GMT).</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Action Footer -->
+<div class="flex items-center justify-between pt-8 border-t border-outline-variant/10">
+<button class="text-error text-xs font-bold px-6 py-2 rounded-full hover:bg-error/10 transition-colors">Reset to Default</button>
+<div class="flex gap-4">
+<button class="text-on-surface-variant/60 hover:text-on-surface text-xs font-bold transition-colors px-4">Cancel Changes</button>
+<button class="bg-on-surface text-background px-8 py-2.5 rounded-full text-xs font-extrabold shadow-2xl hover:bg-secondary hover:text-on-secondary transition-all">Save Protocol</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Contextual Status Bar (Mobile Navigation placeholder) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#10131c] flex items-center justify-around z-50 px-4 border-t border-outline-variant/10">
+<button class="text-secondary"><span class="material-symbols-outlined" data-icon="settings">settings</span></button>
+<button class="text-on-surface-variant/60"><span class="material-symbols-outlined" data-icon="hub">hub</span></button>
+<button class="text-on-surface-variant/60"><span class="material-symbols-outlined" data-icon="psychology">psychology</span></button>
+<button class="text-on-surface-variant/60"><span class="material-symbols-outlined" data-icon="extension">extension</span></button>
+</nav>
+</body></html>

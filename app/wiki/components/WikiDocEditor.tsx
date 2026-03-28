@@ -69,6 +69,10 @@ interface WikiDocEditorProps {
   onApplyTemplate: () => void;
   // 权限
   isAdmin?: boolean;
+  /** 隐藏文档类型切换（博客等固定类型页面） */
+  hideTypeChange?: boolean;
+  /** 隐藏套模板按钮 */
+  hideApplyTemplate?: boolean;
 }
 
 export default function WikiDocEditor({
@@ -85,6 +89,8 @@ export default function WikiDocEditor({
   textSelection, setTextSelection,
   onApplyTemplate,
   isAdmin = false,
+  hideTypeChange = false,
+  hideApplyTemplate = false,
 }: WikiDocEditorProps) {
   const { t } = useTranslation();
 
@@ -182,6 +188,7 @@ export default function WikiDocEditor({
       {/* 元数据栏 */}
       <div className="px-6 py-2 border-b flex items-center gap-4 flex-wrap flex-shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--surface-hover)' }}>
         {/* 类型 */}
+        {!hideTypeChange && (
         <div className="flex items-center gap-1.5">
           <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{t('wiki.type')}</span>
           {isBlogReadOnly ? (
@@ -194,8 +201,11 @@ export default function WikiDocEditor({
             </Select>
           )}
         </div>
+        )}
 
         {/* 渲染模板 */}
+        {!hideApplyTemplate && (
+        <>
         <div className="w-px h-4" style={{ background: 'var(--border)' }} />
         <div className="flex items-center gap-1.5">
           <LayoutTemplate className="w-3 h-3" style={{ color: 'var(--text-tertiary)' }} />
@@ -223,6 +233,8 @@ export default function WikiDocEditor({
             </button>
           )}
         </div>
+        </>
+        )}
 
         <div className="w-px h-4" style={{ background: 'var(--border)' }} />
 

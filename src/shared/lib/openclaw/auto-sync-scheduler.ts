@@ -52,7 +52,7 @@ export function startAutoSync(workspaceId: string, intervalMinutes: number): voi
   }, intervalMs);
 
   timers.set(workspaceId, { timer, intervalMinutes: safeInterval });
-  console.log(`[AutoSync] 定时全量同步已启动: workspace=${workspaceId}, 间隔=${safeInterval}分钟`);
+  console.debug(`[AutoSync] 定时全量同步已启动: workspace=${workspaceId}, 间隔=${safeInterval}分钟`);
 }
 
 /**
@@ -64,7 +64,7 @@ export function stopAutoSync(workspaceId: string): void {
   if (existing) {
     clearInterval(existing.timer);
     timers.delete(workspaceId);
-    console.log(`[AutoSync] 定时全量同步已停止: workspace=${workspaceId}`);
+    console.debug(`[AutoSync] 定时全量同步已停止: workspace=${workspaceId}`);
   }
 }
 
@@ -75,7 +75,7 @@ export function stopAllAutoSync(): void {
   const timers = getTimers();
   for (const [id, { timer }] of timers) {
     clearInterval(timer);
-    console.log(`[AutoSync] 定时全量同步已停止: workspace=${id}`);
+    console.debug(`[AutoSync] 定时全量同步已停止: workspace=${id}`);
   }
   timers.clear();
 }
@@ -116,7 +116,7 @@ export async function startAllAutoSync(): Promise<number> {
     const allWorkspaces = await db.select().from(openclawWorkspaces);
     const workspaces = allWorkspaces.filter(ws => ws.syncEnabled);
 
-    console.log(`[AutoSync] Found ${allWorkspaces.length} workspaces, ${workspaces.length} enabled for sync`);
+    console.debug(`[AutoSync] Found ${allWorkspaces.length} workspaces, ${workspaces.length} enabled for sync`);
 
     let started = 0;
     for (const ws of workspaces) {
@@ -143,12 +143,12 @@ async function executeFullSync(workspaceId: string): Promise<void> {
       .where(eq(openclawWorkspaces.id, workspaceId));
 
     if (!workspace || !workspace.syncEnabled) {
-      console.log(`[AutoSync] workspace ${workspaceId} 已禁用同步，跳过并停止定时器`);
+      console.debug(`[AutoSync] workspace ${workspaceId} 已禁用同步，跳过并停止定时器`);
       stopAutoSync(workspaceId);
       return;
     }
 
-    console.log(`[AutoSync] 开始定时全量同步: ${workspace.name} (${workspaceId})`);
+    console.debug(`[AutoSync] 开始定时全量同步: ${workspace.name} (${workspaceId})`);
 
     // 通过内部 API 触发全量同步（定时同步启用 forceReparse 确保任务不遗漏）
     const port = process.env.PORT || 3000;
@@ -170,7 +170,7 @@ async function executeFullSync(workspaceId: string): Promise<void> {
 
     const result = await res.json();
     const data = result.data || result;
-    console.log(`[AutoSync] 定时全量同步完成: ${workspace.name}`, {
+    console.debug(`[AutoSync] 定时全量同步完成: ${workspace.name}`, {
       synced: data.synced,
       created: data.created,
       updated: data.updated,

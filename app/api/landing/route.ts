@@ -171,18 +171,19 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // 更新 landing_pages 表
-    const updateData: Record<string, unknown> = {
-      content,
-      metaTitle,
-      metaDescription,
-      updatedAt: new Date(),
-    };
+    // PUT 允许更新的字段白名单
+    const allowedFields = ['content', 'renderedHtml', 'metaTitle', 'metaDescription', 'status'];
+    const updateData: Record<string, unknown> = { updatedAt: new Date() };
 
-    // 如果是发布操作，设置状态为 published，并保存渲染后的 HTML 缓存
+    for (const field of allowedFields) {
+      if (field in body && body[field] !== undefined) {
+        updateData[field] = body[field];
+      }
+    }
+
+    // 如果是发布操作，设置状态为 published
     if (publish) {
       updateData.status = 'published';
-      updateData.renderedHtml = renderedHtml || null;  // 保存前端渲染好的 HTML
     }
 
     const result = await db.update(landingPages)

@@ -396,12 +396,12 @@ export default function TaskDrawer({ task, onClose, onDelete }: TaskDrawerProps)
     } else {
       current.push(docId);
     }
-    await updateTaskAsync(task.id, { attachments: current as any });
+    await updateTaskAsync(task.id, { attachments: current });
   };
 
   const handleRemoveDoc = async (docId: string) => {
     const updated = attachments.filter(id => id !== docId);
-    await updateTaskAsync(task.id, { attachments: updated as any });
+    await updateTaskAsync(task.id, { attachments: updated });
   };
 
   return (

@@ -50,6 +50,16 @@ module.exports = {
           900: '#4c1d95',
           950: '#2e1065',
         },
+        // 语义色彩映射（供 inline style var() 使用）
+        'color-border': 'var(--border)',
+        'color-bg-elevated': 'var(--surface-elevated)',
+        'color-bg-hover': 'var(--surface-hover)',
+        'color-text-primary': 'var(--text-primary)',
+        'color-text-secondary': 'var(--text-secondary)',
+        'color-text-muted': 'var(--text-tertiary)',
+        'color-brand': 'var(--brand)',
+        'color-ai': 'var(--ai)',
+        'color-success': 'var(--success)',
       },
       borderRadius: {
         DEFAULT: '0.375rem',

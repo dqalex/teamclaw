@@ -2,12 +2,17 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { storeEvents } from '@/lib/store-events';
 
+// 导航分组定义
+export type NavSection = 'dashboard' | 'projects' | 'assets' | 'automation' | 'collaboration' | 'operations' | 'settings';
+
 interface UIState {
   sidebarOpen: boolean;
   chatOpen: boolean;
   theme: 'light' | 'dark';
   hydrated: boolean;
   expandedProjects: string[];
+  /** 当前激活的导航分组，驱动顶部子导航切换 */
+  activeNavSection: NavSection;
   toggleSidebar: () => void;
   toggleChat: () => void;
   setChatOpen: (open: boolean) => void;
@@ -15,6 +20,7 @@ interface UIState {
   setHydrated: (hydrated: boolean) => void;
   toggleProjectExpand: (projectId: string) => void;
   expandProject: (projectId: string) => void;
+  setActiveNavSection: (section: NavSection) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -25,6 +31,7 @@ export const useUIStore = create<UIState>()(
       theme: 'light',
       hydrated: false,
       expandedProjects: [],
+      activeNavSection: 'assets' as NavSection,
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       toggleChat: () => set((state) => ({ chatOpen: !state.chatOpen })),
       setChatOpen: (open) => set({ chatOpen: open }),
@@ -41,6 +48,7 @@ export const useUIStore = create<UIState>()(
         if (state.expandedProjects.includes(projectId)) return state;
         return { expandedProjects: [...state.expandedProjects, projectId] };
       }),
+      setActiveNavSection: (section) => set({ activeNavSection: section }),
     }),
     {
       name: 'teamclaw-ui',
@@ -48,6 +56,7 @@ export const useUIStore = create<UIState>()(
         sidebarOpen: state.sidebarOpen,
         theme: state.theme,
         expandedProjects: state.expandedProjects,
+        activeNavSection: state.activeNavSection,
       }),
       onRehydrateStorage: () => (state) => {
         // rehydration 完成后标记 hydrated

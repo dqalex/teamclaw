@@ -15,7 +15,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter, useParams } from 'next/navigation';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
+
 import { Button, Input, Badge, Card, CardContent, CardHeader, CardTitle, Label, Textarea, Select } from '@/shared/ui';
 import { useSkillStore, useAuthStore } from '@/domains';
 import { skillsApi } from '@/lib/data-service';
@@ -188,7 +188,6 @@ export default function EditSkillPage() {
   if (loading) {
     return (
       <AppShell>
-        <Header title={t('skillhub.edit.title')} />
         <main className="flex-1 p-6 flex items-center justify-center">
           <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--text-tertiary)' }} />
         </main>
@@ -199,7 +198,6 @@ export default function EditSkillPage() {
   if (!skill) {
     return (
       <AppShell>
-        <Header title={t('skillhub.edit.title')} />
         <main className="flex-1 p-6">
           <Card>
             <CardContent className="p-12 text-center">
@@ -220,21 +218,6 @@ export default function EditSkillPage() {
   
   return (
     <AppShell>
-      <Header 
-        title={t('skillhub.edit.title')}
-        actions={
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => router.push(`/skillhub/${skillId}`)}
-            className="flex items-center gap-1.5"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {t('common.back')}
-          </Button>
-        }
-      />
-      
       <main className="flex-1 p-6 overflow-auto max-w-2xl mx-auto">
         <form onSubmit={handleSubmit}>
           {/* 基本信息卡片 */}

@@ -65,7 +65,7 @@ async function initializeAll(): Promise<number> {
   // 3. 启动定时全量同步
   const autoSyncCount = await startAutoSyncSchedulers();
 
-  console.log(`[heartbeat] 初始化完成: ${heartbeatCount} 个心跳, ${watcherCount} 个文件监听, ${autoSyncCount} 个定时同步`);
+  console.debug(`[heartbeat] 初始化完成: ${heartbeatCount} 个心跳, ${watcherCount} 个文件监听, ${autoSyncCount} 个定时同步`);
 
   return heartbeatCount;
 }
@@ -96,7 +96,7 @@ async function startFileWatchers(): Promise<number> {
   // 创建 Watcher 实例
   const watcher = getWatcher(async (workspaceId, filePath, eventType) => {
     try {
-      console.log(`[Watcher] 文件变更: ${filePath} (${eventType})`);
+      console.debug(`[Watcher] 文件变更: ${filePath} (${eventType})`);
       await syncManager.syncSingleFile(workspaceId, filePath, eventType);
     } catch (error) {
       console.error(`[Watcher] 同步失败: ${filePath}`, error);
@@ -114,7 +114,7 @@ async function startFileWatchers(): Promise<number> {
     const started = watcher.start(workspace);
     if (started) {
       count++;
-      console.log(`[Watcher] 已启动监听: ${workspace.name} (${workspace.path})`);
+      console.debug(`[Watcher] 已启动监听: ${workspace.name} (${workspace.path})`);
     }
   }
 

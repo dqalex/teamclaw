@@ -17,7 +17,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
+
 import { Button, Input, Card, CardContent, CardHeader, CardTitle, Label, Badge, Select } from '@/shared/ui';
 import { useAuthStore } from '@/domains';
 import {
@@ -204,21 +204,6 @@ export default function SkillHubSettingsPage() {
   
   return (
     <AppShell>
-      <Header 
-        title={t('skillhub.settings.title')}
-        actions={
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => router.push('/skillhub')}
-            className="flex items-center gap-1.5"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {t('common.back')}
-          </Button>
-        }
-      />
-      
       <main className="flex-1 p-6 overflow-auto max-w-3xl mx-auto">
         {/* 外部 SkillHub 配置 */}
         <Card className="mb-6">

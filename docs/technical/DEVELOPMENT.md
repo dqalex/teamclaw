@@ -461,9 +461,36 @@ export async function GET(
 MCP (Model Context Protocol) 指令系统提供标准化的 AI 操作接口，支持 AI 成员通过结构化指令操作平台数据。
 
 **版本信息**：
-- TeamClaw MCP Tools: v1.0.1
-- 工具数量: 37 个
+- TeamClaw MCP Tools: v1.1
+- 工具数量: 58 个（51 活跃 + 7 DEPRECATED）
 - 协议版本: OpenClaw Gateway Protocol v3
+
+### 8.2 v1.1 新增 MCP 工具
+
+| Phase | 工具 | 说明 |
+|-------|------|------|
+| 2 | `start_workflow` | 启动 Workflow 执行 |
+| 2 | `advance_workflow` | 推进 Workflow 节点 |
+| 2 | `pause_workflow` | 暂停 Workflow |
+| 2 | `resume_workflow` | 恢复 Workflow |
+| 2 | `replay_workflow_from` | 断点续执行 |
+| 2 | `create_workflow` | 创建 Workflow 定义 |
+| 2 | `get_workflow_status` | 查询 Workflow 运行状态 |
+| 1B | `record_skill_experience` | 记录 Skill 执行经验 |
+| 1B | `get_skill_experiences` | 获取历史经验列表 |
+| 1B | `promote_skill_experience` | 晋升经验为 L1 规则 |
+| 3 | `list_marketplace_services` | 浏览 Marketplace 服务 |
+| 3 | `submit_service_rating` | 提交服务评分 |
+| 3 | `subscribe_service` | 订阅服务 |
+| 3 | `activate_service` | 激活码激活服务 |
+| 4 | `get_proactive_events` | 获取主动引擎事件 |
+| 4 | `dismiss_proactive_event` | 忽略主动事件 |
+| 4 | `get_analytics_summary` | 获取效能摘要 |
+| 5 | `purchase_credits` | 购买积分 |
+| 5 | `get_consumer_balance` | 查询积分余额 |
+| 5 | `create_objective` | 创建 OKR 目标 |
+| 5 | `update_key_result` | 更新关键结果 |
+| 5 | `get_objectives` | 获取 OKR 列表 |
 
 ### 8.2 调用方式
 

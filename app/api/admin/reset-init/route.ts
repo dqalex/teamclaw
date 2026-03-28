@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
         if (existsSync(dbPath)) {
           unlinkSync(dbPath);
           // eslint-disable-next-line no-console
-      console.log('[Admin] Database file deleted:', dbPath);
+      console.debug('[Admin] Database file deleted:', dbPath);
         }
         if (existsSync(walPath)) {
           unlinkSync(walPath);

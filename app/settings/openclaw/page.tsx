@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { initI18n } from '@/lib/i18n';
 import { useOpenClawWorkspaceStore } from '@/core/gateway/openclaw-workspace.store';
@@ -9,13 +8,10 @@ import { WorkspaceCard } from '@/features/skill-manager/WorkspaceCard';
 import { WorkspaceForm } from '@/features/skill-manager/WorkspaceForm';
 import { GatewayConfigPanel } from '@/features/settings/GatewayConfigPanel';
 import { Button } from '@/shared/ui';
-import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
-import { Plus, RefreshCw, ArrowLeft, FolderSync } from 'lucide-react';
+import { Plus, RefreshCw, FolderSync } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function OpenClawSettingsPage() {
-  const router = useRouter();
   const { t } = useTranslation();
   // 精确 selector 订阅
   const workspaces = useOpenClawWorkspaceStore((s) => s.workspaces);
@@ -34,42 +30,51 @@ export default function OpenClawSettingsPage() {
   }, [fetchWorkspaces]);
 
   return (
-    <AppShell>
-      <Header title={t('openclaw.title')} />
-      <main className="flex-1 p-6 overflow-auto max-w-4xl mx-auto">
-        {/* 返回按钮 */}
-        <button
-          onClick={() => router.push('/settings')}
-          className="flex items-center gap-1.5 text-xs mb-4 hover:opacity-70 transition-opacity"
-          style={{ color: 'var(--text-tertiary)' }}
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          {t('openclaw.backToSettings')}
-        </button>
+    <div className="p-6 overflow-auto max-w-5xl mx-auto space-y-6">
+      {/* Gateway 连接模式配置 */}
+      <GatewayConfigPanel />
 
-        {/* 标题区域 */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--surface-hover)' }}>
-              <FolderSync className="w-5 h-5" style={{ color: 'var(--primary)' }} />
-            </div>
-            <div>
-              <h1 className="font-display text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-                {t('openclaw.title')}
-              </h1>
-              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                {t('openclaw.desc')}
-              </p>
-            </div>
-          </div>
+      {/* 连接说明 */}
+      <div className="card p-5">
+        <h3 className="font-display font-semibold text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
+          {t('settings.openclaw.connectionGuide.title', { defaultValue: 'Connection Guide' })}
+        </h3>
+        <ul className="text-xs space-y-1.5 list-disc list-inside" style={{ color: 'var(--text-tertiary)' }}>
+          <li>{t('settings.openclaw.connectionGuide.tip1', { defaultValue: 'Ensure OpenClaw Gateway is running (default ws://localhost:18789)' })}</li>
+          <li>{t('settings.openclaw.connectionGuide.tip2', { defaultValue: 'Server proxy mode: connection maintained by server, browser close does not affect tasks' })}</li>
+          <li>{t('settings.openclaw.connectionGuide.tip3', { defaultValue: 'Browser direct mode: connection established by browser, suitable for real-time chat' })}</li>
+          <li>{t('settings.openclaw.connectionGuide.tip4', { defaultValue: 'Token is required for authentication' })}</li>
+        </ul>
+      </div>
+
+      {/* SSH 隧道说明 */}
+      <div className="card p-5">
+        <h3 className="font-display font-semibold text-sm mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+          {t('settings.openclaw.remoteGuide.title', { defaultValue: 'Remote Connection Guide' })}
+        </h3>
+        <p className="text-xs mb-3" style={{ color: 'var(--text-tertiary)' }}>
+          {t('settings.openclaw.remoteGuide.desc', { defaultValue: 'If Gateway is running on a remote server, use SSH tunnel for secure connection:' })}
+        </p>
+        <div className="p-3 rounded-lg text-xs font-mono mb-3" style={{ background: 'var(--surface-hover)', color: 'var(--text-secondary)' }}>
+          <code>ssh -L 18789:localhost:18789 user@remote-server</code>
+        </div>
+      </div>
+
+      {/* Workspace 设置 */}
+      <div className="card p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display font-semibold text-sm flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+            <FolderSync className="w-4 h-4" />
+            {t('openclaw.workspace.title', { defaultValue: 'OpenClaw Workspace' })}
+          </h3>
           <div className="flex gap-2">
             <Button size="sm" variant="secondary" onClick={() => fetchWorkspaces()} disabled={loading}>
               <RefreshCw className={clsx('w-3.5 h-3.5 mr-1.5', loading && 'animate-spin')} />
-              {t('openclaw.refresh')}
+              {t('openclaw.refresh', { defaultValue: 'Refresh' })}
             </Button>
             <Button size="sm" onClick={() => setShowForm(true)}>
               <Plus className="w-3.5 h-3.5 mr-1.5" />
-              {t('openclaw.add')}
+              {t('openclaw.add', { defaultValue: 'Add Workspace' })}
             </Button>
           </div>
         </div>
@@ -81,41 +86,17 @@ export default function OpenClawSettingsPage() {
           </div>
         )}
 
-        {/* Gateway 连接模式配置 */}
-        <div className="mb-6">
-          <GatewayConfigPanel />
-        </div>
-
-        {/* Workspace 区域标题 */}
-        <div className="flex items-center gap-2 mb-4">
-          <FolderSync className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
-          <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-            OpenClaw Workspaces
-          </span>
-        </div>
-
-        {/* 内容区域 */}
         {loading && workspaces.length === 0 ? (
           <div className="card p-8 text-center">
             <div className="w-8 h-8 mx-auto mb-3 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
-            <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>{t('common.loading')}</p>
+            <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>{t('common.loading', { defaultValue: 'Loading...' })}</p>
           </div>
         ) : workspaces.length === 0 ? (
-          <div className="card p-8 text-center">
-            <div className="w-12 h-12 mx-auto mb-4 rounded-xl flex items-center justify-center" style={{ background: 'var(--surface-hover)' }}>
-              <FolderSync className="w-6 h-6" style={{ color: 'var(--text-tertiary)' }} />
-            </div>
-            <p className="text-sm mb-1" style={{ color: 'var(--text-primary)' }}>{t('openclaw.noWorkspace')}</p>
-            <p className="text-xs mb-4" style={{ color: 'var(--text-tertiary)' }}>
-              {t('openclaw.noWorkspaceHint')}
-            </p>
-            <Button size="sm" onClick={() => setShowForm(true)}>
-              <Plus className="w-3.5 h-3.5 mr-1.5" />
-              {t('openclaw.createFirst')}
-            </Button>
+          <div className="text-center py-6 text-sm" style={{ color: 'var(--text-tertiary)' }}>
+            {t('openclaw.noWorkspace', { defaultValue: 'No workspaces configured' })}
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-3">
             {workspaces.map((workspace) => (
               <WorkspaceCard key={workspace.id} workspace={workspace} />
             ))}
@@ -127,17 +108,15 @@ export default function OpenClawSettingsPage() {
           <WorkspaceForm
             onClose={() => setShowForm(false)}
             onSubmit={async (data) => {
-              const result = await createWorkspace({
+              await createWorkspace({
                 ...data,
                 memberId: data.memberId ?? undefined,
               });
-              if (result) {
-                setShowForm(false);
-              }
+              setShowForm(false);
             }}
           />
         )}
-      </main>
-    </AppShell>
+      </div>
+    </div>
   );
 }

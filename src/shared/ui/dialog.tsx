@@ -72,7 +72,7 @@ export function DialogContent({ children, className, showClose = true }: DialogC
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-50">
       <div
-        className={clsx('rounded-2xl p-6 shadow-float w-full max-w-md animate-slideUp border', className)}
+        className={clsx('relative rounded-2xl p-6 shadow-float w-full max-w-md animate-slideUp border', className)}
         style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
       >
         {showClose && (

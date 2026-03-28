@@ -8,13 +8,13 @@ import {
   LayoutGrid,
   List,
   Edit2,
-  Home,
-  FolderSync,
+  Milestone as MilestoneIcon,
 } from 'lucide-react';
 import { Button, Input, Select } from '@/shared/ui';
+import { useProjectStore } from '@/domains';
 import ConfirmDialog from '@/shared/layout/ConfirmDialog';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
+
 import MilestoneManager from '@/features/milestone-tracker/MilestoneManager';
 
 // 懒加载大型抽屉组件（仅在打开任务详情时加载）
@@ -30,73 +30,60 @@ import { useTasksPage } from './hooks/useTasksPage';
 export default function TasksPage() {
   const tp = useTasksPage();
   const { t } = useTranslation();
+  const { setCurrentProject } = useProjectStore();
+
+  // 项目筛选器选项
+  const projectFilterOptions = [
+    { value: '', label: t('tasks.allProjects') },
+    ...tp.projects.map(p => ({ value: p.id, label: p.name })),
+  ];
 
   return (
     <AppShell>
-      <Header
-        title={t('tasks.title')}
-        showProjectSelector
-        actions={
+
+      <main className="flex-1 p-6 overflow-auto">
+        {/* 工具栏 */}
+        <div className="flex items-center justify-between mb-4 gap-3">
           <div className="flex items-center gap-2">
-            {tp.error && (
-              <div className="px-3 py-1.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs rounded-lg">{tp.error}</div>
+            {/* 项目筛选器 */}
+            <Select
+              value={tp.currentProjectId || ''}
+              onChange={e => setCurrentProject(e.target.value || null)}
+              options={projectFilterOptions}
+              className="py-1.5 text-sm w-40"
+            />
+            {/* 里程碑按钮 */}
+            {tp.currentProjectId && (
+              <Button size="sm" variant="secondary" onClick={() => tp.setShowMilestoneManager(tp.currentProjectId)}>
+                <MilestoneIcon className="w-3.5 h-3.5" /> {t('milestones.title')}
+              </Button>
             )}
-            {/* source 过滤 */}
-            <div className="flex items-center rounded-lg border" style={{ borderColor: 'var(--border)' }}>
-              {([
-                { key: 'all' as const, label: t('common.all'), icon: null },
-                { key: 'local' as const, label: t('tasks.localTasks'), icon: Home },
-                { key: 'openclaw' as const, label: t('tasks.syncedTasks'), icon: FolderSync },
-              ]).map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => tp.setFilterSource(tab.key)}
-                  className={clsx(
-                    'flex items-center gap-1 px-2 py-1.5 text-xs font-medium transition-colors',
-                    tab.key === 'all' && 'rounded-l-lg',
-                    tab.key === 'openclaw' && 'rounded-r-lg',
-                    tp.filterSource === tab.key ? 'bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400' : ''
-                  )}
-                  style={tp.filterSource !== tab.key ? { color: 'var(--text-tertiary)' } : undefined}
-                >
-                  {tab.icon && <tab.icon className="w-3 h-3" />}
-                  {tab.label}
-                  <span className="text-[10px] opacity-60">{tp.sourceCounts[tab.key]}</span>
-                </button>
-              ))}
-            </div>
+          </div>
+          <div className="flex items-center gap-2">
             {/* 视图切换 */}
-            <div className="flex items-center rounded-lg border" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex rounded-lg border" style={{ borderColor: 'var(--border)' }}>
               <button
                 onClick={() => tp.setViewMode('board')}
-                className={clsx('p-1.5 rounded-l-lg transition-colors', tp.viewMode === 'board' ? 'bg-primary-50 text-primary-600 dark:bg-primary-950' : '')}
-                style={{ color: tp.viewMode === 'board' ? undefined : 'var(--text-tertiary)' }}
+                className={clsx('p-1.5 rounded-l-lg transition-colors', tp.viewMode === 'board' ? 'bg-slate-100 dark:bg-slate-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50')}
+                title={t('tasks.boardView')}
               >
-                <LayoutGrid className="w-4 h-4" />
+                <LayoutGrid className="w-4 h-4" style={{ color: tp.viewMode === 'board' ? 'var(--text-primary)' : 'var(--text-tertiary)' }} />
               </button>
               <button
                 onClick={() => tp.setViewMode('list')}
-                className={clsx('p-1.5 rounded-r-lg transition-colors', tp.viewMode === 'list' ? 'bg-primary-50 text-primary-600 dark:bg-primary-950' : '')}
-                style={{ color: tp.viewMode === 'list' ? undefined : 'var(--text-tertiary)' }}
+                className={clsx('p-1.5 rounded-r-lg transition-colors', tp.viewMode === 'list' ? 'bg-slate-100 dark:bg-slate-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50')}
+                title={t('tasks.listView')}
               >
-                <List className="w-4 h-4" />
+                <List className="w-4 h-4" style={{ color: tp.viewMode === 'list' ? 'var(--text-primary)' : 'var(--text-tertiary)' }} />
               </button>
             </div>
-            {/* 优先级过滤 */}
-            <Select value={tp.filterPriority} onChange={e => tp.setFilterPriority(e.target.value)} className="py-1.5 text-xs w-24">
-              <option value="all">{t('common.all')}</option>
-              <option value="high">{t('tasks.high')}</option>
-              <option value="medium">{t('tasks.medium')}</option>
-              <option value="low">{t('tasks.low')}</option>
-            </Select>
-            <Button onClick={() => { tp.setShowQuickInput(true); setTimeout(() => tp.quickInputRef.current?.focus(), 50); }}>
-              <Plus className="w-4 h-4" /> {t('tasks.newTask')}
+            {/* 创建按钮 */}
+            <Button size="sm" onClick={() => tp.setShowQuickInput(true)}>
+              <Plus className="w-3.5 h-3.5" /> {t('tasks.create')}
             </Button>
           </div>
-        }
-      />
+        </div>
 
-      <main className="flex-1 p-6 overflow-auto">
         {/* 批量操作栏 */}
         {tp.selectionMode && (
           <TaskBatchBar

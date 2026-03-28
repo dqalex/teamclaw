@@ -304,7 +304,7 @@ export function createForbiddenResponse(message: string = '权限不足'): NextR
  *   if (!auth.success) return auth.response;
  *   
  *   // auth.user 包含用户信息
- *   console.log(auth.user.userId);
+ *   console.debug(auth.user.userId);
  * }
  * ```
  */

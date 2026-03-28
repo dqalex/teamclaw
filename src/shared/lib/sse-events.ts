@@ -44,6 +44,10 @@ export type SSEEventType =
   | 'skill_update'
   | 'skill_snapshot_created'
   | 'skill_snapshots_captured'
+  // Skill 进化引擎事件（v1.1 Phase 1B）
+  | 'skill_experience_recorded'
+  | 'skill_experience_promoted'
+  | 'skill_evolution_log'
   // 审批请求事件
   | 'approval_request_created'
   | 'approval_request_approved'
@@ -53,10 +57,35 @@ export type SSEEventType =
   | 'approval_request_cancelled'
   // 项目成员事件
   | 'project_member_joined'
+  // Workflow Engine 事件（v1.1 Phase 2A）
+  | 'workflow_run_started'
+  | 'workflow_run_completed'
+  | 'workflow_node_advanced'
+  | 'workflow_run_failed'
+  // Marketplace + Consumer 事件（v1.1 Phase 3）
+  | 'service_rating_submitted'
+  | 'service_activated'
+  | 'consumer_registered'
   // v3.0: 增量更新事件
   | 'task:incremental'
   | 'document:incremental'
-  | 'delivery:incremental';
+  | 'delivery:incremental'
+  // Proactive Engine + Observability 事件（v1.1 Phase 4）
+  | 'proactive_event_triggered'
+  | 'proactive_event_acted'
+  | 'proactive_event_dismissed'
+  | 'event_log_created'
+  // Payment + Credits 事件（v1.1 Phase 5）
+  | 'credits_purchased'
+  | 'credits_deducted'
+  | 'credits_refunded'
+  | 'order_created'
+  | 'order_status_changed'
+  // OKR 事件（v1.1 Phase 5）
+  | 'objective_created'
+  | 'objective_updated'
+  | 'objective_deleted'
+  | 'key_result_updated';
 
 /**
  * SSE 事件结构
@@ -99,6 +128,10 @@ export const SSE_EVENT_TYPES: SSEEventType[] = [
   'skill_update',
   'skill_snapshot_created',
   'skill_snapshots_captured',
+  // Skill 进化引擎（v1.1 Phase 1B）
+  'skill_experience_recorded',
+  'skill_experience_promoted',
+  'skill_evolution_log',
   // 审批请求
   'approval_request_created',
   'approval_request_approved',
@@ -106,12 +139,37 @@ export const SSE_EVENT_TYPES: SSEEventType[] = [
   'approval_request_cancelled',
   // 项目成员事件
   'project_member_joined',
+  // Workflow Engine 事件（v1.1 Phase 2A）
+  'workflow_run_started',
+  'workflow_run_completed',
+  'workflow_node_advanced',
+  'workflow_run_failed',
+  // Marketplace + Consumer 事件（v1.1 Phase 3）
+  'service_rating_submitted',
+  'service_activated',
+  'consumer_registered',
   // v3.0: 增量更新
   'task:incremental',
   'document:incremental',
   'delivery:incremental',
   // Chat channel 事件
   'chat:job_failed',
+  // Proactive Engine + Observability（v1.1 Phase 4）
+  'proactive_event_triggered',
+  'proactive_event_acted',
+  'proactive_event_dismissed',
+  'event_log_created',
+  // Payment + Credits（v1.1 Phase 5）
+  'credits_purchased',
+  'credits_deducted',
+  'credits_refunded',
+  'order_created',
+  'order_status_changed',
+  // OKR（v1.1 Phase 5）
+  'objective_created',
+  'objective_updated',
+  'objective_deleted',
+  'key_result_updated',
 ];
 
 /**
@@ -184,6 +242,10 @@ export const SSE_EVENT_REFRESH_MAP: Record<SSEEventType, string[]> = {
   skill_update: ['skills'],
   skill_snapshot_created: ['skills'],
   skill_snapshots_captured: ['skills'],
+  // Skill 进化引擎（v1.1 Phase 1B）
+  skill_experience_recorded: ['skills'],
+  skill_experience_promoted: ['skills'],
+  skill_evolution_log: ['skills'],
   
   // 审批请求
   approval_request_created: ['approvalRequests'],
@@ -194,12 +256,37 @@ export const SSE_EVENT_REFRESH_MAP: Record<SSEEventType, string[]> = {
   // 项目成员事件
   project_member_joined: ['members', 'projects'],
   
+  // Workflow Engine 事件（v1.1 Phase 2A）
+  workflow_run_started: ['tasks'],
+  workflow_run_completed: ['tasks'],
+  workflow_node_advanced: ['tasks'],
+  workflow_run_failed: ['tasks'],
+  // Marketplace + Consumer 事件（v1.1 Phase 3）
+  service_rating_submitted: [],
+  service_activated: [],
+  consumer_registered: [],
   // v3.0: 增量更新事件
   'task:incremental': ['tasks'],
   'document:incremental': ['documents'],
   'delivery:incremental': ['deliveries'],
   // Chat channel 事件（不需要刷新 store）
   'chat:job_failed': [],
+  // Proactive Engine + Observability（v1.1 Phase 4）
+  proactive_event_triggered: ['proactiveEvents'],
+  proactive_event_acted: ['proactiveEvents'],
+  proactive_event_dismissed: ['proactiveEvents'],
+  event_log_created: ['eventLogs'],
+  // Payment + Credits（v1.1 Phase 5）
+  credits_purchased: ['consumer'],
+  credits_deducted: ['consumer'],
+  credits_refunded: ['consumer'],
+  order_created: ['orders'],
+  order_status_changed: ['orders'],
+  // OKR（v1.1 Phase 5）
+  objective_created: ['objectives'],
+  objective_updated: ['objectives'],
+  objective_deleted: ['objectives'],
+  key_result_updated: ['objectives'],
 };
 
 // ============================================================

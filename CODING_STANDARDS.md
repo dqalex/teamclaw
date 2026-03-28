@@ -8,16 +8,19 @@
 
 | 层面 | 技术 | 版本要求 |
 |------|------|---------|
-| 框架 | Next.js (App Router) | 14.x |
-| 语言 | TypeScript (strict) | ^5.7 |
+| 框架 | Next.js (App Router) | ^14.2 |
+| 语言 | TypeScript (strict) | ^5.4 |
 | UI | React + Tailwind CSS | React ^18 / Tailwind ^3.4 |
 | 组件库 | shadcn/ui | - |
-| 状态管理 | Zustand | ^5.0 |
-| 数据库 | SQLite (better-sqlite3) | ^11 |
-| ORM | Drizzle ORM | ^0.36 |
+| 状态管理 | Zustand | ^4.5 |
+| 数据库 | SQLite (better-sqlite3) | ^12 |
+| ORM | Drizzle ORM | ^0.45 |
 | 图标 | lucide-react | - |
-| ID 生成 | uuid v4 | - |
+| ID 生成 | Base58 short ID (generateId) | - |
 | 条件类名 | clsx | - |
+| 数据校验 | Zod | ^4.3 |
+| 实时通信 | ws | ^8.19 |
+| 密码哈希 | argon2 | ^0.44 |
 
 ---
 
@@ -94,7 +97,7 @@ export const examplesRelations = relations(examples, ({ one, many }) => ({
 ```
 
 **强制规则**:
-- 主键: `text('id').primaryKey()`，值由 API 层 `uuidv4()` 生成
+- 主键: `text('id').primaryKey()`，值由 API 层 `generateId()` 生成（Base58 short ID）
 - 字段命名: TypeScript 用 camelCase，SQL 列名用 snake_case
 - 时间戳: `integer` + `mode: 'timestamp'`
 - JSON 字段: `text` + `mode: 'json'` + `$type<T>()`
@@ -125,7 +128,7 @@ db.pragma('busy_timeout = 5000');
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { examples } from '@/db/schema';
-import { v4 as uuidv4 } from 'uuid';
+import { generateId } from '@/shared/lib/utils';
 import { eq } from 'drizzle-orm';
 
 // POST — 创建
@@ -138,8 +141,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'title is required' }, { status: 400 });
     }
     
-    // 2. 创建记录
-    const newItem = { id: uuidv4(), ...body, createdAt: new Date(), updatedAt: new Date() };
+    // 2. 创建记录（使用 Base58 short ID）
+    const newItem = { id: generateId(), ...body, createdAt: new Date(), updatedAt: new Date() };
     db.insert(examples).values(newItem).run();
     
     // 3. 脱敏后返回（如含敏感字段）

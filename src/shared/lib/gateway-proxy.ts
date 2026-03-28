@@ -73,7 +73,7 @@ export class GatewayProxyClient {
     await gatewayRequest(RPC_METHODS.AGENTS_DELETE, { agentId });
   }
 
-  async getAgentFiles(agentId: string): Promise<{ files: { name: string; path: string; missing: boolean; size?: number; updatedAtMs?: number }[] }> {
+  async getAgentFiles(agentId: string): Promise<{ workspace?: string; files: { name: string; path: string; missing: boolean; size?: number; updatedAtMs?: number }[] }> {
     return gatewayRequest('agents.files.list', { agentId });
   }
 
@@ -85,7 +85,7 @@ export class GatewayProxyClient {
     return gatewayRequest('agents.files.set', { agentId, name, content });
   }
 
-  async getAgentIdentity(agentId: string): Promise<{ name: string; theme?: string; emoji?: string; avatar?: string }> {
+  async getAgentIdentity(agentId: string): Promise<{ name: string; theme?: string; emoji?: string; avatar?: string; avatarUrl?: string }> {
     return gatewayRequest('agent.identity.get', { agentId });
   }
 

@@ -51,6 +51,8 @@ export interface ApiContext {
   pagination?: PaginationParams;
   requestId: string;
   startTime: number;
+  /** 经 schema 验证后的输入数据（仅在配置 inputSchema 时可用） */
+  validatedInput?: unknown;
 }
 
 /**
@@ -422,7 +424,7 @@ export function createPutRoute<TInput, TOutput>(
         if (!result.success) {
           throw ApiErrors.badRequest(result.error);
         }
-        (ctx as any).validatedInput = result.data;
+        ctx.validatedInput = result.data;
       }
 
       const result = await handler(req, ctx);
@@ -565,7 +567,7 @@ export function createResourceRoutes<T extends { id: string }>(
  *     },
  *     
  *     create: async (req, ctx) => {
- *       const input = (ctx as any).validatedInput; // 已验证的输入
+ *       const input = ctx.validatedInput; // 已验证的输入
  *       const [task] = await db.insert(tasks).values(input).returning();
  *       return task;
  *     },

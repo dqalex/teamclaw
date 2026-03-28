@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
 import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
 import ConfirmDialog from '@/shared/layout/ConfirmDialog';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
 import { Button, Input, Badge } from '@/shared/ui';
 import { useSOPTemplateStore, useProjectStore, useChatStore, useAuthStore, useGatewayStore } from '@/domains';
 import { useRenderTemplateStore } from '@/domains/render-template';
@@ -57,6 +57,9 @@ const categoryColors: Record<SOPCategory, string> = {
 
 export default function SOPPage() {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
+  // 从 URL query 参数驱动 tab 切换（顶部子导航）
+  const pageTab: PageTab = searchParams.get('tab') === 'render' ? 'render' : 'sop';
   // 精确 selector 订阅
   const templates = useSOPTemplateStore((s) => s.templates);
   const loading = useSOPTemplateStore((s) => s.loading);
@@ -70,7 +73,6 @@ export default function SOPPage() {
   const deleteRenderTemplate = useRenderTemplateStore((s) => s.deleteTemplateAsync);
   const fetchRenderTemplates = useRenderTemplateStore((s) => s.fetchTemplates);
   
-  const [pageTab, setPageTab] = useState<PageTab>('sop');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<SOPTemplate | null>(null);
@@ -450,7 +452,7 @@ export default function SOPPage() {
   useEffect(() => {
     if (pageTab === 'render' && renderTemplates.length === 0) fetchRenderTemplates();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageTab]);
+  }, [pageTab, renderTemplates.length, fetchRenderTemplates]);
   
   // 新建渲染模板
   const handleCreateRenderTemplate = useCallback(() => {
@@ -675,38 +677,7 @@ ${aiCreateRtPrompt.trim()}
 
   return (
     <AppShell>
-      <Header title={t('sop.title')} />
-      
       <div className="p-6">
-        {/* 页面标签切换 */}
-        <div className="flex items-center gap-1 mb-6 p-1 rounded-lg w-fit" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-          <button
-            onClick={() => setPageTab('sop')}
-            className={clsx(
-              'flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-md transition-colors',
-              pageTab === 'sop'
-                ? 'bg-white dark:bg-slate-700 shadow-sm'
-                : 'hover:bg-white/50 dark:hover:bg-slate-700/50'
-            )}
-            style={{ color: pageTab === 'sop' ? 'var(--text-primary)' : 'var(--text-tertiary)' }}
-          >
-            <ClipboardList className="w-4 h-4" />
-            {t('sop.title')}
-          </button>
-          <button
-            onClick={() => setPageTab('render')}
-            className={clsx(
-              'flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-md transition-colors',
-              pageTab === 'render'
-                ? 'bg-white dark:bg-slate-700 shadow-sm'
-                : 'hover:bg-white/50 dark:hover:bg-slate-700/50'
-            )}
-            style={{ color: pageTab === 'render' ? 'var(--text-primary)' : 'var(--text-tertiary)' }}
-          >
-            <Palette className="w-4 h-4" />
-            {t('sop.renderTemplatesTab')}
-          </button>
-        </div>
 
         {pageTab === 'sop' ? (
           <>
@@ -990,7 +961,7 @@ ${aiCreateRtPrompt.trim()}
                                     {getStageTypeLabel(stage.type)}
                                   </span>
                                   {stage.optional && (
-                                    <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>(optional)</span>
+                                    <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{t('sop.optional')}</span>
                                   )}
                                 </div>
                                 {stage.description && (
@@ -1031,7 +1002,7 @@ ${aiCreateRtPrompt.trim()}
                   <div className="card p-12 text-center">
                     <ClipboardList className="w-16 h-16 mx-auto mb-4 opacity-20" style={{ color: 'var(--text-tertiary)' }} />
                     <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
-                      {t('agents.selectAgent').replace('Agent', 'SOP')}
+                      {t('sop.selectTemplate')}
                     </p>
                   </div>
                 )}
@@ -1306,7 +1277,7 @@ ${aiCreateRtPrompt.trim()}
                         {selectedRt.htmlTemplate && (
                           <div>
                             <h3 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-tertiary)' }}>
-                              HTML Template
+                              {t('renderTemplate.htmlTemplate')}
                             </h3>
                             <pre className="text-xs p-4 rounded-lg overflow-auto max-h-60 font-mono"
                               style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
@@ -1318,7 +1289,7 @@ ${aiCreateRtPrompt.trim()}
                         {selectedRt.mdTemplate && (
                           <div>
                             <h3 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-tertiary)' }}>
-                              Markdown Template
+                              {t('renderTemplate.markdownTemplate')}
                             </h3>
                             <pre className="text-xs p-4 rounded-lg overflow-auto max-h-40 font-mono"
                               style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
@@ -1330,7 +1301,7 @@ ${aiCreateRtPrompt.trim()}
                         {selectedRt.cssTemplate && (
                           <div>
                             <h3 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-tertiary)' }}>
-                              CSS
+                              {t('renderTemplate.css')}
                             </h3>
                             <pre className="text-xs p-4 rounded-lg overflow-auto max-h-40 font-mono"
                               style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
@@ -1349,7 +1320,7 @@ ${aiCreateRtPrompt.trim()}
                         {selectedRt.slots && Object.keys(selectedRt.slots).length > 0 && (
                           <div>
                             <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-tertiary)' }}>
-                              Slots ({Object.keys(selectedRt.slots).length})
+                              {t('renderTemplate.slotsLabel')} ({Object.keys(selectedRt.slots).length})
                             </h3>
                             <div className="space-y-2">
                               {Object.entries(selectedRt.slots).map(([key, slot]) => (
@@ -1387,7 +1358,7 @@ ${aiCreateRtPrompt.trim()}
                         {Array.isArray(selectedRt.sections) && selectedRt.sections.length > 0 && (
                           <div>
                             <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-tertiary)' }}>
-                              Sections ({selectedRt.sections.length})
+                              {t('renderTemplate.sectionsLabel')} ({selectedRt.sections.length})
                             </h3>
                             <div className="space-y-2">
                               {selectedRt.sections.map((section, idx) => (
@@ -1407,7 +1378,7 @@ ${aiCreateRtPrompt.trim()}
                                     </span>
                                     {Boolean((section as Record<string, unknown>)?.repeatable) && (
                                       <Badge className="text-[9px] ml-2 bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400">
-                                        repeatable
+                                        {t('renderTemplate.repeatable')}
                                       </Badge>
                                     )}
                                   </div>

@@ -36,9 +36,8 @@ export interface StoreEventPayloads {
 // 事件处理器类型
 type StoreEventHandler<T extends StoreEventType> = (payload: StoreEventPayloads[T]) => void;
 
-// 使用 any 类型简化内部实现，外部类型安全
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyHandler = (payload: any) => void;
+type AnyHandler = (...args: any[]) => void;
 
 class StoreEventBus {
   private subscribers: Map<StoreEventType, Set<AnyHandler>> = new Map();

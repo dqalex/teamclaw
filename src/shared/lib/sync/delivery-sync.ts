@@ -220,13 +220,13 @@ export async function syncDeliveries(documentId: string, body: string): Promise<
         documentId: documentRefId,
         title: p.title,
         description: p.description || null,
-        platform: p.platform as any,
+        platform: p.platform as 'tencent-doc' | 'feishu' | 'notion' | 'local' | 'other',
         externalUrl,
         status: p.status,
         version: p.version,
         createdAt: now,
         updatedAt: now,
-      } as any);
+      });
       eventBus.emit({ type: 'delivery_update', resourceId: newId });
       counts.created++;
     }

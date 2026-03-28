@@ -16,3 +16,5 @@ export { Switch } from './switch';
 export { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 export { Spinner } from './spinner';
+export { CommandBar } from './command';
+export { DataTable, type Column, type DataTableProps, type PaginationConfig } from './data-table';

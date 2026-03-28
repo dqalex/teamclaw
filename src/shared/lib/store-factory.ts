@@ -414,7 +414,7 @@ export function createCrudStore<
 export function createApiClient<T extends BaseEntity>(baseUrl: string): CrudApi<T> {
   return {
     getAll: async (filters) => {
-      const query = filters ? `?${new URLSearchParams(filters as any)}` : '';
+      const query = filters ? `?${new URLSearchParams(filters as Record<string, string>)}` : '';
       const res = await fetch(`${baseUrl}${query}`);
       const data = await res.json();
       return res.ok ? { data } : { error: data.error };

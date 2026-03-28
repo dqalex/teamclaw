@@ -7,7 +7,7 @@
  * ```ts
  * // 需要登录
  * export const GET = withAuth(async (request, auth) => {
- *   console.log(auth.userId);
+ *   console.debug(auth.userId);
  *   return NextResponse.json({ data: 'ok' });
  * });
  * 

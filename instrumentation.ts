@@ -69,6 +69,14 @@ export async function register() {
       } catch (err) {
         console.error('[Instrumentation] Failed to start skill snapshot scheduler:', err);
       }
+
+      // 4. 启动 Proactive Engine Listener（v1.1 Phase 4）
+      try {
+        const { proactiveListener } = await import('./src/core/proactive');
+        proactiveListener.start();
+      } catch (err) {
+        console.error('[Instrumentation] Failed to start proactive listener:', err);
+      }
     }, 3000); // 3 秒后启动，确保数据库连接已就绪
   }
 }

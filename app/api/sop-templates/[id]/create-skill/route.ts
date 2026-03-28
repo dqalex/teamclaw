@@ -76,7 +76,7 @@ export async function POST(
       await mkdir(skillDir, { recursive: true });
     }
     await writeFile(path.join(skillDir, 'SKILL.md'), skillMd, 'utf-8');
-    console.log(`[create-skill] Wrote SKILL.md to ${skillDir}`);
+    console.debug(`[create-skill] Wrote SKILL.md to ${skillDir}`);
 
     // 3. 复制到 Gateway skills 目录（如果是生产环境）
     if (process.env.NODE_ENV === 'production' || process.env.DEPLOY_SERVER) {
@@ -89,7 +89,7 @@ export async function POST(
         // 复制文件
         await execAsync(`cp "${path.join(skillDir, 'SKILL.md')}" "${gatewaySkillDir}/"`);
 
-        console.log(`[create-skill] Copied to Gateway: ${gatewaySkillDir}`);
+        console.debug(`[create-skill] Copied to Gateway: ${gatewaySkillDir}`);
       } catch (copyError) {
         console.warn('[create-skill] Failed to copy to Gateway:', copyError);
         // 不阻止流程继续

@@ -131,7 +131,7 @@ export function validateEnv(strict: boolean = false): {
   
   // 打印环境信息（开发环境）
   if (!isProduction && errors.length === 0) {
-    console.log('[Env Validator] 环境变量验证通过');
+    console.debug('[Env Validator] 环境变量验证通过');
     if (warnings.length > 0) {
       console.warn('[Env Validator] 警告:', warnings.join('; '));
     }

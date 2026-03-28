@@ -289,7 +289,7 @@ async function notifyAICreatorOnTaskUpdate(
       idempotencyKey: `task-notify-${oldTask.id}-${Date.now()}`,
     });
 
-    console.log('[TaskNotify] Notification sent to AI creator:', {
+    console.debug('[TaskNotify] Notification sent to AI creator:', {
       taskId: oldTask.id,
       creatorId: oldTask.creatorId,
       sessionKey,

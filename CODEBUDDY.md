@@ -104,7 +104,7 @@ Three-layer architecture for AI Agent tool calls:
 - **`types.ts`**: 27 `ActionInstruction` types + `ExecutionResult` + `PendingQuestion`
 - **`definitions.ts`**: 37 MCP tool JSON Schema definitions (name, description, parameters)
 - **`executor.ts`**: Switch-case dispatcher; calls `/api/mcp` internally, refreshes Zustand stores on success
-- **`src/domains/*/mcp.ts`**: Domain handlers (task, document, member, project, schedule, status, delivery, template, sop)
+- **`src/domains/*/mcp.ts`**: Domain handlers (task, document, member, project, schedule, status, delivery, template, sop, workflow, marketplace)
 
 To add a new MCP tool: (1) register definition in `definitions.ts`, (2) add handler in `src/domains/*/mcp.ts`, (3) add switch-case in `executor.ts`.
 
@@ -119,9 +119,9 @@ Critical rules:
 
 ### Frontend Components (`src/features/` / `src/shared/`)
 
-- **Layout** (`src/shared/layout/`): `AppShell`, `Header`, `Sidebar`, `ThemeProvider`, `DataProvider`
-- **Features** (`src/features/`): `agent-manager/`, `chat-panel/`, `document-editor/`, `sop-engine/`, `task-board/`, `wiki-editor/`, `skill-manager/`, `milestone-tracker/`, `settings/`, `landing/`
-- **UI**: `src/shared/ui/` has shadcn/ui primitives—must use these, never re-implement
+- **Layout** (`src/shared/layout/`): `AppShell` v4.0（统一集成 Header+Breadcrumb），`Header`（面包屑+项目选择器+通知中心+用户菜单），`Sidebar`, `ThemeProvider`, `DataProvider`
+- **Features** (`src/features/`): `agent-manager/`, `chat-panel/`, `document-editor/`, `sop-engine/`, `task-board/`, `wiki-editor/`, `skill-manager/`, `milestone-tracker/`, `settings/`, `landing/`, `dashboard/`
+- **UI**: `src/shared/ui/` has shadcn/ui primitives + `DataTable`（泛型+排序+筛选+分页+行选择）+ `Breadcrumb`（自动路由+显式 items）+ `NotificationCenter`（localStorage 持久化+markAsRead/clearAll）+ `CommandBar`（⌘K 命令面板）—must use these, never re-implement
 - **Editor**: `src/shared/editor/` has MarkdownEditor, HtmlPreview, etc.
 
 ### Middleware (`middleware.ts`)
@@ -135,6 +135,7 @@ All user-visible text must use `react-i18next` `t()` function—no hardcoded str
 ### Key Patterns
 
 - **Path alias**: `@/*` maps to project root; no cross-layer relative imports
+- **Responsive breakpoints**: CSS variables in `globals.css` — `--breakpoint-xs` (640px) through `--breakpoint-xl` (1536px), plus `--sidebar-width`/`--header-height` layout tokens
 - **Input debounce**: All edit inputs must debounce 500ms via `useRef<setTimeout>`
 - **Enter/Blur guard**: Inline edits use `submittedByEnterRef` to prevent double-submit
 - **Derived lists**: Always `useMemo` for filter/map/sort operations

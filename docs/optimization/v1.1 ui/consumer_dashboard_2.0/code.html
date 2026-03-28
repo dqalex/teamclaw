@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TeamClaw v1.1 | Consumer Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "inverse-primary": "#494bd6",
+                        "surface-variant": "#31353e",
+                        "on-secondary-fixed": "#001f26",
+                        "on-primary": "#1000a9",
+                        "surface-container-low": "#181c24",
+                        "secondary-fixed-dim": "#4cd7f6",
+                        "on-surface-variant": "#c7c4d7",
+                        "background": "#10131c",
+                        "on-background": "#e0e2ee",
+                        "on-primary-container": "#0d0096",
+                        "surface-container": "#1c2028",
+                        "on-tertiary-fixed": "#23005c",
+                        "surface-container-highest": "#31353e",
+                        "secondary": "#4cd7f6",
+                        "inverse-surface": "#e0e2ee",
+                        "tertiary": "#d0bcff",
+                        "surface-tint": "#c0c1ff",
+                        "secondary-container": "#03b5d3",
+                        "on-surface": "#e0e2ee",
+                        "on-primary-fixed": "#07006c",
+                        "primary": "#c0c1ff",
+                        "surface-container-lowest": "#0a0e16",
+                        "primary-fixed": "#e1e0ff",
+                        "on-tertiary-container": "#340080",
+                        "surface": "#10131c",
+                        "tertiary-container": "#a078ff",
+                        "surface-dim": "#10131c",
+                        "on-error": "#690005",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "surface-bright": "#353943",
+                        "on-secondary-fixed-variant": "#004e5c",
+                        "primary-container": "#8083ff",
+                        "on-tertiary": "#3c0091",
+                        "on-secondary-container": "#00424e",
+                        "on-tertiary-fixed-variant": "#5516be",
+                        "outline": "#908fa0",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#d0bcff",
+                        "inverse-on-surface": "#2d303a",
+                        "secondary-fixed": "#acedff",
+                        "tertiary-fixed": "#e9ddff",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "on-secondary": "#003640",
+                        "surface-container-high": "#262a33",
+                        "outline-variant": "#464554"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Plus Jakarta Sans"],
+                        "label": ["Plus Jakarta Sans"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-header {
+            background: rgba(24, 28, 36, 0.6);
+            backdrop-filter: blur(12px);
+        }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        .glow-secondary { box-shadow: 0 0 15px rgba(76, 215, 246, 0.15); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-secondary/30">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-slate-900/60 backdrop-blur-xl shadow-2xl shadow-indigo-500/10 flex justify-between items-center px-6 py-3 w-full h-[56px]">
+<div class="flex items-center gap-6">
+<span class="text-xl font-bold tracking-tighter text-indigo-100">Deep Command AI</span>
+<nav class="hidden md:flex items-center gap-4">
+<div class="flex items-center gap-2 text-xs font-medium text-slate-400">
+<span>Home</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-indigo-300 border-b-2 border-cyan-400 pb-1">Subscriptions</span>
+</div>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex items-center gap-6 mr-4">
+<a class="text-slate-400 hover:text-slate-100 transition-colors font-['Plus_Jakarta_Sans'] font-medium text-sm tracking-tight" href="#">Marketplace</a>
+<a class="text-slate-400 hover:text-slate-100 transition-colors font-['Plus_Jakarta_Sans'] font-medium text-sm tracking-tight" href="#">Documentation</a>
+<a class="text-slate-400 hover:text-slate-100 transition-colors font-['Plus_Jakarta_Sans'] font-medium text-sm tracking-tight" href="#">Support</a>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-slate-400 hover:bg-slate-800/50 rounded-full transition-all duration-300">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-400 hover:bg-slate-800/50 rounded-full transition-all duration-300">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="close-up portrait of a professional man in a tech environment with soft blue rim lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCF4wOWOaEr25mHlZGR0s22EfHFKdNEhZNVUZoCBcM_TvvnemYxd3g9Yb5Jb4OEFNIv0szlteYaCkll3_nnu1eg4WtFHlVxgIXV-FOgg8UP7SYfbisSukabWvWL9eJAf2FpnKqNb-8MxnV-dSsNss0mWozKFZJb3fAL57KryJd_Cj0ieBe3U9ei0adYrzFP09wv3wN1ZPmOZzJrCRZ6-xxl24W6iZKXjlQCVhEUdH4EbhP2Vd3YKWsB48g-xbmxttWuY_5gkn7ZAg8A"/>
+</div>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 h-screen w-64 pt-20 bg-slate-950 flex flex-col h-full border-r border-slate-800/50 hidden md:flex">
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-secondary to-primary-container flex items-center justify-center shadow-lg shadow-secondary/20">
+<span class="material-symbols-outlined text-on-secondary-fixed" style="font-variation-settings: 'FILL' 1;">terminal</span>
+</div>
+<div>
+<h3 class="text-sm font-bold text-on-surface">Command Center</h3>
+<p class="text-[10px] uppercase tracking-widest text-secondary font-bold">Premium Tier</p>
+</div>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:text-slate-200 hover:bg-slate-900/80 hover:translate-x-1 transition-all duration-200 font-['Plus_Jakarta_Sans'] text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 bg-slate-800/50 text-cyan-400 border-r-4 border-cyan-400 px-4 py-3 shadow-[0_0_15px_rgba(76,215,246,0.15)] font-['Plus_Jakarta_Sans'] text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">subscriptions</span>
+<span>Subscriptions</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:text-slate-200 hover:bg-slate-900/80 hover:translate-x-1 transition-all duration-200 font-['Plus_Jakarta_Sans'] text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<span>Usage Metrics</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:text-slate-200 hover:bg-slate-900/80 hover:translate-x-1 transition-all duration-200 font-['Plus_Jakarta_Sans'] text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span>Billing</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:text-slate-200 hover:bg-slate-900/80 hover:translate-x-1 transition-all duration-200 font-['Plus_Jakarta_Sans'] text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined">smart_toy</span>
+<span>AI Models</span>
+</a>
+</nav>
+<div class="p-4 mx-4 mb-6 rounded-2xl bg-surface-container-low border border-outline-variant/10">
+<p class="text-xs text-slate-400 mb-3">Limit reached soon</p>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full mb-4">
+<div class="bg-secondary h-1.5 rounded-full w-[85%] shadow-[0_0_8px_rgba(76,215,246,0.5)]"></div>
+</div>
+<button class="w-full py-2 bg-gradient-to-r from-primary to-primary-container text-on-primary-container text-xs font-bold rounded-xl hover:opacity-90 transition-opacity">
+                Upgrade Quota
+            </button>
+</div>
+<div class="mt-auto px-3 pb-6 space-y-1">
+<a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:text-slate-200 transition-colors font-['Plus_Jakarta_Sans'] text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined">help</span>
+<span>Help</span>
+</a>
+<a class="flex items-center gap-3 text-error/70 px-4 py-3 hover:text-error transition-colors font-['Plus_Jakarta_Sans'] text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span>Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-64 pt-[56px] min-h-screen bg-surface-dim">
+<div class="max-w-7xl mx-auto p-8 space-y-8">
+<!-- Welcome Header -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h1 class="text-3xl font-extrabold tracking-tight text-on-background">Subscription Console</h1>
+<p class="text-slate-400 mt-1">Manage your active AI services and team permissions.</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-xs font-mono text-secondary border border-secondary/20">System v1.1 Active</span>
+</div>
+</section>
+<!-- Overview Cards Grid -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Card 1: Account Balance -->
+<div class="bg-surface-container rounded-2xl p-6 border-l-4 border-secondary glow-secondary transition-transform hover:-translate-y-1 duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Balance</span>
+</div>
+<div class="space-y-1">
+<p class="text-3xl font-mono font-medium tabular-nums text-on-background">¥128</p>
+<p class="text-xs text-slate-400">Next refill in 12 days</p>
+</div>
+</div>
+<!-- Card 2: Active Subscriptions -->
+<div class="bg-surface-container rounded-2xl p-6 border-l-4 border-primary shadow-lg transition-transform hover:-translate-y-1 duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">layers</span>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Active</span>
+</div>
+<div class="space-y-1">
+<p class="text-3xl font-mono font-medium tabular-nums text-on-background">3</p>
+<p class="text-xs text-slate-400">+1 from last month</p>
+</div>
+</div>
+<!-- Card 3: Monthly Spending -->
+<div class="bg-surface-container rounded-2xl p-6 border-l-4 border-tertiary shadow-lg transition-transform hover:-translate-y-1 duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Spending</span>
+</div>
+<div class="space-y-1">
+<p class="text-3xl font-mono font-medium tabular-nums text-on-background">¥320</p>
+<p class="text-xs text-slate-400">Avg. ¥10.60 / day</p>
+</div>
+</div>
+<!-- Card 4: Quota Usage -->
+<div class="bg-surface-container rounded-2xl p-6 border-l-4 border-error shadow-lg transition-transform hover:-translate-y-1 duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">speed</span>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Usage</span>
+</div>
+<div class="flex items-end justify-between">
+<div class="space-y-1">
+<p class="text-3xl font-mono font-medium tabular-nums text-on-background">85%</p>
+<p class="text-xs text-slate-400">Critical threshold</p>
+</div>
+<!-- Micro Circular Indicator -->
+<div class="relative w-12 h-12 flex items-center justify-center">
+<svg class="w-full h-full -rotate-90">
+<circle class="text-surface-container-highest" cx="24" cy="24" fill="transparent" r="20" stroke="currentColor" stroke-width="4"></circle>
+<circle class="text-error" cx="24" cy="24" fill="transparent" r="20" stroke="currentColor" stroke-dasharray="125.6" stroke-dashoffset="18.8" stroke-width="4"></circle>
+</svg>
+</div>
+</div>
+</div>
+</section>
+<!-- Subscription Detailed List -->
+<section class="space-y-6">
+<div class="flex items-center justify-between">
+<h2 class="text-xl font-bold text-on-background">Active Subscriptions</h2>
+<button class="text-sm font-semibold text-secondary flex items-center gap-2 hover:underline">
+                        View History <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<!-- List of cards -->
+<div class="space-y-4">
+<!-- Sub Card 1 -->
+<div class="group bg-surface-container-low rounded-2xl overflow-hidden hover:bg-surface-container transition-colors duration-300 border border-outline-variant/5">
+<div class="p-6 md:p-8 flex flex-col lg:flex-row lg:items-center gap-8">
+<!-- Service Identity -->
+<div class="flex items-start gap-4 lg:w-1/4">
+<div class="w-14 h-14 rounded-2xl bg-surface-container-highest flex items-center justify-center group-hover:bg-secondary/10 transition-colors">
+<span class="material-symbols-outlined text-secondary text-3xl">smart_toy</span>
+</div>
+<div class="space-y-1">
+<h3 class="font-bold text-lg text-on-background">Brand Copy Assistant</h3>
+<div class="flex items-center gap-2">
+<span class="inline-block w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="text-[10px] font-bold text-secondary uppercase tracking-widest">Active</span>
+</div>
+</div>
+</div>
+<!-- Detail Metrics -->
+<div class="flex-1 grid grid-cols-2 md:grid-cols-3 gap-6">
+<div>
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Subscribed Since</p>
+<p class="font-mono text-sm text-on-surface">2026-03-15</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Quota Status</p>
+<p class="font-mono text-sm text-on-surface">45/100 Units</p>
+</div>
+<div class="col-span-2 md:col-span-1">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Current Usage</p>
+<div class="flex items-center gap-3">
+<div class="flex-1 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[45%]"></div>
+</div>
+<span class="font-mono text-xs text-secondary">45%</span>
+</div>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-3 lg:justify-end">
+<button class="px-5 py-2.5 bg-secondary text-on-secondary-fixed text-sm font-bold rounded-xl hover:shadow-[0_0_20px_rgba(76,215,246,0.3)] transition-all">
+                                    Use Service
+                                </button>
+<button class="px-5 py-2.5 bg-surface-container-highest text-on-surface text-sm font-bold rounded-xl hover:bg-surface-variant transition-colors">
+                                    Renew
+                                </button>
+<button class="p-2.5 text-error/60 hover:text-error hover:bg-error/10 rounded-xl transition-all">
+<span class="material-symbols-outlined">delete_outline</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Sub Card 2 -->
+<div class="group bg-surface-container-low rounded-2xl overflow-hidden hover:bg-surface-container transition-colors duration-300 border border-outline-variant/5">
+<div class="p-6 md:p-8 flex flex-col lg:flex-row lg:items-center gap-8">
+<div class="flex items-start gap-4 lg:w-1/4">
+<div class="w-14 h-14 rounded-2xl bg-surface-container-highest flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-primary text-3xl">psychology</span>
+</div>
+<div class="space-y-1">
+<h3 class="font-bold text-lg text-on-background">Advanced Reasoning v2</h3>
+<div class="flex items-center gap-2">
+<span class="inline-block w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="text-[10px] font-bold text-secondary uppercase tracking-widest">Active</span>
+</div>
+</div>
+</div>
+<div class="flex-1 grid grid-cols-2 md:grid-cols-3 gap-6">
+<div>
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Subscribed Since</p>
+<p class="font-mono text-sm text-on-surface">2026-02-10</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Quota Status</p>
+<p class="font-mono text-sm text-on-surface">880/1000 Units</p>
+</div>
+<div class="col-span-2 md:col-span-1">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Current Usage</p>
+<div class="flex items-center gap-3">
+<div class="flex-1 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[88%]"></div>
+</div>
+<span class="font-mono text-xs text-primary">88%</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3 lg:justify-end">
+<button class="px-5 py-2.5 bg-secondary text-on-secondary-fixed text-sm font-bold rounded-xl hover:shadow-[0_0_20px_rgba(76,215,246,0.3)] transition-all">
+                                    Use Service
+                                </button>
+<button class="px-5 py-2.5 bg-surface-container-highest text-on-surface text-sm font-bold rounded-xl hover:bg-surface-variant transition-colors">
+                                    Renew
+                                </button>
+<button class="p-2.5 text-error/60 hover:text-error hover:bg-error/10 rounded-xl transition-all">
+<span class="material-symbols-outlined">delete_outline</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Sub Card 3 -->
+<div class="group bg-surface-container-low rounded-2xl overflow-hidden hover:bg-surface-container transition-colors duration-300 border border-outline-variant/5">
+<div class="p-6 md:p-8 flex flex-col lg:flex-row lg:items-center gap-8">
+<div class="flex items-start gap-4 lg:w-1/4">
+<div class="w-14 h-14 rounded-2xl bg-surface-container-highest flex items-center justify-center group-hover:bg-tertiary/10 transition-colors">
+<span class="material-symbols-outlined text-tertiary text-3xl">image_search</span>
+</div>
+<div class="space-y-1">
+<h3 class="font-bold text-lg text-on-background">Visual Generator Pro</h3>
+<div class="flex items-center gap-2">
+<span class="inline-block w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="text-[10px] font-bold text-secondary uppercase tracking-widest">Active</span>
+</div>
+</div>
+</div>
+<div class="flex-1 grid grid-cols-2 md:grid-cols-3 gap-6">
+<div>
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Subscribed Since</p>
+<p class="font-mono text-sm text-on-surface">2026-03-01</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Quota Status</p>
+<p class="font-mono text-sm text-on-surface">12/50 Gen</p>
+</div>
+<div class="col-span-2 md:col-span-1">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Current Usage</p>
+<div class="flex items-center gap-3">
+<div class="flex-1 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-tertiary w-[24%]"></div>
+</div>
+<span class="font-mono text-xs text-tertiary">24%</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3 lg:justify-end">
+<button class="px-5 py-2.5 bg-secondary text-on-secondary-fixed text-sm font-bold rounded-xl hover:shadow-[0_0_20px_rgba(76,215,246,0.3)] transition-all">
+                                    Use Service
+                                </button>
+<button class="px-5 py-2.5 bg-surface-container-highest text-on-surface text-sm font-bold rounded-xl hover:bg-surface-variant transition-colors">
+                                    Renew
+                                </button>
+<button class="p-2.5 text-error/60 hover:text-error hover:bg-error/10 rounded-xl transition-all">
+<span class="material-symbols-outlined">delete_outline</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom CTA Section (Editorial Layout) -->
+<section class="mt-12 p-8 rounded-[2rem] bg-gradient-to-br from-indigo-900/40 to-slate-900/20 border border-outline-variant/10 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-64 h-64 bg-secondary/10 blur-[100px] rounded-full -mr-20 -mt-20"></div>
+<div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+<div class="max-w-xl text-center md:text-left">
+<h2 class="text-2xl font-extrabold text-on-background mb-3">Maximize your AI workflow efficiency</h2>
+<p class="text-slate-400">Add team seats to your console and share subscription quotas across your entire organization with precise permission controls.</p>
+</div>
+<div class="flex flex-col sm:flex-row gap-4">
+<button class="px-8 py-4 bg-primary text-on-primary-container font-extrabold rounded-full hover:scale-105 transition-transform">
+                            Add Team Members
+                        </button>
+<button class="px-8 py-4 bg-surface-container-highest border border-outline-variant/30 text-on-surface font-bold rounded-full hover:bg-surface-variant transition-colors">
+                            Request Demo
+                        </button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Mobile Bottom Navigation -->
+<nav class="md:hidden fixed bottom-0 w-full bg-slate-900/90 backdrop-blur-lg border-t border-slate-800 flex justify-around py-3 z-50">
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] font-bold">Dash</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">subscriptions</span>
+<span class="text-[10px] font-bold">Subs</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined">payments</span>
+<span class="text-[10px] font-bold">Bill</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-bold">Profile</span>
+</button>
+</nav>
+</body></html>

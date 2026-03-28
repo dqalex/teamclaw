@@ -59,7 +59,7 @@ export async function POST() {
       eventBus.emit({ type: 'openclaw_status', resourceId: memberId });
     }
     
-    console.log(`[check-stale] 重置 ${resetIds.length} 个超时状态: ${resetIds.join(', ')}`);
+    console.debug(`[check-stale] 重置 ${resetIds.length} 个超时状态: ${resetIds.join(', ')}`);
     return NextResponse.json({ reset: resetIds.length, memberIds: resetIds });
   } catch (error) {
     console.error('[check-stale] Check failed:', error);

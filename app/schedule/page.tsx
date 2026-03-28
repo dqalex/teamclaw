@@ -2,7 +2,7 @@
 
 import { useTranslation } from 'react-i18next';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
+
 import GatewayRequired from '@/shared/layout/GatewayRequired';
 import ConfirmDialog from '@/shared/layout/ConfirmDialog';
 import { Button } from '@/shared/ui';
@@ -32,19 +32,6 @@ export default function SchedulePage() {
   return (
     <AppShell>
       <GatewayRequired feature={t('scheduler.title')}>
-      <Header
-        title={t('scheduler.title')}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="secondary" className="flex items-center gap-1 text-xs" onClick={() => refreshCronJobs()}>
-              <RefreshCw className="w-3.5 h-3.5" /> {t('agents.refresh')}
-            </Button>
-            <Button size="sm" className="flex items-center gap-1 text-xs" onClick={() => setShowCreate(true)}>
-              <Plus className="w-3.5 h-3.5" /> {t('scheduler.newJob')}
-            </Button>
-          </div>
-        }
-      />
 
       <main className="flex-1 p-6 overflow-auto max-w-4xl mx-auto space-y-6">
         <ScheduleStats

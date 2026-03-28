@@ -97,7 +97,7 @@ async function buildProjectContext(projectId: string): Promise<string> {
 
   // 构建任务列表文本
   const taskListText = projectTasks.slice(0, 20).map(t => {
-    const statusEmoji = { todo: '⏳', in_progress: '🔄', reviewing: '👀', completed: '✅' }[t.status] || '❓';
+    const statusEmoji = ({ todo: '⏳', in_progress: '🔄', reviewing: '👀', completed: '✅' } as Record<string, string>)[t.status as string] || '❓';
     return `- ${statusEmoji} **${t.title}** (${t.priority})`;
   }).join('\n');
 
@@ -147,7 +147,7 @@ async function buildTaskContext(taskId: string): Promise<string> {
   // 获取负责人
   const allMembers = await db.select().from(members);
   const assigneeNames = (task.assignees || [])
-    .map(id => allMembers.find(m => m.id === id)?.name)
+    .map((id: string) => allMembers.find(m => m.id === id)?.name)
     .filter(Boolean)
     .join(', ');
 

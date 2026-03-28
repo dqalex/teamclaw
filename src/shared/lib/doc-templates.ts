@@ -120,5 +120,12 @@ export const DOC_TEMPLATES: Record<string, string> = {
   decision: DECISION_TEMPLATE,
   scheduled_task: SCHEDULED_TASK_TEMPLATE,
   task_list: TASK_LIST_TEMPLATE,
+  blog: `> 发布日期：YYYY-MM-DD  
+> 版本：  
+> 标签：
+
+---
+
+`,
   other: '',
 };

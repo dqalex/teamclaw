@@ -12,7 +12,6 @@ import { useProjectStore, useTaskStore, useDocumentStore } from '@/domains';
 import type { KnowledgeConfig } from '@/db/schema';
 import { useGatewayStore } from '@/core/gateway/store';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
 import {
   Folder, Plus, CheckSquare, FileText, Trash2, Edit2, X, Save,
   Bot, Clock, FolderSync, Home,
@@ -251,43 +250,6 @@ export default function ProjectsPage() {
 
   return (
     <AppShell>
-      <Header
-        title={t('projects.title')}
-        actions={
-          <div className="flex items-center gap-2">
-            {/* source 过滤 */}
-            <div className="flex items-center rounded-lg border" style={{ borderColor: 'var(--border)' }}>
-              {([
-                { key: 'all' as const, label: t('common.all'), icon: null },
-                { key: 'local' as const, label: t('projects.localProjects'), icon: Home },
-                { key: 'openclaw' as const, label: t('projects.syncedProjects'), icon: FolderSync },
-              ]).map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setSourceFilter(tab.key)}
-                  className={clsx(
-                    'flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium transition-colors',
-                    tab.key === 'all' && 'rounded-l-lg',
-                    tab.key === 'openclaw' && 'rounded-r-lg',
-                    sourceFilter === tab.key
-                      ? 'bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400'
-                      : ''
-                  )}
-                  style={sourceFilter !== tab.key ? { color: 'var(--text-tertiary)' } : undefined}
-                >
-                  {tab.icon && <tab.icon className="w-3 h-3" />}
-                  {tab.label}
-                  <span className="text-[10px] opacity-60">{sourceCounts[tab.key]}</span>
-                </button>
-              ))}
-            </div>
-            <Button onClick={() => setShowNew(true)}>
-              <Plus className="w-4 h-4" /> {t('projects.newProject')}
-            </Button>
-          </div>
-        }
-      />
-
       <main className="flex-1 p-6 overflow-auto max-w-4xl mx-auto">
         {projectStats.length === 0 && !showNew ? (
           <Card className="p-12 text-center">

@@ -60,6 +60,10 @@ export default [
       "scripts/**/*.mjs",
       "scripts/diagnostics/**", // 诊断脚本
       "tests/**", // 测试文件
+      "test-page.js",
+      "test-page2.js",
+      "test-dompurify.mjs",
+      "business-overview.html*",
     ],
   },
 ];

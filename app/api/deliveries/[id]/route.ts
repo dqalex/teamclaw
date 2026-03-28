@@ -108,6 +108,13 @@ export const PUT = withAuth(async (
         .returning();
 
       eventBus.emit({ type: 'delivery_update', resourceId: delivery.id });
+      // v1.1 Phase 4: 触发 Proactive Engine 规则评估（异步，不阻塞）
+      try {
+        const { proactiveListener } = await import('@/src/core/proactive');
+        proactiveListener.onEventChange('delivery_update', { id: delivery.id, taskId: delivery.taskId, status: delivery.status, title: delivery.title, updatedAt: delivery.updatedAt?.toISOString() });
+      } catch {
+        // Proactive Engine 不可用时静默降级，不阻塞交付更新
+      }
       triggerMarkdownSync('teamclaw:deliveries');
 
       // 审核状态变更时，同步关联任务状态 + 构建通知消息
@@ -126,7 +133,7 @@ export const PUT = withAuth(async (
           reviewComment: body.reviewComment,
         };
 
-        let taskForNotify: { id: string; title: string; description: string | null; priority: string; status: string; deadline: Date | null; projectId: string | null; attachments: string[] | null } | null = null;
+        let taskForNotify: Record<string, unknown> | null = null;
 
         if (existing.taskId) {
           // 有关联任务：同步任务状态
@@ -167,7 +174,7 @@ interface ReviewContext {
 async function syncTaskStatusFromReview(
   taskId: string,
   reviewStatus: string,
-): Promise<{ id: string; title: string; description: string | null; priority: string; status: string; deadline: Date | null; projectId: string | null; attachments: string[] | null } | null> {
+) {
   try {
     type TaskStatus = 'todo' | 'in_progress' | 'reviewing' | 'completed';
     const taskStatusMap: Record<string, TaskStatus> = {
@@ -202,7 +209,7 @@ async function syncTaskStatusFromReview(
  */
 async function buildReviewNotification(
   reviewStatus: string,
-  task: { id: string; title: string; description: string | null; priority: string; status: string; deadline: Date | null; projectId: string | null; attachments: string[] | null } | null,
+  task: Record<string, unknown> | null,
   ctx: ReviewContext,
   overrideSessionKey?: string,
 ): Promise<{ sessionKey: string; message: string } | null> {
@@ -213,7 +220,7 @@ async function buildReviewNotification(
 
     if (!sessionKey) {
       // 查找提交者（AI 成员），如果 memberId 不是 AI，查找项目中的 AI 成员
-      const aiMember = await findAiMemberForNotification(ctx.memberId, task?.projectId || null);
+      const aiMember = await findAiMemberForNotification(ctx.memberId, (task?.projectId as string) || null);
       if (!aiMember) return null;
 
       const agentId = aiMember.openclawAgentId || aiMember.openclawName;
@@ -233,7 +240,7 @@ async function buildReviewNotification(
     // 获取项目信息
     let projectContext: { project_id: string; project_name: string; project_description: string | null; project_source: string } | null = null;
     if (task?.projectId) {
-      const [project] = await db.select().from(projects).where(eq(projects.id, task.projectId));
+      const [project] = await db.select().from(projects).where(eq(projects.id, task.projectId as string));
       if (project) {
         projectContext = {
           project_id: project.id,
@@ -254,7 +261,7 @@ async function buildReviewNotification(
     }
 
     // 获取关联文件
-    const attachmentIds = task?.attachments || [];
+    const attachmentIds = (task?.attachments as string[]) || [];
     let filesSection = '';
     if (attachmentIds.length > 0) {
       const attachedDocs = await db.select().from(documents).where(inArray(documents.id, attachmentIds));
@@ -299,7 +306,7 @@ async function buildReviewNotification(
       task_title: task?.title || null,
       task_description: task?.description || null,
       task_priority: task?.priority || null,
-      task_deadline: task?.deadline ? new Date(task.deadline).toLocaleDateString('zh-CN') : null,
+      task_deadline: task?.deadline ? new Date(task.deadline as string | number).toLocaleDateString('zh-CN') : null,
       project_id: projectContext?.project_id || null,
       project_name: projectContext?.project_name || null,
       project_description: projectContext?.project_description || null,

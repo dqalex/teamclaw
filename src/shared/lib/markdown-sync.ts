@@ -191,7 +191,7 @@ export async function syncDatabaseToMarkdown(documentId: string): Promise<{ upda
   const { body: newBody } = parseFrontmatter(newContent);
   const hasActualContent = newBody.trim().length > 0;
   if (!hasActualContent) {
-    console.log(`[markdown-sync] 反向同步跳过：文档 ${documentId} 序列化结果无实际内容，保留原始文档`);
+    console.debug(`[markdown-sync] 反向同步跳过：文档 ${documentId} 序列化结果无实际内容，保留原始文档`);
     return { updated: false };
   }
 
@@ -385,7 +385,7 @@ async function syncDeliveryFromDocumentFrontmatter(
       source: 'local',
       createdAt: now,
       updatedAt: now,
-    } as any);
+    });
     eventBus.emit({ type: 'delivery_update', resourceId: newId });
   }
 }

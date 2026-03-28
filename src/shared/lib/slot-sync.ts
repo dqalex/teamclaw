@@ -22,6 +22,7 @@ let DOMParser: typeof globalThis.DOMParser;
 
 if (typeof window === 'undefined') {
   // Node.js 环境：使用 linkedom
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { parseHTML } = require('linkedom');
   const { document, CustomEvent, Element, HTMLElement, NodeList, DOMParser: LDParser } = parseHTML(`<!DOCTYPE html><html><head></head><body></body></html>`);
   globalThis.document = document;
@@ -1367,8 +1368,8 @@ function parseFlowGroup(lines: string[]): string {
       continue;
     }
 
-    // 带状态的节点
-    if (/^[✅❌⚠️]/.test(trimmed)) {
+    // 带状态的节点（使用非捕获分组避免 no-misleading-character-class）
+    if (/^(?:✅|❌|⚠️)/.test(trimmed)) {
       const statusMatch = trimmed.match(/^(✅|❌|⚠️)\s*(.*)/);
       if (statusMatch) {
         const cls = statusMatch[1] === '✅' ? 'success' : statusMatch[1] === '❌' ? 'error' : 'warn';

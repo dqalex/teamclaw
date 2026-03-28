@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useRef } from 'react';
 import { useMemberStore, useProjectStore, useTaskStore, useAuthStore } from '@/domains';
 import { useGatewayStore } from '@/core/gateway/store';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
+
 import { Button, Badge, Input } from '@/shared/ui';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -268,7 +268,6 @@ export default function MembersPage() {
 
   return (
     <AppShell>
-      <Header title={t('members.title')} />
 
       <main className="flex-1 p-6 overflow-auto max-w-5xl mx-auto space-y-8">
         {/* AI 成员 */}

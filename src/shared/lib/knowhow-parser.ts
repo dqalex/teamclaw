@@ -269,3 +269,62 @@ export function updateL5Stats(markdown: string): string {
 
   return lines.join('\n');
 }
+
+/**
+ * 向 L1 追加晋升规则
+ *
+ * 在 L1 区域末尾（L2 之前）插入新规则条目。
+ * 如果文档没有 L1 区域，则自动创建。
+ *
+ * @param markdown - 原始 Know-how 文档内容
+ * @param rule - 晋升的规则文本
+ * @param scenario - 来源场景描述（用于溯源）
+ * @returns 更新后的完整文档内容
+ */
+export function appendToL1(markdown: string, rule: string, scenario: string): string {
+  const date = new Date().toISOString().split('T')[0];
+  // 格式：- [晋升 YYYY-MM-DD from <scenario>] <rule>
+  const newRuleLine = `- [晋升 ${date} from ${scenario}] ${rule}`;
+
+  const lines = markdown.split('\n');
+  let l1Start = -1;
+  let l2Start = -1;
+  let l3Start = -1;
+  let l4Start = -1;
+  let l5Start = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (LAYER_PATTERNS.L1.test(lines[i]) && l1Start === -1) l1Start = i;
+    if (LAYER_PATTERNS.L2.test(lines[i]) && l2Start === -1) l2Start = i;
+    if (LAYER_PATTERNS.L3.test(lines[i]) && l3Start === -1) l3Start = i;
+    if (LAYER_PATTERNS.L4.test(lines[i]) && l4Start === -1) l4Start = i;
+    if (LAYER_PATTERNS.L5.test(lines[i]) && l5Start === -1) l5Start = i;
+  }
+
+  // 没有 L1 区域：在最早的 L2-L5 之前（或文档末尾）创建
+  if (l1Start === -1) {
+    const insertPos = l2Start >= 0 ? l2Start
+      : l3Start >= 0 ? l3Start
+      : l4Start >= 0 ? l4Start
+      : l5Start >= 0 ? l5Start
+      : lines.length;
+    lines.splice(insertPos, 0, '', '## L1 核心规则', newRuleLine, '');
+    return lines.join('\n');
+  }
+
+  // 有 L1，找 L1 区域的结束位置（下一个 L2-L5 标题，或文档末尾）
+  const l1End = l2Start >= 0 ? l2Start
+    : l3Start >= 0 ? l3Start
+    : l4Start >= 0 ? l4Start
+    : l5Start >= 0 ? l5Start
+    : lines.length;
+
+  // 在 L1 区域末尾插入（跳过末尾空行）
+  let actualInsertPos = l1End;
+  while (actualInsertPos > l1Start && lines[actualInsertPos - 1].trim() === '') {
+    actualInsertPos--;
+  }
+
+  lines.splice(actualInsertPos, 0, newRuleLine);
+  return lines.join('\n');
+}

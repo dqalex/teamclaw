@@ -394,7 +394,7 @@ export async function refreshTaskList(workspaceId: string): Promise<boolean> {
       join(tasksDir, TODO_FILE_NAME), todoContent
     );
     if (todoUpdated) {
-      console.log(`[task-list] TODO.md 已更新: ${join(tasksDir, TODO_FILE_NAME)} (${activeResult.tasks.length} 项任务)`);
+      console.debug(`[task-list] TODO.md 已更新: ${join(tasksDir, TODO_FILE_NAME)} (${activeResult.tasks.length} 项任务)`);
       anyUpdated = true;
     }
 
@@ -405,7 +405,7 @@ export async function refreshTaskList(workspaceId: string): Promise<boolean> {
       join(tasksDir, DONE_FILE_NAME), doneContent
     );
     if (doneUpdated) {
-      console.log(`[task-list] DONE.md 已更新: ${join(tasksDir, DONE_FILE_NAME)} (${doneResult.tasks.length} 项完成)`);
+      console.debug(`[task-list] DONE.md 已更新: ${join(tasksDir, DONE_FILE_NAME)} (${doneResult.tasks.length} 项完成)`);
       anyUpdated = true;
     }
 

@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGatewayStore } from '@/core/gateway/store';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
+
 import GatewayRequired from '@/shared/layout/GatewayRequired';
 import { Button, Input, Badge } from '@/shared/ui';
 import type { Skill } from '@/types';
@@ -252,7 +252,6 @@ export default function SkillsPage() {
 
   return (
     <AppShell>
-      <Header title={t('skillsPage.title')} />
 
       <main className="flex-1 p-6 overflow-auto max-w-4xl mx-auto">
         <GatewayRequired feature={t('skillsPage.title')}>

@@ -5,7 +5,7 @@ import { useDeliveryStore, useMemberStore, useDocumentStore, useTaskStore, usePr
 import { useGatewayStore } from '@/core/gateway/store';
 import { useAuthStore } from '@/domains/auth';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
+
 import { Button, Textarea, Badge } from '@/shared/ui';
 import ConfirmDialog from '@/shared/layout/ConfirmDialog';
 import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
@@ -258,17 +258,6 @@ export default function DeliveriesPage() {
 
   return (
     <AppShell>
-      <Header
-        title={t('deliveries.title')}
-        actions={
-          statusCounts.pending > 0 ? (
-            <Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 px-2 py-1 text-sm rounded">
-              {t('deliveries.pendingReview', { count: statusCounts.pending })}
-            </Badge>
-          ) : undefined
-        }
-      />
-
       <main className="flex-1 p-6 overflow-auto">
         {/* 统计卡片 */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -278,9 +267,9 @@ export default function DeliveriesPage() {
             { label: t('deliveries.approved'), value: statusCounts.approved, border: 'border-l-4 border-green-500', color: 'text-green-600' },
             { label: t('deliveries.needModifyReturn'), value: statusCounts.rejected + statusCounts.revision_needed, border: 'border-l-4 border-red-500', color: 'text-red-600' },
           ].map(s => (
-            <div key={s.label} className={clsx('card p-4', s.border)}>
-              <div className="text-sm" style={{ color: 'var(--text-tertiary)' }}>{s.label}</div>
-              <div className={clsx('text-2xl font-bold font-display', s.color)}>{s.value}</div>
+            <div key={s.label} className={clsx('card p-4 rounded-xl', s.border)}>
+              <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>{s.label}</div>
+              <div className={clsx('text-2xl font-bold font-display tabular-nums', s.color)}>{s.value}</div>
             </div>
           ))}
         </div>

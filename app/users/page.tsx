@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/domains';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
+
 import { Button, Input, Badge, Dialog } from '@/shared/ui';
 import { useRouter } from 'next/navigation';
 import { 
@@ -212,7 +212,6 @@ export default function UsersPage() {
   if (!isAuthenticated) {
     return (
       <AppShell>
-        <Header title="用户管理" />
         <main className="flex-1 flex items-center justify-center p-6">
           <div className="text-center">
             <Shield className="w-16 h-16 mx-auto mb-4 text-gray-400" />
@@ -227,7 +226,6 @@ export default function UsersPage() {
   if (currentUser?.role !== 'admin') {
     return (
       <AppShell>
-        <Header title="用户管理" />
         <main className="flex-1 flex items-center justify-center p-6">
           <div className="text-center">
             <Shield className="w-16 h-16 mx-auto mb-4 text-red-400" />
@@ -241,7 +239,6 @@ export default function UsersPage() {
 
   return (
     <AppShell>
-      <Header title="用户管理" />
 
       <main className="flex-1 p-6 overflow-auto">
         <div className="max-w-5xl mx-auto">

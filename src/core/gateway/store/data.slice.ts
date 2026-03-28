@@ -82,7 +82,36 @@ export const dataActions = {
         identity: a.identity,
         isDefault: a.id === result.defaultId,
       }));
-      set({ agentsList: agents, agentsDefaultId: result.defaultId || null, agentsMainKey: result.mainKey || null });
+
+      // 并行获取每个 agent 的 workspace 和完整 identity（avatar/avatarUrl/theme）
+      const enrichedAgents = await Promise.all(agents.map(async (agent) => {
+        try {
+          const [filesResult, identityResult] = await Promise.all([
+            activeClient.getAgentFiles(agent.id),
+            activeClient.getAgentIdentity(agent.id),
+          ]);
+          // 从 agents.files.list 获取 workspace 路径
+          if (filesResult?.workspace) {
+            agent.workspace = filesResult.workspace;
+          }
+          // 补充 identity 中 agents.list 未返回的字段（avatar/avatarUrl/theme）
+          if (identityResult) {
+            agent.identity = {
+              ...agent.identity,
+              name: agent.identity?.name || identityResult.name,
+              theme: agent.identity?.theme || identityResult.theme,
+              emoji: agent.identity?.emoji || identityResult.emoji,
+              avatar: agent.identity?.avatar || identityResult.avatar,
+              avatarUrl: agent.identity?.avatarUrl || identityResult.avatarUrl,
+            };
+          }
+        } catch {
+          // 单个 agent 信息获取失败不影响整体
+        }
+        return agent;
+      }));
+
+      set({ agentsList: enrichedAgents, agentsDefaultId: result.defaultId || null, agentsMainKey: result.mainKey || null });
 
       // 自动同步 Agent 与本地 AI 成员（通过 API 直接调用，解耦 Store）
       const { data: allMembers, error: membersError } = await membersApi.getAll();

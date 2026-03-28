@@ -140,7 +140,7 @@ export const TEAMCLAW_TOOLS = {
       properties: {
         title: { type: 'string', description: '文档标题' },
         content: { type: 'string', description: '文档内容（Markdown）' },
-        doc_type: { type: 'string', enum: ['report', 'note', 'decision', 'scheduled_task', 'task_list', 'other'], description: '文档类型（默认 note）' },
+        doc_type: { type: 'string', enum: ['guide', 'reference', 'report', 'note', 'decision', 'scheduled_task', 'task_list', 'other'], description: '文档类型（默认 note）' },
         project_id: { type: 'string', description: '关联项目 ID（可选）' },
         // v3.0 Content Studio 扩展
         render_mode: { type: 'string', enum: ['markdown', 'visual'], description: '渲染模式：markdown（纯文本）或 visual（可视化编辑）' },
@@ -158,7 +158,7 @@ export const TEAMCLAW_TOOLS = {
       properties: {
         document_id: { type: 'string', description: '文档 ID' },
         content: { type: 'string', description: '新的文档内容' },
-        doc_type: { type: 'string', enum: ['report', 'note', 'decision', 'scheduled_task', 'task_list', 'other'], description: '更新文档类型（可选）' },
+        doc_type: { type: 'string', enum: ['guide', 'reference', 'report', 'note', 'decision', 'scheduled_task', 'task_list', 'other'], description: '更新文档类型（可选）' },
       },
       required: ['document_id', 'content'],
     },
@@ -562,7 +562,7 @@ export const TEAMCLAW_TOOLS = {
               label: { type: 'string', description: '阶段名称' },
               type: { type: 'string', enum: ['input', 'ai_auto', 'ai_with_confirm', 'manual', 'render', 'export', 'review'], description: '阶段类型' },
               promptTemplate: { type: 'string', description: '该阶段的 AI 指令模板（Mustache 语法）' },
-              outputType: { type: 'string', enum: ['text', 'markdown', 'html', 'json'], description: '产出格式' },
+              outputType: { type: 'string', enum: ['text', 'markdown', 'html', 'data', 'file'], description: '产出格式' },
               requireConfirm: { type: 'boolean', description: '是否需要人工确认' },
             },
             required: ['id', 'label', 'type'],
@@ -853,6 +853,321 @@ export const TEAMCLAW_TOOLS = {
         search: { type: 'string', description: '搜索关键词（可选）' },
         limit: { type: 'number', description: '返回数量限制（默认 20）' },
       },
+    },
+  },
+
+  // ========== v1.1 Phase 2: Workflow Engine ==========
+
+  start_workflow: {
+    name: 'start_workflow',
+    description: 'Start a workflow execution. Creates a workflow run and begins from the entry node.',
+    parameters: {
+      type: 'object',
+      properties: {
+        workflowId: { type: 'string', description: 'Workflow definition ID' },
+        taskId: { type: 'string', description: 'Optional associated task ID' },
+      },
+      required: ['workflowId'],
+    },
+  },
+
+  advance_workflow: {
+    name: 'advance_workflow',
+    description: 'Advance workflow to next node. Call this after completing the current node execution.',
+    parameters: {
+      type: 'object',
+      properties: {
+        runId: { type: 'string', description: 'Workflow Run ID' },
+        nodeOutput: { type: 'object', description: 'Output of the current node (optional)' },
+      },
+      required: ['runId'],
+    },
+  },
+
+  pause_workflow: {
+    name: 'pause_workflow',
+    description: 'Pause a running workflow.',
+    parameters: {
+      type: 'object',
+      properties: {
+        runId: { type: 'string', description: 'Workflow Run ID' },
+      },
+      required: ['runId'],
+    },
+  },
+
+  resume_workflow: {
+    name: 'resume_workflow',
+    description: 'Resume a paused workflow.',
+    parameters: {
+      type: 'object',
+      properties: {
+        runId: { type: 'string', description: 'Workflow Run ID' },
+      },
+      required: ['runId'],
+    },
+  },
+
+  replay_workflow_from: {
+    name: 'replay_workflow_from',
+    description: 'Replay workflow from a specific node (breakpoint resume).',
+    parameters: {
+      type: 'object',
+      properties: {
+        runId: { type: 'string', description: 'Workflow Run ID' },
+        nodeId: { type: 'string', description: 'Node ID to replay from' },
+      },
+      required: ['runId', 'nodeId'],
+    },
+  },
+
+  create_workflow: {
+    name: 'create_workflow',
+    description: 'Create a new workflow definition with DAG nodes.',
+    parameters: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Workflow name' },
+        description: { type: 'string', description: 'Workflow description' },
+        projectId: { type: 'string', description: 'Associated project ID (optional)' },
+        nodes: { type: 'array', description: 'Array of workflow node definitions', items: { type: 'object' } },
+        entryNodeId: { type: 'string', description: 'ID of the entry node' },
+      },
+      required: ['name', 'nodes', 'entryNodeId'],
+    },
+  },
+
+  get_workflow_status: {
+    name: 'get_workflow_status',
+    description: 'Get the current status of a workflow run, including current node, progress, and any errors.',
+    parameters: {
+      type: 'object',
+      properties: {
+        run_id: { type: 'string', description: 'Workflow Run ID' },
+      },
+      required: ['run_id'],
+    },
+  },
+
+  // ========== v1.1 Phase 1B: Skill 进化引擎 ==========
+
+  record_skill_experience: {
+    name: 'record_skill_experience',
+    description: '记录 Skill 执行经验。当 Agent 在执行 Skill 过程中被用户修正或自主发现更好的做法时调用。系统会自动过滤无意义的记录（纯格式调整、太短的修正），并对相似场景的经验进行归并。当同一经验出现 3 次及以上时，建议使用 promote_skill_experience 将其晋升为 L1 规则。',
+    parameters: {
+      type: 'object',
+      properties: {
+        skill_id: { type: 'string', description: 'Skill ID' },
+        scenario: { type: 'string', description: '场景描述（用于归并匹配）' },
+        original_judgment: { type: 'string', description: '原始判断（可选）' },
+        correction: { type: 'string', description: '修正后的正确做法' },
+        reasoning: { type: 'string', description: '修正理由（可选）' },
+        source: { type: 'string', enum: ['user_correction', 'auto_detect', 'manual'], description: '来源（默认 auto_detect）' },
+        task_id: { type: 'string', description: '关联任务 ID（可选）' },
+        member_id: { type: 'string', description: '记录者 ID（可选）' },
+      },
+      required: ['skill_id', 'scenario', 'correction'],
+    },
+  },
+
+  get_skill_experiences: {
+    name: 'get_skill_experiences',
+    description: '获取 Skill 的历史经验列表。按出现频率降序排列，返回「场景 → 修正」格式的经验摘要。可用于在执行 Skill 前回顾历史经验。',
+    parameters: {
+      type: 'object',
+      properties: {
+        skill_id: { type: 'string', description: 'Skill ID' },
+        limit: { type: 'number', description: '返回数量限制（默认 20）' },
+        include_promoted: { type: 'boolean', description: '是否包含已晋升为 L1 的经验（默认 false）' },
+      },
+      required: ['skill_id'],
+    },
+  },
+
+  promote_skill_experience: {
+    name: 'promote_skill_experience',
+    description: '将经验晋升为 L1 规则。当某条经验出现次数 ≥ 3 时应调用此工具，将其标记为 L1 规则。晋升后的经验会在下次 Skill 执行时自动注入。',
+    parameters: {
+      type: 'object',
+      properties: {
+        experience_id: { type: 'string', description: '经验记录 ID' },
+        member_id: { type: 'string', description: '操作者 ID（可选）' },
+      },
+      required: ['experience_id'],
+    },
+  },
+
+  // ========== v1.1 Phase 3: Marketplace ==========
+
+  list_marketplace_services: {
+    name: 'list_marketplace_services',
+    description: 'Browse the Marketplace service catalog. Lists published AI services with optional filtering by category, sorting by rating/usage/newest, and pagination.',
+    parameters: {
+      type: 'object',
+      properties: {
+        search: { type: 'string', description: 'Search keyword to filter services by name' },
+        category: { type: 'string', description: 'Filter by service category' },
+        sort: { type: 'string', enum: ['rating', 'usage', 'newest'], description: 'Sort order (default: rating)' },
+        limit: { type: 'number', description: 'Max results to return (default 20, max 100)' },
+        offset: { type: 'number', description: 'Pagination offset (default 0)' },
+      },
+    },
+  },
+
+  submit_service_rating: {
+    name: 'submit_service_rating',
+    description: 'Submit a rating (1-5 stars) for a Marketplace service. Requires consumer authentication via consumer_token parameter.',
+    parameters: {
+      type: 'object',
+      properties: {
+        service_id: { type: 'string', description: 'Service ID to rate' },
+        rating: { type: 'number', description: 'Rating from 1 to 5' },
+        feedback: { type: 'string', description: 'Optional feedback comment (max 1000 chars)' },
+        consumer_token: { type: 'string', description: 'Consumer auth token (from login)' },
+      },
+      required: ['service_id', 'rating', 'consumer_token'],
+    },
+  },
+
+  subscribe_service: {
+    name: 'subscribe_service',
+    description: 'Subscribe a consumer to a Marketplace service. Creates a subscription record and deducts credits if the service is paid.',
+    parameters: {
+      type: 'object',
+      properties: {
+        service_id: { type: 'string', description: 'Service ID to subscribe' },
+        consumer_id: { type: 'string', description: 'Consumer ID' },
+        consumer_token: { type: 'string', description: 'Consumer auth token (from login)' },
+      },
+      required: ['service_id', 'consumer_id', 'consumer_token'],
+    },
+  },
+
+  activate_service: {
+    name: 'activate_service',
+    description: 'Activate a service using an activation key. Redeems the key and creates a subscription for the consumer.',
+    parameters: {
+      type: 'object',
+      properties: {
+        activation_key: { type: 'string', description: 'Activation key string' },
+        consumer_id: { type: 'string', description: 'Consumer ID' },
+        consumer_token: { type: 'string', description: 'Consumer auth token (from login)' },
+      },
+      required: ['activation_key', 'consumer_id', 'consumer_token'],
+    },
+  },
+
+  // Proactive Engine + Observability（v1.1 Phase 4）
+  get_proactive_events: {
+    name: 'get_proactive_events',
+    description: 'Get proactive engine events. Returns triggered alerts that need attention, such as task overdue warnings or delivery backlog alerts.',
+    parameters: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', enum: ['triggered', 'acted', 'dismissed', 'failed', 'all'], description: 'Event status filter (default: triggered)' },
+        severity: { type: 'string', enum: ['info', 'warning', 'critical'], description: 'Severity filter' },
+        project_id: { type: 'string', description: 'Project ID filter' },
+        limit: { type: 'number', description: 'Max results (default 20)' },
+      },
+    },
+  },
+
+  dismiss_proactive_event: {
+    name: 'dismiss_proactive_event',
+    description: 'Dismiss a proactive event. Marks the event as dismissed so it no longer requires attention.',
+    parameters: {
+      type: 'object',
+      properties: {
+        event_id: { type: 'string', description: 'Proactive event ID to dismiss' },
+        reason: { type: 'string', description: 'Reason for dismissal (optional)' },
+      },
+      required: ['event_id'],
+    },
+  },
+
+  get_analytics_summary: {
+    name: 'get_analytics_summary',
+    description: 'Get analytics summary including token consumption attribution, agent efficiency metrics, and project value output. Supports time range filtering.',
+    parameters: {
+      type: 'object',
+      properties: {
+        project_id: { type: 'string', description: 'Project ID filter (optional, returns all if not specified)' },
+        period: { type: 'string', enum: ['today', 'week', 'month', 'quarter', 'year'], description: 'Time period (default: week)' },
+        group_by: { type: 'string', enum: ['agent', 'project', 'entity_type'], description: 'Group results by dimension (default: agent)' },
+      },
+    },
+  },
+
+  // ========== v1.1 Phase 5: Payment + Credits ==========
+
+  purchase_credits: {
+    name: 'purchase_credits',
+    description: 'Purchase credits for a consumer. Creates an order, processes payment, and adds credits to the consumer balance.',
+    parameters: {
+      type: 'object',
+      properties: {
+        consumer_id: { type: 'string', description: 'Consumer ID' },
+        credits_amount: { type: 'number', description: 'Number of credits to purchase' },
+        amount_cents: { type: 'number', description: 'Payment amount in cents' },
+        currency: { type: 'string', enum: ['CNY', 'USD'], description: 'Currency (default: CNY)' },
+      },
+      required: ['consumer_id', 'credits_amount', 'amount_cents'],
+    },
+  },
+
+  get_consumer_balance: {
+    name: 'get_consumer_balance',
+    description: 'Get the current credit balance for a consumer.',
+    parameters: {
+      type: 'object',
+      properties: {
+        consumer_id: { type: 'string', description: 'Consumer ID' },
+      },
+      required: ['consumer_id'],
+    },
+  },
+
+  // ========== v1.1 Phase 5: OKR ==========
+
+  create_objective: {
+    name: 'create_objective',
+    description: 'Create a project objective (OKR). Objectives define high-level goals for a project.',
+    parameters: {
+      type: 'object',
+      properties: {
+        project_id: { type: 'string', description: 'Project ID' },
+        title: { type: 'string', description: 'Objective title' },
+        description: { type: 'string', description: 'Objective description' },
+        due_date: { type: 'string', format: 'date', description: 'Due date (ISO string)' },
+      },
+      required: ['project_id', 'title'],
+    },
+  },
+
+  update_key_result: {
+    name: 'update_key_result',
+    description: 'Update a key result value. Automatically recalculates objective progress.',
+    parameters: {
+      type: 'object',
+      properties: {
+        key_result_id: { type: 'string', description: 'Key Result ID' },
+        current_value: { type: 'number', description: 'New current value' },
+        status: { type: 'string', enum: ['active', 'completed', 'cancelled'], description: 'New status' },
+      },
+      required: ['key_result_id'],
+    },
+  },
+
+  get_objectives: {
+    name: 'get_objectives',
+    description: 'Get project objectives with their key results. Returns OKR data for a project.',
+    parameters: {
+      type: 'object',
+      properties: {
+        project_id: { type: 'string', description: 'Project ID' },
+        status: { type: 'string', enum: ['active', 'completed', 'cancelled', 'all'], description: 'Status filter (default: active)' },
+      },
+      required: ['project_id'],
     },
   },
 } as const;

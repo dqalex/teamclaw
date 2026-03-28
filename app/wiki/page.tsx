@@ -2,11 +2,11 @@
 
 import { useTranslation } from 'react-i18next';
 import AppShell from '@/shared/layout/AppShell';
-import Header from '@/shared/layout/Header';
+
 import { Button } from '@/shared/ui';
 import { Plus } from 'lucide-react';
-import { useWikiPage } from './hooks/useWikiPage';
-import { useAuthStore } from '@/domains';
+import { useWikiPage, typeOrder } from './hooks/useWikiPage';
+import { useAuthStore, useProjectStore } from '@/domains';
 import WikiSidebar from './components/WikiSidebar';
 import WikiDocEditor from './components/WikiDocEditor';
 import WikiCreateDocDialog from './components/WikiCreateDocDialog';
@@ -15,13 +15,14 @@ import { TemplateApplyDialog } from './components/TemplateApplyDialog';
 
 export default function WikiPage() {
   const { t } = useTranslation();
-  const wiki = useWikiPage();
+  const wiki = useWikiPage({ allowedTypes: typeOrder.filter(t => t !== 'blog') });
+  const wikiVisibleTypes = typeOrder.filter(t => t !== 'blog');
   const user = useAuthStore((s) => s.user);
   const isAdmin = user?.role === 'admin';
+  const { setCurrentProject } = useProjectStore();
 
   return (
     <AppShell>
-      <Header title={t('wiki.title')} showProjectSelector />
       <div className="flex h-[calc(100vh-64px)] overflow-x-auto">
         {/* 左侧列表 */}
         <WikiSidebar
@@ -38,6 +39,10 @@ export default function WikiPage() {
           onToggleCollapse={wiki.toggleCollapse}
           onNewDoc={() => wiki.setShowNewDocDialog(true)}
           typeLabels={wiki.typeLabels}
+          projects={wiki.projects}
+          currentProjectId={wiki.currentProjectId}
+          onProjectChange={setCurrentProject}
+          visibleTypes={wikiVisibleTypes}
         />
 
         {/* 右侧编辑区 */}
@@ -105,6 +110,7 @@ export default function WikiPage() {
           typeLabels={wiki.typeLabels}
           onSubmit={wiki.handleCreateDoc}
           onClose={() => wiki.setShowNewDocDialog(false)}
+          excludedTypes={['blog']}
         />
       )}
 
